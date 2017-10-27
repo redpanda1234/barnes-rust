@@ -1,0 +1,6 @@
+[package]
+name = "barnes"
+version = "0.1.0"
+authors = ["redpanda1234 <fkobayashi@hmc.edu>"]
+
+[dependencies]
