@@ -9,7 +9,7 @@ static mut NUM_THREADS: i64 = 20; // magic number for now, will find more
 
 #[derive(Debug)] // for printing stuff
 pub struct Region {
-    pub reg_vec: Option<Vec<Option<Region>>> // FIXME: make this compile-able
+    pub reg_vec: Option<Vec<Option<Region>>> // FIXME: make this syntactically valid
 
     /* Dead code?
     // pub ne: Option<region>, // Option enum; either some or none.
