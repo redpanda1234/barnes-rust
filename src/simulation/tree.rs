@@ -12,9 +12,9 @@ pub struct Coord {
 
 #[derive(Debug)] // for printing stuff
 pub struct Region {
-    pub reg_vec: Option<Vec<Option<Region>>>,
+    pub reg_vec: Option<Vec<Region>>,
 
-    pub x: f64, // use the bottom-left corner as the reference point
+    pub x: f64, // use the top-right corner as the reference point
     pub y: f64, //
     pub length: f64,
 
@@ -52,18 +52,65 @@ impl Region {
             point.y <= self.y + self.length && point.y >= self.y
     }
 
-    fn ingest_addbucket(&mut self) {
-        match self.add_bucket {
-            Some(bucket) => {
+    fn split(&mut self) {       // TODO: parallelize stuff
+        let side: f64 = self.length/2;
+        self.reg_vec = Some(vec![
+            // ne
+            Region {
+                reg_vec: None,
 
-            }
+                x: self.x,
+                y: self.y,
+                length: side,
 
-            None => {
-                if self.remove {
-                    self.prune();
-                }
+                remove: false,
+                add_bucket: None,
+
+                com: None,
+            },
+
+            // nw
+            Region {
+                reg_vec: None,
+
+                x: self.x - side,
+                y: self.y,
+                length: side,
+
+                remove: false,
+                add_bucket: None,
+
+                com: None,
+            },
+
+            // sw
+            Region {
+                reg_vec: None,
+
+                x: self.x - side,
+                y: self.y - side,
+                length: side,
+
+                remove: false,
+                add_bucket: None,
+
+                com: None,
+            },
+
+            // se
+            Region {
+                reg_vec: None,
+
+                x: self.x,
+                y: self.y - side,
+                length: side,
+
+                remove: false,
+                add_bucket: None,
+
+                com: None,
             }
-        }
+        ])
     }
 
     fn update(&mut self) {
@@ -77,8 +124,7 @@ impl Region {
             // update it. There are a few options.
 
             // 1. The mass that formerly occupied this box has moved
-            // out of it. If so, reg_vec will be None, and we move
-            // into that. We then need to decide whether to
+            // out of it. If so, we then need to decide whether to
             //
             // (a) prune this node
             // (b) only modify this node (and no subtrees)
@@ -90,36 +136,35 @@ impl Region {
             // method to handle the addlist (verbosity sucks)
 
             None => {
-                // If the mass has been flagged durring el for removal
+                // If the mass has been flagged for removal
                 if remove {
-                    // match cases a, b, or c above.
-                    match self.add_bucket {
-                        // If the addlist is empty as well, then this
-                        // region should be pruned as it is empty, and
-                        // has no waiting masses.
-                        None => {
-                            self.prune() // TODO: implement this
-                        }
+                    if self.add_bucket.len() == 1 {
+                        // If we're removing it anyways, just redefine
+                        self.com = self.add_bucket[0];
+                    } else {
+                        // Empty the COM; we'll redefine it if need
+                        self.com = None;
 
-                        // Else, we need to decide between cases (b)
-                        // and (c).
-                        Some(bucket) => {
-                            if bucket.len() == 1 {
-                                self.com = bucket[0];
-                            } else {
-                                self.insert() // TODO: implement this
-                            }
-
+                        match self.add_bucket {
+                            // If our node is totally empty, prune it
+                            None => self.prune(),
+                            // else ingest the queued masses
+                            Some(bucket) => self.split(),
                         }
                     }
                 } else {
-
+                    match self.addbucket {
+                        None => None,
+                        Some(bucket) => self.split(),
+                    }
                 }
-            }
+            },
 
-            Some() => {
+            // Done with the None case, now we move to the some case
 
-            }
+            Some(reg_vec) => {
+
+            },
         }
     }
 }
