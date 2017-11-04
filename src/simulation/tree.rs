@@ -52,8 +52,23 @@ impl Region {
             point.y <= self.y + self.length && point.y >= self.y
     }
 
+    fn ingest_addbucket(&mut self) {
+        match self.add_bucket {
+            Some(bucket) => {
+
+            }
+
+            None => {
+                if self.remove {
+                    self.prune();
+                }
+            }
+        }
+    }
+
     fn update(&mut self) {
         match self.reg_vec {
+
             // Some very labyrinthine control flow here. Hopefully
             // it's well-documented at the very least.
 
@@ -70,6 +85,10 @@ impl Region {
             // (c) draw in subtrees for this node
 
             // These cases are handled by the pattern block below.
+
+            // TODO: refactor this dumbass method by making a separate
+            // method to handle the addlist (verbosity sucks)
+
             None => {
                 // If the mass has been flagged durring el for removal
                 if remove {
@@ -93,6 +112,8 @@ impl Region {
 
                         }
                     }
+                } else {
+
                 }
             }
 
