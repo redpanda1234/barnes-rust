@@ -4,16 +4,15 @@ use std::thread;       // For fearless concurrency
 // mut allows us to modify the value contained in the static
 static mut NUM_THREADS: i64 = 20; // TODO: intelligent thread limit
 
+pub struct Coord {
+    x: f64,
+    y: f64,
+    mass: f64,
+}
+
 #[derive(Debug)] // for printing stuff
 pub struct Region {
     pub reg_vec: Option<Vec<Option<Region>>>,
-
-    /* Dead code?
-    // pub ne: Option<region>, // Option enum; either some or none.
-    // pub nw: Option<region>, // Makes handling dead regions easier.
-    // pub sw: Option<region>,
-    // pub se: Option<region>,
-    */
 
     pub x: f64, // use the bottom-left corner as the reference point
     pub y: f64, //
@@ -23,12 +22,6 @@ pub struct Region {
     pub add_bucket: Option<Vec<Coord>>, // masses to inject
 
     pub com: Option<Coord>,
-}
-
-pub struct Coord {
-    x: f64,
-    y: f64,
-    mass: f64,
 }
 
 
@@ -59,10 +52,48 @@ impl Region {
             point.y <= self.y + self.length && point.y >= self.y
     }
 
-    fn update(&self) -> Coord {
+    fn update(&mut self) {
         match self.reg_vec {
+            // Some very labyrinthine control flow here. Hopefully
+            // it's well-documented at the very least.
+
+            // If the region vector is None, then we have no current
+            // children subtree, and we need to decide how best to
+            // update it. There are a few options.
+
+            // 1. The mass that formerly occupied this box has moved
+            // out of it. If so, reg_vec will be None, and we move
+            // into that. We then need to decide whether to
+            //
+            // (a) prune this node
+            // (b) only modify this node (and no subtrees)
+            // (c) draw in subtrees for this node
+
+            // These cases are handled by the pattern block below.
             None => {
-                if
+                // If the mass has been flagged durring el for removal
+                if remove {
+                    // match cases a, b, or c above.
+                    match self.add_bucket {
+                        // If the addlist is empty as well, then this
+                        // region should be pruned as it is empty, and
+                        // has no waiting masses.
+                        None => {
+                            self.prune() // TODO: implement this
+                        }
+
+                        // Else, we need to decide between cases (b)
+                        // and (c).
+                        Some(bucket) => {
+                            if bucket.len() == 1 {
+                                self.com = bucket[0];
+                            } else {
+                                self.insert() // TODO: implement this
+                            }
+
+                        }
+                    }
+                }
             }
 
             Some() => {
