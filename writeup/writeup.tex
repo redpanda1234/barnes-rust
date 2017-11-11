@@ -1,0 +1,106 @@
+\documentclass[cm, 10pt]{article}
+% =================================================================== %
+%                                                                     %
+%                               Packages                              %
+%                                                                     %
+% =================================================================== %
+
+% For adjusting the page dimensions to look passable instead of
+% terrible
+\usepackage[margin=1in,tmargin=1.25in,paper=letterpaper]{geometry}
+
+% For most of the math symbols, and nice things like align
+% environment
+\usepackage{amsmath, amssymb, mathtools}
+
+% Fancy page header
+\usepackage{fancyhdr}
+
+% For customizing the enumerate environment
+\usepackage{enumitem}
+
+% For diagrams, if needed
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{positioning}
+
+% For figure
+\usepackage{float}
+
+% For the page of... in footer
+\usepackage{lastpage}
+
+% For cancelling frac stuff
+\usepackage{cancel}
+
+% ----------------------- Hacky Control Seqs ------------------------ %
+\let\oldref\ref
+\renewcommand{\ref}[1]{(\oldref{#1})}
+
+\newcommand\RR{{\mathbb R}}
+\newcommand\CC{{\mathbb C}}
+\newcommand\ZZ{{\mathbb Z}}
+\newcommand\NN{{\mathbb N}}
+\newcommand\QQ{{\mathbb Q}}
+
+\newcommand{\set}[1]{\ensuremath{ \left\{ #1 \right\} }}
+\newcommand{\pn}[1]{\left( #1 \right)}
+\newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\bk}[1]{\left[ #1 \right]}
+\newcommand{\vc}[1]{\left\langle #1 \right\rangle}
+
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\LL}{\mathcal{L}}
+
+% ----------------- pset specific control sequences ----------------- %
+\newcommand{\ucf}{U_{\rm cf}}
+\newcommand{\ueff}{U_{\rm eff}}
+
+\newcommand{\rmax}{r_{\rm max}}
+\newcommand{\rmin}{r_{\rm min}}
+
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+% ----------------------- Header formatting ------------------------- %
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Forest Kobayashi, Harry Fetsch}
+\chead{Computational Project}
+\rhead{Phyiscs 111 - Fall \the\year}
+\lfoot{Due Sunday, December 10th}
+\rfoot{\thepage\ of \pageref{LastPage}}
+
+% Adjust paragraph formatting
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1em}
+
+% Finally, enumerate formatting
+\setenumerate[0]{label=(\alph*)}
+
+% ================================================================== %
+%                                                                    %
+%                              Document                              %
+%                                                                    %
+% ================================================================== %
+
+\begin{document}
+
+  \section{Introduction}
+    Hello
+
+% ------------------------------------------------------------------ %
+
+  \section{Analysis}
+
+% ------------------------------------------------------------------ %
+
+  \section{Findings}
+
+% ------------------------------------------------------------------ %
+
+  \section{Conclusion}
+
+% ------------------------------------------------------------------ %
+
+
+\end{document}
