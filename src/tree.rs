@@ -5,18 +5,33 @@ use std::thread;       // For fearless concurrency
 static mut NUM_THREADS: i64 = 20; // TODO: intelligent thread limit
 
 pub struct Coord {
-    x: f64,
-    y: f64,
+    pub pos_vec: Vec<f64>,
     mass: f64,
+
+    // TODO: implement a method for element-wise addition on coord
 }
+
+let static MULTIPLIERS: Vec<i8> = Vec::new();
+
+fn populate_mult(n: i8, mult: i8) -> Vec<Vec<i8>> {
+    if (n <= 1) {
+        return vec![vec![-1],vec![1]];
+    }
+
+    let v1: Vec = populate_mult(n - 1, -1);
+    v1 = v1.extend(populate_mult(n - 1, 1));
+}
+
+
 
 // #[derive(Debug)] // for printing stuff
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
 
-    pub x: f64, // use the top-right corner as the reference point
-    pub y: f64, //
-    pub length: f64,
+    // The vector of coordinates defining the position of the minimum
+    // corners of our n-box
+    pub coord_vec: Vec<f64>,
+    pub half_length: f64,
 
     pub remove: bool,
     pub add_bucket: Option<Vec<Coord>>, // masses to inject
@@ -44,72 +59,18 @@ impl Region {
     // energy term
 
     fn contains(&self, point: &Coord) -> bool {
-
-        // Since rust is an expression language thing, then the
-        // last evaluated exp (below, a bool) will be the return
-        // value of the function
-        point.x <= self.x + self.length && point.x >= self.x &&
-            point.y <= self.y + self.length && point.y >= self.y
+        for (qi, pi) in self.coord_vec.zip(point.pos_vec) {
+            if (qi-pi).abs() > self.half_length {
+                return false
+            }
+        }
+        true
     }
 
-    fn split(&mut self) {       // TODO: parallelize stuff
-        let side: f64 = self.length/2.0;
+    fn split(&mut self) { // TODO: parallelize stuff
+        let
         self.reg_vec = Some(vec![
-            // ne
-            Region {
-                reg_vec: None,
 
-                x: self.x,
-                y: self.y,
-                length: side,
-
-                remove: false,
-                add_bucket: None,
-
-                com: None,
-            },
-
-            // nw
-            Region {
-                reg_vec: None,
-
-                x: self.x - side,
-                y: self.y,
-                length: side,
-
-                remove: false,
-                add_bucket: None,
-
-                com: None,
-            },
-
-            // sw
-            Region {
-                reg_vec: None,
-
-                x: self.x - side,
-                y: self.y - side,
-                length: side,
-
-                remove: false,
-                add_bucket: None,
-
-                com: None,
-            },
-
-            // se
-            Region {
-                reg_vec: None,
-
-                x: self.x,
-                y: self.y - side,
-                length: side,
-
-                remove: false,
-                add_bucket: None,
-
-                com: None,
-            }
         ])
     }
 
@@ -164,7 +125,10 @@ impl Region {
             // Done with the None case, now we move to the some case
 
             Some(reg_vec) => {
-
+                match self.add_bucket {
+                    None => (),
+                    Some(bucket) => self.recurse(),
+                }
             },
         }
     }
