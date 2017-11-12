@@ -10,7 +10,7 @@ pub struct Coord {
     mass: f64,
 }
 
-#[derive(Debug)] // for printing stuff
+// #[derive(Debug)] // for printing stuff
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
 
@@ -43,7 +43,7 @@ impl Region {
     // Also: really really close bodies merge, but add the bonding
     // energy term
 
-    fn contains(&self, point: &Point) -> bool {
+    fn contains(&self, point: &Coord) -> bool {
 
         // Since rust is an expression language thing, then the
         // last evaluated exp (below, a bool) will be the return
@@ -53,7 +53,7 @@ impl Region {
     }
 
     fn split(&mut self) {       // TODO: parallelize stuff
-        let side: f64 = self.length/2;
+        let side: f64 = self.length/2.0;
         self.reg_vec = Some(vec![
             // ne
             Region {
@@ -137,10 +137,11 @@ impl Region {
 
             None => {
                 // If the mass has been flagged for removal
-                if remove {
-                    if self.add_bucket.len() == 1 {
+                if self.remove {
+                    let add_bucket = self.add_bucket.unwrap();
+                    if add_bucket.len() == 1 {
                         // If we're removing it anyways, just redefine
-                        self.com = self.add_bucket[0];
+                        self.com = Some(add_bucket[0]);
                     } else {
                         // Empty the COM; we'll redefine it if need
                         self.com = None;
@@ -153,8 +154,8 @@ impl Region {
                         }
                     }
                 } else {
-                    match self.addbucket {
-                        None => None,
+                    match self.add_bucket {
+                        None => (),
                         Some(bucket) => self.split(),
                     }
                 }
