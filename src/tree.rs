@@ -23,7 +23,6 @@ fn populate_mult(n: i8, mult: i8) -> Vec<Vec<i8>> {
 }
 
 
-
 // #[derive(Debug)] // for printing stuff
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
