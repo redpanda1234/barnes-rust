@@ -28,7 +28,16 @@ fn populate_mult(n: i8, mult: f64) -> Vec<Vec<f64>> {
     v1
 }
 
-static MULTIPLIERS: Vec<Vec<f64>> = populate_mult(2, 0.0);
+// TODO: create a value for this in main
+
+// static MULTIPLIERS: Vec<Vec<f64>> = vec![vec![]];
+pub struct Bullshit {
+    dumbass: Vec<Vec<f64>>,
+}
+
+static MULTIPLIERS: Bullshit = Bullshit {dumbass: populate_mult(2, 0.0)};
+  // ((-1,-1), (-1,1), (1,-1), (1,1));
+  // ((f64), (f64), (f64), (f64))
 
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
@@ -80,7 +89,7 @@ impl Region {
         let mut reg_vec = Vec::new();
         let quarter_length = self.half_length * 0.5;
 
-        for vec in MULTIPLIERS.iter() {
+        for vec in MULTIPLIERS[0].iter() {
             let mut copy_pos = vec.clone();
             for i in 0..copy_pos.len() {
                 copy_pos[i] += 0.5 * vec[i] * self.half_length;
@@ -130,6 +139,7 @@ impl Region {
                     if add_bucket.len() == 1 {
                         // If we're removing it anyways, just redefine
                         self.com = Some(add_bucket[0]);
+                        false
                     } else {
                         // Empty the COM; we'll redefine it if need
                         self.com = None;
@@ -144,7 +154,11 @@ impl Region {
                 } else {
                     match self.add_bucket {
                         None => false,
-                        Some(bucket) => {self.split(); self.recurse()},
+                        Some(bucket) => {
+                            bucket.push(self.com.unwrap());
+                            self.split();
+                            self.recurse()
+                        },
                     }
                 }
             },
@@ -152,6 +166,7 @@ impl Region {
             // Done with the None case, now we move to the some case
 
             Some(reg_vec) => {
+                self.com = None;
                 match self.add_bucket {
                     None => false,
                     Some(bucket) => {self.recurse()},
@@ -169,6 +184,7 @@ impl Region {
                 }
             }
         }
+        self.add_bucket = None;
 
         let mut remove = false;
         for region in self.reg_vec.unwrap() {
