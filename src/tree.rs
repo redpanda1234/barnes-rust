@@ -101,9 +101,9 @@ impl Region {
 
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> bool {
         match self.reg_vec {
-
+            // TODO: if remove is true for all children,
             // Some very labyrinthine control flow here. Hopefully
             // it's well-documented at the very least.
 
@@ -136,15 +136,15 @@ impl Region {
 
                         match self.add_bucket {
                             // If our node is totally empty, prune it
-                            None => self.prune(),
+                            None => true,
                             // else ingest the queued masses
-                            Some(bucket) => self.split(),
+                            Some(bucket) => {self.split(); self.recurse()},
                         }
                     }
                 } else {
                     match self.add_bucket {
-                        None => (),
-                        Some(bucket) => self.split(),
+                        None => false,
+                        Some(bucket) => {self.split(); self.recurse()},
                     }
                 }
             },
@@ -153,10 +153,28 @@ impl Region {
 
             Some(reg_vec) => {
                 match self.add_bucket {
-                    None => (),
-                    Some(bucket) => self.recurse(),
+                    None => false,
+                    Some(bucket) => {self.recurse()},
                 }
             },
         }
     }
+
+    fn recurse(&self) -> bool {
+        'outer: for mass in self.add_bucket.unwrap() {
+            'inner: for region in self.reg_vec.unwrap() {
+                if region.contains(&mass) {
+                    region.add_bucket.map(|mut v| v.push(mass));
+                    break 'inner;
+                }
+            }
+        }
+
+        let mut remove = false;
+        for region in self.reg_vec.unwrap() {
+            if region.update() { remove = true; }
+        }
+        return remove;
+    }
+
 }
