@@ -4,6 +4,7 @@
 // mut allows us to modify the value contained in the static
 static mut NUM_THREADS: i64 = 20; // TODO: intelligent thread limit
 
+#[derive(Clone)]
 pub struct Coord {
     pub pos_vec: Vec<f64>,
     mass: f64,
@@ -11,31 +12,31 @@ pub struct Coord {
     // TODO: implement a method for element-wise addition on coord
 }
 
-fn populate_mult(n: i8, mult: f64) -> Vec<Vec<f64>> {
-    if n <= 0 {
-        return vec![vec![mult]];
-    }
+// fn populate_mult(n: i8, mult: f64) -> Vec<Vec<f64>> {
+//     if n <= 0 {
+//         return vec![vec![mult]];
+//     }
 
-    let mut v1: Vec<Vec<f64>> = populate_mult(n - 1, -1.0);
-    v1.extend(populate_mult(n - 1, 1.0));
+//     let mut v1: Vec<Vec<f64>> = populate_mult(n - 1, -1.0);
+//     v1.extend(populate_mult(n - 1, 1.0));
 
-    if mult != 0.0 {
-        for i in 0..v1.len() {
-            v1[i].push(mult);
-        }
-    }
+//     if mult != 0.0 {
+//         for i in 0..v1.len() {
+//             v1[i].push(mult);
+//         }
+//     }
 
-    v1
-}
+//     v1
+// }
 
 // TODO: create a value for this in main
 
 // static MULTIPLIERS: Vec<Vec<f64>> = vec![vec![]];
-pub struct Bullshit {
-    dumbass: Vec<Vec<f64>>,
-}
+// pub struct Bullshit {
+//     dumbass: Vec<Vec<f64>>,
+// }
 
-static MULTIPLIERS: Bullshit = Bullshit {dumbass: populate_mult(2, 0.0)};
+// static MULTIPLIERS: Bullshit = Bullshit {dumbass: populate_mult(2, 0.0)};
   // ((-1,-1), (-1,1), (1,-1), (1,1));
   // ((f64), (f64), (f64), (f64))
 
@@ -56,6 +57,24 @@ pub struct Region {
 
 impl Region {
 
+    fn populate_mult(&mut self, n: i8, mult: f64) -> Vec<Vec<f64>> {
+        if n <= 0 {
+            return vec![vec![mult]];
+        }
+
+        let mut v1: Vec<Vec<f64>> = self.populate_mult(n - 1, -1.0);
+        v1.extend(self.populate_mult(n - 1, 1.0));
+
+        if mult != 0.0 {
+            for i in 0..v1.len() {
+                v1[i].push(mult);
+            }
+        }
+
+        v1
+    }
+
+
     // TODO: calculate distance metric in parent node
     // store at most one mass in the
 
@@ -73,7 +92,8 @@ impl Region {
     // energy term
 
     fn contains(&self, point: &Coord) -> bool {
-        for (qi, pi) in self.coord_vec.iter().zip(point.pos_vec) {
+        let pos_vec = point.pos_vec.clone();
+        for (qi, pi) in self.coord_vec.iter().zip(pos_vec) {
             if (qi-pi).abs() > self.half_length {
                 return false
             }
@@ -82,14 +102,15 @@ impl Region {
     }
 
     fn split(&mut self) { // TODO: parallelize stuff
-        if MULTIPLIERS[0].len() != self.coord_vec.len() {
-            panic!("Not enough frosh chem");
-        }
+        // if MULTIPLIERS.dumbass[0].len() != self.coord_vec.len() {
+        //     panic!("Not enough frosh chem");
+        // }
 
         let mut reg_vec = Vec::new();
         let quarter_length = self.half_length * 0.5;
+        let mult = self.populate_mult(2, 0.0);
 
-        for vec in MULTIPLIERS[0].iter() {
+        for vec in mult.iter() {
             let mut copy_pos = vec.clone();
             for i in 0..copy_pos.len() {
                 copy_pos[i] += 0.5 * vec[i] * self.half_length;
@@ -110,7 +131,7 @@ impl Region {
 
     }
 
-    fn update(&mut self) -> bool {
+    fn update(mut self) -> bool {
         match self.reg_vec {
             // TODO: if remove is true for all children,
             // Some very labyrinthine control flow here. Hopefully
@@ -138,7 +159,7 @@ impl Region {
                     let add_bucket = self.add_bucket.unwrap();
                     if add_bucket.len() == 1 {
                         // If we're removing it anyways, just redefine
-                        self.com = Some(add_bucket[0]);
+                        self.com = Some(add_bucket[0].clone());
                         false
                     } else {
                         // Empty the COM; we'll redefine it if need
@@ -148,13 +169,13 @@ impl Region {
                             // If our node is totally empty, prune it
                             None => true,
                             // else ingest the queued masses
-                            Some(bucket) => {self.split(); self.recurse()},
+                            Some(ref bucket) => {self.split(); self.recurse()},
                         }
                     }
                 } else {
                     match self.add_bucket {
                         None => false,
-                        Some(bucket) => {
+                        Some(mut bucket) => {
                             bucket.push(self.com.unwrap());
                             self.split();
                             self.recurse()
