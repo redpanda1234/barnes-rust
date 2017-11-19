@@ -131,7 +131,7 @@ impl Region {
 
     }
 
-    fn update(&mut self) -> bool {
+    fn update(&mut self) -> i16 {
         match self.reg_vec {
             // TODO: if remove is true for all children,
             // Some very labyrinthine control flow here. Hopefully
@@ -159,12 +159,12 @@ impl Region {
                     self.com = None;
                     match self.add_bucket {
                         // If our node is totally empty, prune it
-                        None => true,
+                        None => 0,
                         // else ingest the queued masses
                         Some(ref mut bucket) => {
                             if bucket.len() == 1 {
                                 self.com = Some(bucket[0].clone());
-                                false
+                                1
                             } else {
                                 self.split();
                                 self.recurse()
@@ -173,7 +173,7 @@ impl Region {
                     }
                 } else {
                     match self.add_bucket {
-                        None => false,
+                        None => 1,
                         Some(ref mut bucket) => {
                             bucket.push(self.com.clone().unwrap());
                             self.split();
@@ -188,14 +188,14 @@ impl Region {
             Some(ref reg_vec) => {
                 self.com = None;
                 match self.add_bucket {
-                    None => false,
+                    None => 1,
                     Some(ref bucket) => {self.recurse()},
                 }
             },
         }
     }
 
-    fn recurse(&mut self) -> bool {
+    fn recurse(&mut self) -> i16 {
         'outer: for mass in self.add_bucket.unwrap() {
             'inner: for region in self.reg_vec.unwrap() {
                 if region.contains(&mass) {
@@ -206,9 +206,9 @@ impl Region {
         }
         self.add_bucket = None;
 
-        let mut remove = false;
+        let mut remove = 0;
         for region in self.reg_vec.unwrap() {
-            if region.update() { remove = true; }
+            remove += region.update();
         }
         return remove;
     }
