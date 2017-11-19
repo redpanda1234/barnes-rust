@@ -161,7 +161,7 @@ impl Region {
                         // If our node is totally empty, prune it
                         None => true,
                         // else ingest the queued masses
-                        Some(ref bucket) => {
+                        Some(ref mut bucket) => {
                             if bucket.len() == 1 {
                                 self.com = Some(bucket[0].clone());
                                 false
