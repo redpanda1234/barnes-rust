@@ -131,7 +131,7 @@ impl Region {
 
     }
 
-    fn update(mut self) -> bool {
+    fn update(&mut self) -> bool {
         match self.reg_vec {
             // TODO: if remove is true for all children,
             // Some very labyrinthine control flow here. Hopefully
@@ -156,27 +156,26 @@ impl Region {
             None => {
                 // If the mass has been flagged for removal
                 if self.remove {
-                    let add_bucket = self.add_bucket.unwrap();
-                    if add_bucket.len() == 1 {
-                        // If we're removing it anyways, just redefine
-                        self.com = Some(add_bucket[0].clone());
-                        false
-                    } else {
-                        // Empty the COM; we'll redefine it if need
-                        self.com = None;
-
-                        match self.add_bucket {
-                            // If our node is totally empty, prune it
-                            None => true,
-                            // else ingest the queued masses
-                            Some(ref bucket) => {self.split(); self.recurse()},
-                        }
+                    self.com = None;
+                    match self.add_bucket {
+                        // If our node is totally empty, prune it
+                        None => true,
+                        // else ingest the queued masses
+                        Some(ref bucket) => {
+                            if bucket.len() == 1 {
+                                self.com = Some(bucket[0].clone());
+                                false
+                            } else {
+                                self.split();
+                                self.recurse()
+                            }
+                        },
                     }
                 } else {
                     match self.add_bucket {
                         None => false,
-                        Some(mut bucket) => {
-                            bucket.push(self.com.unwrap());
+                        Some(ref mut bucket) => {
+                            bucket.push(self.com.clone().unwrap());
                             self.split();
                             self.recurse()
                         },
@@ -184,19 +183,19 @@ impl Region {
                 }
             },
 
-            // Done with the None case, now we move to the some case
+            // Done with the None case, now we move to the some case, @Raxod502
 
-            Some(reg_vec) => {
+            Some(ref reg_vec) => {
                 self.com = None;
                 match self.add_bucket {
                     None => false,
-                    Some(bucket) => {self.recurse()},
+                    Some(ref bucket) => {self.recurse()},
                 }
             },
         }
     }
 
-    fn recurse(&self) -> bool {
+    fn recurse(&mut self) -> bool {
         'outer: for mass in self.add_bucket.unwrap() {
             'inner: for region in self.reg_vec.unwrap() {
                 if region.contains(&mass) {
