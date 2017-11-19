@@ -1,4 +1,4 @@
-use std::thread;       // For fearless concurrency
+// use std::thread;       // For fearless concurrency
 
 // Static -> valid globally throughout the lifetime of the program
 // mut allows us to modify the value contained in the static
@@ -11,32 +11,24 @@ pub struct Coord {
     // TODO: implement a method for element-wise addition on coord
 }
 
-static MULTIPLIERS: Vec<i8> = Vec::new(); // multipliers for
-// constructing the subregion vectors
-
-// Note: radon suggests this is dumb. Instead, maybe construct by
-// starting with an initial vector
-fn populate_mult() -> Vec<Vec<i8>> {
-    let num_dim = 2;
-    let initial = Vec::new();
-
-    for n in [0..num_dim] {
-        initial.extend(1)
+fn populate_mult(n: i8, mult: f64) -> Vec<Vec<f64>> {
+    if n <= 0 {
+        return vec![vec![mult]];
     }
 
-    let output = vec![&initial];
+    let mut v1: Vec<Vec<f64>> = populate_mult(n - 1, -1.0);
+    v1.extend(populate_mult(n - 1, 1.0));
 
-    'outer: loop {
-        'inner: for i in [0..num_dim] {
-            if (output.last()[i] == 1) {
-                output.push(&vec.clone_from(initial));
-            } else {
-                ouptut.push(&)
-            }
+    if mult != 0.0 {
+        for i in 0..v1.len() {
+            v1[i].push(mult);
         }
     }
+
+    v1
 }
 
+static MULTIPLIERS: Vec<Vec<f64>> = populate_mult(2, 0.0);
 
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
@@ -72,7 +64,7 @@ impl Region {
     // energy term
 
     fn contains(&self, point: &Coord) -> bool {
-        for (qi, pi) in self.coord_vec.zip(point.pos_vec) {
+        for (qi, pi) in self.coord_vec.iter().zip(point.pos_vec) {
             if (qi-pi).abs() > self.half_length {
                 return false
             }
@@ -81,9 +73,32 @@ impl Region {
     }
 
     fn split(&mut self) { // TODO: parallelize stuff
-        let self.reg_vec = Some(vec![
+        if MULTIPLIERS[0].len() != self.coord_vec.len() {
+            panic!("Not enough frosh chem");
+        }
 
-        ]);
+        let mut reg_vec = Vec::new();
+        let quarter_length = self.half_length * 0.5;
+
+        for vec in MULTIPLIERS.iter() {
+            let mut copy_pos = vec.clone();
+            for i in 0..copy_pos.len() {
+                copy_pos[i] += 0.5 * vec[i] * self.half_length;
+            }
+            reg_vec.push(
+                Region {
+                    reg_vec: None,
+                    coord_vec: copy_pos,
+                    remove: false,
+                    add_bucket: None,
+                    com: None,
+                    half_length: quarter_length,
+                }
+            )
+        }
+
+        self.reg_vec = Some(reg_vec);
+
     }
 
     fn update(&mut self) {
