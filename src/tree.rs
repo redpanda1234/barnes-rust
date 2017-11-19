@@ -11,19 +11,33 @@ pub struct Coord {
     // TODO: implement a method for element-wise addition on coord
 }
 
-let static MULTIPLIERS: Vec<i8> = Vec::new();
+static MULTIPLIERS: Vec<i8> = Vec::new(); // multipliers for
+// constructing the subregion vectors
 
-fn populate_mult(n: i8, mult: i8) -> Vec<Vec<i8>> {
-    if (n <= 1) {
-        return vec![vec![-1],vec![1]];
+// Note: radon suggests this is dumb. Instead, maybe construct by
+// starting with an initial vector
+fn populate_mult() -> Vec<Vec<i8>> {
+    let num_dim = 2;
+    let initial = Vec::new();
+
+    for n in [0..num_dim] {
+        initial.extend(1)
     }
 
-    let v1: Vec = populate_mult(n - 1, -1);
-    v1 = v1.extend(populate_mult(n - 1, 1));
+    let output = vec![&initial];
+
+    'outer: loop {
+        'inner: for i in [0..num_dim] {
+            if (output.last()[i] == 1) {
+                output.push(&vec.clone_from(initial));
+            } else {
+                ouptut.push(&)
+            }
+        }
+    }
 }
 
 
-// #[derive(Debug)] // for printing stuff
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
 
@@ -67,10 +81,9 @@ impl Region {
     }
 
     fn split(&mut self) { // TODO: parallelize stuff
-        let
-        self.reg_vec = Some(vec![
+        let self.reg_vec = Some(vec![
 
-        ])
+        ]);
     }
 
     fn update(&mut self) {
