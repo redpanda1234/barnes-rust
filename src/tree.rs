@@ -83,7 +83,8 @@ static MULTIPLIERS: [[f64; 2]; 4] = [
 //   - really really close bodies merge, but add a bonding energy
 //     term to maintain conservation of energy
 
-*/
+ */
+#[derive(Clone)]
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
     pub coord_vec: Vec<f64>,
@@ -127,7 +128,7 @@ impl Region {
                     self.com = None;
                     match self.add_bucket {
                         None => 0,
-                        Some(ref mut bucket) => {
+                        Some(ref bucket) => {
                             if bucket.len() == 1 {
                                 self.com = Some(bucket[0].clone());
                                 1
@@ -147,7 +148,7 @@ impl Region {
                 }
             },
 
-            Some(ref _reg_vec) => {
+            Some(mut _reg_vec) => {
                 self.com = None;
                 match self.add_bucket {
                     None => 1,
@@ -174,6 +175,8 @@ impl Region {
         // let mult = self.populate_mult(2, 0.0);
 
         for vec in MULTIPLIERS.iter() {
+            // have to define copy_pos this jenky way because we
+            // defined our MULTIPLIERS as a static array
             let mut copy_pos = vec![vec[0], vec[1]];
             for i in 0..copy_pos.len() {
                 copy_pos[i] += 0.5 * vec[i] * self.half_length;
@@ -197,8 +200,8 @@ impl Region {
     fn recurse(&mut self, split: bool) -> i32 {
         if split {self.split();}
         else {
-            'outer: for mass in self.add_bucket.unwrap() {
-                'inner: for region in self.reg_vec.unwrap() {
+            'outer: for mass in self.add_bucket.clone().unwrap() {
+                'inner: for region in self.reg_vec.clone().unwrap() {
                     if region.contains(&mass) {
                         region.add_bucket.map(|mut v| v.push(mass));
                         break 'inner;
@@ -206,10 +209,10 @@ impl Region {
                 }
             }
         }
-        self.add_bucket = None;
+        // self.add_bucket = None;
 
         let mut remove = 0;
-        for mut region in self.reg_vec.unwrap() {
+        for mut region in self.reg_vec.clone().unwrap() {
             remove += region.update();
         }
         return remove;
