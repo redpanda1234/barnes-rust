@@ -30,8 +30,9 @@ impl Body {
     fn update_accel(&self, acc: Vec<f64>, mass: &Body) -> Vec<f64> {
         for (acci, ai) in acc.iter().zip(
             self.get_classical_accel(mass)) {
-            acci += ai;
+            *acci += ai;
         }
+        acc
     }
 
     // This is bad. Want to update forces and velocities and positions
@@ -53,26 +54,28 @@ impl Body {
         // half-length
         match node.com {
             None => {node.add_com(); self.is_far(node)},
-            Some(com) => {
-                2.0 * node.half_length /
+            Some(ref com) => {
+                (2.0 * node.half_length /
                     (self.squared_dist_to(&node.com.clone().unwrap()))
-                    <= THETA
+                    <= THETA) as bool
             },
         }
     }
 
-    fn get_acc(&mut self, node: &mut Region) ->  {
-        let acc = vec![0.0; DIMS];
-        match node.reg_vec {
-            None => self.update_accel(node.com),
-            Some => {
-
+    fn get_acc(&mut self, node: &mut Region) -> Vec<f64> {
+        let mut acc = vec![0.0; DIMS];
+        match node.reg_vec.clone() {
+            None => self.update_accel(acc, &node.com.clone().unwrap()),
+            Some(ref reg_vec) => {
+                if self.is_far(node) {
+                    acc = self.update_accel(acc, &node.com.clone().unwrap());
+                } else {
+                    for child in reg_vec.iter() {
+                        acc = self.update_accel(acc, &child.com.clone().unwrap());
+                    }
+                }
+                acc
             }
-        }
-        if self.is_far(node) {
-
-        } else {
-
         }
     }
 }
@@ -105,6 +108,6 @@ impl Region {
     }
 
     fn add_com(&mut self) {
-        self.com = self.calc_com();
+        self.com = Some(self.calc_com());
     }
 }
