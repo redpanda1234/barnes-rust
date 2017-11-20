@@ -18,7 +18,8 @@ static mut NUM_THREADS: i64 = 20;
 #[derive(Clone)]
 pub struct Body {
     pub pos_vec: Vec<f64>,
-    mass: f64,
+    pub vel_vec: Vec<f64>,
+    pub mass: f64,
 }
 
 /*
