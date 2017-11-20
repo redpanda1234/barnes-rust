@@ -122,11 +122,11 @@ impl Region {
     }
 
     fn update(&mut self) -> i32 {
-        match self.reg_vec {
+        match self.reg_vec.clone() {
             None => {
                 if self.remove {
                     self.com = None;
-                    match self.add_bucket {
+                    match self.add_bucket.clone() {
                         None => 0,
                         Some(ref bucket) => {
                             if bucket.len() == 1 {
@@ -138,7 +138,7 @@ impl Region {
                         },
                     }
                 } else {
-                    match self.add_bucket {
+                    match self.add_bucket.clone() {
                         None => 1,
                         Some(ref mut bucket) => {
                             bucket.push(self.com.clone().unwrap());
@@ -150,7 +150,7 @@ impl Region {
 
             Some(mut _reg_vec) => {
                 self.com = None;
-                match self.add_bucket {
+                match self.add_bucket.clone() {
                     None => 1,
                     Some(ref _bucket) => {
                         let result = self.recurse(false);
