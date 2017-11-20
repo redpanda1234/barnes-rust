@@ -1,8 +1,9 @@
 pub use super::tree::*;
 pub use super::DIMS;
+pub use super::TREE_POINTER;
 
 static THETA: f64 = 0.5;
-
+static DT: f64 = 0.01;
 
 impl Body {
     fn squared_dist_to(&self, mass: &Body) -> f64 {
@@ -11,6 +12,20 @@ impl Body {
             r_squared += (qi - pi).powi(2);
         }
         r_squared
+    }
+
+
+    fn is_far(&self, node: &mut Region) -> bool {
+        // this makes me think we should store full-length instead of
+        // half-length
+        match node.com {
+            None => {node.add_com(); self.is_far(node)},
+            Some(ref com) => {
+                (2.0 * node.half_length /
+                    (self.squared_dist_to(&node.com.clone().unwrap()))
+                    <= THETA) as bool
+            },
+        }
     }
 
     fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
@@ -27,42 +42,15 @@ impl Body {
         vec
     }
 
-    fn update_accel(&self, acc: Vec<f64>, mass: &Body) -> Vec<f64> {
-        for (acci, ai) in acc.iter().zip(
+    fn update_accel(&self, mut acc: Vec<f64>, mass: &Body) -> Vec<f64> {
+        for (mut acci, ai) in acc.iter_mut().zip(
             self.get_classical_accel(mass)) {
             *acci += ai;
         }
         acc
     }
 
-    // This is bad. Want to update forces and velocities and positions
-    // all separately. How to fix? Offload into 3 sep. functions?
-    // fn euler_step(&mut self, mass: &Body, dt: f64) {
-    //     let acc = self.get_classical_accel(mass);
-    //     for (pi, vi, ai) in izip!(
-    //         &mut self.pos_vec,
-    //         &mut self.vel_vec,
-    //         acc
-    //     ) { // Note to confused future me: * dereferences things
-    //         *vi += ai*dt;
-    //         *pi += *vi*dt;
-    //     }
-    // }
-
-    fn is_far(&self, node: &mut Region) -> bool {
-        // this makes me think we should store full-length instead of
-        // half-length
-        match node.com {
-            None => {node.add_com(); self.is_far(node)},
-            Some(ref com) => {
-                (2.0 * node.half_length /
-                    (self.squared_dist_to(&node.com.clone().unwrap()))
-                    <= THETA) as bool
-            },
-        }
-    }
-
-    fn get_acc(&mut self, node: &mut Region) -> Vec<f64> {
+    fn get_total_acc(&mut self, node: &mut Region) -> Vec<f64> {
         let mut acc = vec![0.0; DIMS];
         match node.reg_vec.clone() {
             None => self.update_accel(acc, &node.com.clone().unwrap()),
@@ -76,6 +64,15 @@ impl Body {
                     acc
                 }
             }
+        }
+    }
+
+    fn update_vel(&mut self) {
+        for (vi, ai) in
+        self.vel_vec.iter_mut().zip(
+            self.get_total_acc(TREE_POINTER)
+        ) {
+            *vi += ai*DT
         }
     }
 }
