@@ -27,17 +27,26 @@ impl Body {
         vec
     }
 
-    fn euler_step(&mut self, mass: &Body, dt: f64) {
-        let acc = self.get_classical_accel(mass);
-        for (pi, vi, ai) in izip!(
-            &mut self.pos_vec,
-            &mut self.vel_vec,
-            acc
-        ) { // Note to confused future me: * dereferences things
-            *vi += ai*dt;
-            *pi += *vi*dt;
+    fn update_accel(&self, acc: Vec<f64>, mass: &Body) -> Vec<f64> {
+        for (acci, ai) in acc.iter().zip(
+            self.get_classical_accel(mass)) {
+            acci += ai;
         }
     }
+
+    // This is bad. Want to update forces and velocities and positions
+    // all separately. How to fix? Offload into 3 sep. functions?
+    // fn euler_step(&mut self, mass: &Body, dt: f64) {
+    //     let acc = self.get_classical_accel(mass);
+    //     for (pi, vi, ai) in izip!(
+    //         &mut self.pos_vec,
+    //         &mut self.vel_vec,
+    //         acc
+    //     ) { // Note to confused future me: * dereferences things
+    //         *vi += ai*dt;
+    //         *pi += *vi*dt;
+    //     }
+    // }
 
     fn is_far(&self, node: &mut Region) -> bool {
         // this makes me think we should store full-length instead of
@@ -49,6 +58,21 @@ impl Body {
                     (self.squared_dist_to(&node.com.clone().unwrap()))
                     <= THETA
             },
+        }
+    }
+
+    fn get_acc(&mut self, node: &mut Region) ->  {
+        let acc = vec![0.0; DIMS];
+        match node.reg_vec {
+            None => self.update_accel(node.com),
+            Some => {
+
+            }
+        }
+        if self.is_far(node) {
+
+        } else {
+
         }
     }
 }
@@ -78,5 +102,9 @@ impl Region {
                     mass: den}
             }
         }
+    }
+
+    fn add_com(&mut self) {
+        self.com = self.calc_com();
     }
 }
