@@ -12,33 +12,7 @@ pub struct Coord {
     // TODO: implement a method for element-wise addition on coord
 }
 
-// fn populate_mult(n: i8, mult: f64) -> Vec<Vec<f64>> {
-//     if n <= 0 {
-//         return vec![vec![mult]];
-//     }
-
-//     let mut v1: Vec<Vec<f64>> = populate_mult(n - 1, -1.0);
-//     v1.extend(populate_mult(n - 1, 1.0));
-
-//     if mult != 0.0 {
-//         for i in 0..v1.len() {
-//             v1[i].push(mult);
-//         }
-//     }
-
-//     v1
-// }
-
-// TODO: create a value for this in main
-
-// static MULTIPLIERS: Vec<Vec<f64>> = vec![vec![]];
-// pub struct Bullshit {
-//     dumbass: Vec<Vec<f64>>,
-// }
-
-// static MULTIPLIERS: Bullshit = Bullshit {dumbass: populate_mult(2, 0.0)};
-  // ((-1,-1), (-1,1), (1,-1), (1,1));
-  // ((f64), (f64), (f64), (f64))
+static MULTIPLIERS: [[f64; 2]; 4] = [[-1.0,-1.0], [-1.0,1.0], [1.0,-1.0], [1.0,1.0]];
 
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
@@ -56,24 +30,6 @@ pub struct Region {
 
 
 impl Region {
-
-    fn populate_mult(&mut self, n: i8, mult: f64) -> Vec<Vec<f64>> {
-        if n <= 0 {
-            return vec![vec![mult]];
-        }
-
-        let mut v1: Vec<Vec<f64>> = self.populate_mult(n - 1, -1.0);
-        v1.extend(self.populate_mult(n - 1, 1.0));
-
-        if mult != 0.0 {
-            for i in 0..v1.len() {
-                v1[i].push(mult);
-            }
-        }
-
-        v1
-    }
-
 
     // TODO: calculate distance metric in parent node
     // store at most one mass in the
@@ -101,37 +57,7 @@ impl Region {
         true
     }
 
-    fn split(&mut self) { // TODO: parallelize stuff
-        // if MULTIPLIERS.dumbass[0].len() != self.coord_vec.len() {
-        //     panic!("Not enough frosh chem");
-        // }
-
-        let mut reg_vec = Vec::new();
-        let quarter_length = self.half_length * 0.5;
-        let mult = self.populate_mult(2, 0.0);
-
-        for vec in mult.iter() {
-            let mut copy_pos = vec.clone();
-            for i in 0..copy_pos.len() {
-                copy_pos[i] += 0.5 * vec[i] * self.half_length;
-            }
-            reg_vec.push(
-                Region {
-                    reg_vec: None,
-                    coord_vec: copy_pos,
-                    remove: false,
-                    add_bucket: None,
-                    com: None,
-                    half_length: quarter_length,
-                }
-            )
-        }
-
-        self.reg_vec = Some(reg_vec);
-
-    }
-
-    fn update(&mut self) -> i16 {
+    fn update(&mut self) -> i32 {
         match self.reg_vec {
             // TODO: if remove is true for all children,
             // Some very labyrinthine control flow here. Hopefully
@@ -166,8 +92,7 @@ impl Region {
                                 self.com = Some(bucket[0].clone());
                                 1
                             } else {
-                                self.split();
-                                self.recurse()
+                                self.recurse(true)
                             }
                         },
                     }
@@ -176,8 +101,7 @@ impl Region {
                         None => 1,
                         Some(ref mut bucket) => {
                             bucket.push(self.com.clone().unwrap());
-                            self.split();
-                            self.recurse()
+                            self.recurse(true)
                         },
                     }
                 }
@@ -189,25 +113,65 @@ impl Region {
                 self.com = None;
                 match self.add_bucket {
                     None => 1,
-                    Some(ref bucket) => {self.recurse()},
+                    Some(ref bucket) => {
+                        let result = self.recurse(false);
+                        if result == 0 {
+                            self.reg_vec = None
+                        }
+                        result
+                    },
                 }
             },
         }
     }
 
-    fn recurse(&mut self) -> i16 {
-        'outer: for mass in self.add_bucket.unwrap() {
-            'inner: for region in self.reg_vec.unwrap() {
-                if region.contains(&mass) {
-                    region.add_bucket.map(|mut v| v.push(mass));
-                    break 'inner;
+    fn split(&mut self) {
+        // TODO: parallelize stuff
+        // if MULTIPLIERS.dumbass[0].len() != self.coord_vec.len() {
+        //     panic!("Not enough frosh chem");
+        // }
+
+        let mut reg_vec = Vec::new();
+        let quarter_length = self.half_length * 0.5;
+        // let mult = self.populate_mult(2, 0.0);
+
+        for vec in MULTIPLIERS.iter() {
+            let mut copy_pos = vec![vec[0], vec[1]];
+            for i in 0..copy_pos.len() {
+                copy_pos[i] += 0.5 * vec[i] * self.half_length;
+            }
+            reg_vec.push(
+                Region {
+                    reg_vec: None,
+                    coord_vec: copy_pos,
+                    remove: false,
+                    add_bucket: None,
+                    com: None,
+                    half_length: quarter_length,
+                }
+            )
+        }
+
+        self.reg_vec = Some(reg_vec);
+
+    }
+
+    fn recurse(&mut self, split: bool) -> i32 {
+        if split {self.split();}
+        else {
+            'outer: for mass in self.add_bucket.unwrap() {
+                'inner: for region in self.reg_vec.unwrap() {
+                    if region.contains(&mass) {
+                        region.add_bucket.map(|mut v| v.push(mass));
+                        break 'inner;
+                    }
                 }
             }
         }
         self.add_bucket = None;
 
         let mut remove = 0;
-        for region in self.reg_vec.unwrap() {
+        for mut region in self.reg_vec.unwrap() {
             remove += region.update();
         }
         return remove;
