@@ -68,13 +68,13 @@ impl Body {
             None => self.update_accel(acc, &node.com.clone().unwrap()),
             Some(ref reg_vec) => {
                 if self.is_far(node) {
-                    acc = self.update_accel(acc, &node.com.clone().unwrap());
+                    self.update_accel(acc, &node.com.clone().unwrap())
                 } else {
                     for child in reg_vec.iter() {
                         acc = self.update_accel(acc, &child.com.clone().unwrap());
                     }
+                    acc
                 }
-                acc
             }
         }
     }
