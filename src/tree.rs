@@ -110,7 +110,9 @@ impl Region {
         // position coordinate
         for (qi, pi) in self.coord_vec.iter().zip(pos_vec) {
             // TODO: make sure nothing funny happens if it happens to
-            // be directly on the boundary...
+            // be directly on the boundary... I think this is handeled
+            // because we'll pop a mass as soon as it passes for one
+            // of the regions, but let's double-check.
             if (qi-pi).abs() > self.half_length {
                 return false
             }
@@ -121,13 +123,10 @@ impl Region {
     fn update(&mut self) -> i32 {
         match self.reg_vec {
             None => {
-                // If the mass has been flagged for removal
                 if self.remove {
                     self.com = None;
                     match self.add_bucket {
-                        // If our node is totally empty, prune it
                         None => 0,
-                        // else ingest the queued masses
                         Some(ref mut bucket) => {
                             if bucket.len() == 1 {
                                 self.com = Some(bucket[0].clone());
@@ -147,8 +146,6 @@ impl Region {
                     }
                 }
             },
-
-            // Done with the None case, now we move to the some case, @Raxod502
 
             Some(ref _reg_vec) => {
                 self.com = None;
