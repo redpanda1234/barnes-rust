@@ -1,6 +1,6 @@
 mod tree;
 
-pub use tree::{Coord, Region};
+pub use tree::{Body, Region};
 
 // fn populate_mult(n: i8, mult: f64) -> Vec<Vec<f64>> {
 //     if n <= 0 {

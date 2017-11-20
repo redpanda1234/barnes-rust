@@ -100,19 +100,19 @@ impl Region {
     // contains takes some body, and then compares each of the i
     // coordinates in its position vector to determine whether it's
     // contained in the calling region or not.
-    fn contains(&self, point: &Body) -> bool {
 
-        // Have to clone the position vector because zip consumes it.
-        // Surely there's a better way?
-        let pos_vec = point.pos_vec.clone();
+    fn contains(&self, point: &Body) -> bool {
 
         // Iterate through all pairs of the i components of our
         // position coordinate
-        for (qi, pi) in self.coord_vec.iter().zip(pos_vec) {
+
+        for (qi, pi) in self.coord_vec.iter().zip(&point.pos_vec) {
+
             // TODO: make sure nothing funny happens if it happens to
             // be directly on the boundary... I think this is handeled
             // because we'll pop a mass as soon as it passes for one
             // of the regions, but let's double-check.
+
             if (qi-pi).abs() > self.half_length {
                 return false
             }
