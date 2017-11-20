@@ -62,7 +62,14 @@ static MULTIPLIERS: [[f64; 2]; 4] = [
 // should _always_ change after a timestep.
 
 // add_bucket is an optional queue for pushing masses into the region.
-// The way our code currently works
+// The way our code currently works, when a mass enters some region,
+// we push it into an add-queue for the region. Then, our region
+// determines whether or not it needs to split into sub-regions, and
+// if so, it splits and sequentially pushes the masses in its
+// add-queue into the sub-queues for its children. In the end, the
+// only region that'll actually do any work incorporating the mass
+// will be the lowest-level sub-region. We call this model "corporate
+// delegation."
 */
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
