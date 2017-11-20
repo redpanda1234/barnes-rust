@@ -10,13 +10,13 @@ static mut NUM_THREADS: i64 = 20;
 // Coord later on in our program, without writing the method
 // ourselves.
 
-// TODO: implement a method for element-wise addition on coord
+// TODO: implement a method for element-wise addition on Body
 
-// Coord is going to end up being our class to represent masses. Each
+// Body is going to end up being our class to represent masses. Each
 // one will have a float vector to describe position, then some mass
 // value assigned to it.
 #[derive(Clone)]
-pub struct Coord {
+pub struct Body {
     pub pos_vec: Vec<f64>,
     mass: f64,
 }
@@ -70,67 +70,56 @@ static MULTIPLIERS: [[f64; 2]; 4] = [
 // only region that'll actually do any work incorporating the mass
 // will be the lowest-level sub-region. We call this model "corporate
 // delegation."
+
+// Finally, com is an optional Bodyinate that contains a position and
+// a mass (center of mass of our region).
+
+// ******** TODO / TOFIX ********
+// + calculate distance metric in parent node
+// + store at most one mass in the
+// + create better implementations for generic-dimensional spaces
+// + implement dropping of dead branches
+// + collisions
+//   - really really close bodies merge, but add a bonding energy
+//     term to maintain conservation of energy
+
 */
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
     pub remove: bool, // FIXME: remove?
-    pub add_bucket: Option<Vec<Coord>>,
-    pub com: Option<Coord>,
+    pub add_bucket: Option<Vec<Body>>,
+    pub com: Option<Body>,
 }
 
 
+// Let's implement methods on REgion!
 impl Region {
 
-    // TODO: calculate distance metric in parent node
-    // store at most one mass in the
+    // contains takes some body, and then compares each of the i
+    // coordinates in its position vector to determine whether it's
+    // contained in the calling region or not.
+    fn contains(&self, point: &Body) -> bool {
 
-    // possible TODO: implement in 4-D and project down
-
-    // contains takes a reference to the self struct and a point
-    // struct, then determines whether point is contained within
-    // the bounds of region.
-
-    // TODO: implement dropping of dead branches
-
-    // TODO: collisions
-
-    // Also: really really close bodies merge, but add the bonding
-    // energy term
-
-    fn contains(&self, point: &Coord) -> bool {
+        // Have to clone the position vector because zip consumes it.
+        // Surely there's a better way?
         let pos_vec = point.pos_vec.clone();
+
+        // Iterate through all pairs of the i components of our
+        // position coordinate
         for (qi, pi) in self.coord_vec.iter().zip(pos_vec) {
+            // TODO: make sure nothing funny happens if it happens to
+            // be directly on the boundary...
             if (qi-pi).abs() > self.half_length {
                 return false
             }
         }
-        true
+        true // implicit "return true" if it doesn't fail any checks
     }
 
     fn update(&mut self) -> i32 {
         match self.reg_vec {
-            // TODO: if remove is true for all children,
-            // Some very labyrinthine control flow here. Hopefully
-            // it's well-documented at the very least.
-
-            // If the region vector is None, then we have no current
-            // children subtree, and we need to decide how best to
-            // update it. There are a few options.
-
-            // 1. The mass that formerly occupied this box has moved
-            // out of it. If so, we then need to decide whether to
-            //
-            // (a) prune this node
-            // (b) only modify this node (and no subtrees)
-            // (c) draw in subtrees for this node
-
-            // These cases are handled by the pattern block below.
-
-            // TODO: refactor this dumbass method by making a separate
-            // method to handle the addlist (verbosity sucks)
-
             None => {
                 // If the mass has been flagged for removal
                 if self.remove {
