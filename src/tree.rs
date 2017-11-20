@@ -1,30 +1,75 @@
 // use std::thread;       // For fearless concurrency
 
 // Static -> valid globally throughout the lifetime of the program
-// mut allows us to modify the value contained in the static
-static mut NUM_THREADS: i64 = 20; // TODO: intelligent thread limit
+// mut allows us to modify the value contained in the static.
+// TODO: implement a more intelligent thread limit thing.
+static mut NUM_THREADS: i64 = 20;
 
+// derive(Clone) tells rust to try and implement the clone trait on
+// our Coord automatically. This allows us to clone the data inside of
+// Coord later on in our program, without writing the method
+// ourselves.
+
+// TODO: implement a method for element-wise addition on coord
+
+// Coord is going to end up being our class to represent masses. Each
+// one will have a float vector to describe position, then some mass
+// value assigned to it.
 #[derive(Clone)]
 pub struct Coord {
     pub pos_vec: Vec<f64>,
     mass: f64,
-
-    // TODO: implement a method for element-wise addition on coord
 }
 
-static MULTIPLIERS: [[f64; 2]; 4] = [[-1.0,-1.0], [-1.0,1.0], [1.0,-1.0], [1.0,1.0]];
+/*
+// MULTIPLIERS is a static array that we'll use later to quickly
+// determine the centers of subregions when we recurse. If we multiply
+// each of the sub-arrays in MULTIPLIERS by the sidelength of our
+// region, then _add_ those to our position vector for our starting
+// region, it'll get us the center of our new region. We'd like for
+// there to be a more intelligent way of doing this, but if you
+// examine the commit history, you'll see that we couldn't get it to
+// work with auto-generated arrays.
+*/
+static MULTIPLIERS: [[f64; 2]; 4] = [
+    [-1.0, -1.0],
+    [-1.0, 1.0],
+    [1.0, -1.0],
+    [1.0, 1.0]
+];
 
+/*
+// This is our top-level class that we'll use to represent regions in
+// our recursive tree. We made the mistake of defining everything with
+// option enums --- FIXME: refactor to make this not be the case.
+// reg_vec is an optional vector of child regions --- if we're at a
+// leaf in the tree, then this will be None, else we'll have a Some
+// containing a vector of references to child regions.
+
+// coord_vec is going to be a vector of floats describing the position
+// of the center of our region (which is an n-dimensional box).
+
+// half_length, as the name indicates, is going to be a float whose
+// value is half of the length of a side of our box. We chose to use
+// half lengths because it makes determining whether a region contains
+// some mass faster.
+
+// remove is a bool flag that will tell the update function whether or
+// not the center-of-mass from the previous timestep in our tree is
+// invalid or not. For instance, if any mass moves in the subtree, the
+// COM is no longer valid. FIXME: I'm questioning whether this flag
+// should even be a part of our struct or not. It seems that the com
+// should _always_ change after a timestep.
+
+// add_bucket is an optional queue for pushing masses into the region.
+// The way our code currently works
+*/
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
-
-    // The vector of coordinates defining the position of the minimum
-    // corners of our n-box
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
-
-    pub remove: bool,
-    pub add_bucket: Option<Vec<Coord>>, // masses to inject
-
+    pub remove: bool, // FIXME: remove?
+    pub add_bucket: Option<Vec<Coord>>,
     pub com: Option<Coord>,
 }
 
@@ -109,11 +154,11 @@ impl Region {
 
             // Done with the None case, now we move to the some case, @Raxod502
 
-            Some(ref reg_vec) => {
+            Some(ref _reg_vec) => {
                 self.com = None;
                 match self.add_bucket {
                     None => 1,
-                    Some(ref bucket) => {
+                    Some(ref _bucket) => {
                         let result = self.recurse(false);
                         if result == 0 {
                             self.reg_vec = None
