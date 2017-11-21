@@ -78,9 +78,10 @@ impl Body {
 
     fn update_vel(&mut self) {
         for (vi, ai) in
-        self.vel_vec.clone().iter().zip(
-            self.get_total_acc(&mut *TREE_POINTER.lock().unwrap())
+        self.vel_vec.clone().iter_mut().zip(
+            self.get_total_acc(&mut TREE_POINTER.lock().unwrap().clone())
         ) {
+
             *vi += ai*DT
         }
     }
@@ -89,7 +90,6 @@ impl Body {
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec ) {
             *pi += vi*DT
         }
-
     }
 }
 
@@ -98,10 +98,14 @@ impl Region {
         match self.reg_vec {
             None => {
                 self.com.unwrap().update_pos();
+                //self.com = Some(self.com);
+                // let mut com = self.com.clone().unwrap();
+                // com.update_pos();
+                // self.com = Some(com);
             },
             // This assumes we've pruned dead children, which we
             // haven't quite done yet.
-            Some(ref reg_vec) => {
+            Some(ref _reg_vec) => {
                 let mut num = vec![0.0; DIMS as usize];
                 let mut den = 0.0;
 

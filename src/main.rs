@@ -1,5 +1,5 @@
-#[macro_use]
-extern crate itertools;
+// #[macro_use]
+// extern crate itertools;
 
 #[macro_use]
 extern crate lazy_static;
@@ -16,32 +16,23 @@ pub use tree::*;
 pub const DIMS: usize = 2;
 pub static THETA: f64 = 0.5;
 pub static DT: f64 = 0.01;
-pub static NUMSTEPS: i8 = 10000;
+pub static NUMSTEPS: i16 = 10000;
 
 lazy_static! {
-    pub static ref TREE_POINTER: Mutex<Box<Region>> =
-        Mutex::new(Box::new(
-            Region{
-                reg_vec: None,
-                coord_vec: vec![0.0; DIMS],
-                half_length: 1.0,
-                remove: false, // FIXME: remove?
-                add_bucket: None,
-                com: None,
-            }));
+    pub static ref TREE_POINTER: Mutex<Region> = Mutex::new(
+        Region{
+            reg_vec: None,
+            coord_vec: vec![0.0; DIMS],
+            half_length: 1.0,
+            remove: false, // FIXME: remove?
+            add_bucket: None,
+            com: None,
+        }
+    );
 }
 
-// pub static mut TREE_POINTER: &tree::Region =
-//     &mut Region{
-//         reg_vec: None,
-//         coord_vec: vec![0.0; DIMS],
-//         half_length: 1.0,
-//         remove: false, // FIXME: remove?
-//         add_bucket: None,
-//         com: None,
-//     };
-
 fn main() {
+    // TREE_POINTER.lock().unwrap().clone();
     // for step in 0..NUMSTEPS {
 
     // }
