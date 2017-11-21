@@ -6,3 +6,4 @@ authors = ["redpanda1234 <fkobayashi@hmc.edu>"]
 [dependencies]
 num_cpus = "1.0"
 itertools = "0.7.1"
+lazy_static = "0.2"

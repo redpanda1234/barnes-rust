@@ -87,6 +87,8 @@ static MULTIPLIERS: [[f64; 2]; 4] = [
 //   - really really close bodies merge, but add a bonding energy
 //     term to maintain conservation of energy
 // + make com no longer an option enum
+// + reimplement contains method by constructing indices using our
+//   binary string construction method on the global multiplier array.
  */
 #[derive(Clone)]
 pub struct Region {
@@ -219,6 +221,4 @@ impl Region {
         }
         return remove;
     }
-
-
 }

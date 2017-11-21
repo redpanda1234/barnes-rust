@@ -1,9 +1,5 @@
 pub use super::tree::*;
-pub use super::DIMS;
-pub use super::TREE_POINTER;
-
-static THETA: f64 = 0.5;
-static DT: f64 = 0.01;
+pub use super::{DIMS, TREE_POINTER, DT, THETA};
 
 impl Body {
 
@@ -40,7 +36,7 @@ impl Body {
     }
 
     fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
-        let rel = self.vec_rel(mass);
+        let mut rel = self.vec_rel(mass);
         let sq_mag = self.sq_magnitude(&rel);
         let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
         let r = sq_mag.sqrt();
@@ -82,8 +78,8 @@ impl Body {
 
     fn update_vel(&mut self) {
         for (vi, ai) in
-        self.vel_vec.iter_mut().zip(
-            self.get_total_acc(TREE_POINTER)
+        self.vel_vec.clone().iter().zip(
+            self.get_total_acc(&mut *TREE_POINTER.lock().unwrap())
         ) {
             *vi += ai*DT
         }
