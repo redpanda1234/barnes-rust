@@ -6,6 +6,7 @@ static THETA: f64 = 0.5;
 static DT: f64 = 0.01;
 
 impl Body {
+
     fn squared_dist_to(&self, mass: &Body) -> f64 {
         let mut r_squared: f64 = 0.0;
         for (qi, pi) in self.pos_vec.iter().zip(&mass.pos_vec) {
@@ -14,32 +15,42 @@ impl Body {
         r_squared
     }
 
+    fn vec_rel(&self, mass: &Body) -> Vec<f64> {
+        let mut vec: Vec<f64> = vec![0.0; DIMS];
+        for i in 0..DIMS {
+            vec[i] = mass.pos_vec[i] - self.pos_vec[i];
+        }
+        vec
+    }
+
+    fn sq_magnitude(&self, vec: &Vec<f64>) -> f64 {
+        let mut r_squared: f64 = 0.0;
+        for i in 0..DIMS {
+            r_squared += vec[i].powi(2)
+        }
+        r_squared
+    }
 
     fn is_far(&self, node: &mut Region) -> bool {
         // this makes me think we should store full-length instead of
-        // half-length
-        match node.com {
-            None => {node.add_com(); self.is_far(node)},
-            Some(ref com) => {
-                (2.0 * node.half_length /
-                    (self.squared_dist_to(&node.com.clone().unwrap()))
-                    <= THETA) as bool
-            },
-        }
+        // half-length FIXME store both
+        (2.0 * node.half_length /
+         (self.squared_dist_to(&node.com.clone().unwrap())) <= THETA)
+            as bool
     }
 
     fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
-        let r_squared = self.squared_dist_to(mass);
-        let r = r_squared.sqrt();
+        let rel = self.vec_rel(mass);
+        let sq_mag = self.sq_magnitude(&rel);
+        let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
+        let r = sq_mag.sqrt();
 
-        let acc = mass.mass * (6.674 / (1_000_000_000_00.0))/r_squared;
-        let mut vec = Vec::new();
-
-        for i in 0..self.pos_vec.len() {
+        for i in 0..DIMS {
             // TODO: make this work for generic number of dimensions
-            vec.push(self.pos_vec[i] * acc / r) // pos_vec[i]/r is trig
+            // vec.push(self.pos_vec[i] * acc / r) // pos_vec[i]/r is trig
+            rel[i] *= acc/r;
         }
-        vec
+        rel
     }
 
     fn update_accel(&self, mut acc: Vec<f64>, mass: &Body) -> Vec<f64> {
@@ -59,7 +70,9 @@ impl Body {
                     self.update_accel(acc, &node.com.clone().unwrap())
                 } else {
                     for child in reg_vec.iter() {
-                        acc = self.update_accel(acc, &child.com.clone().unwrap());
+                        acc = self.update_accel(
+                            acc, &child.com.clone().unwrap()
+                        );
                     }
                     acc
                 }
@@ -75,12 +88,22 @@ impl Body {
             *vi += ai*DT
         }
     }
+
+    pub fn update_pos(&mut self) {
+        for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec ) {
+            *pi += vi*DT
+        }
+
+    }
 }
 
 impl Region {
     fn calc_com(&self) -> Body {
         match self.reg_vec {
-            None => self.com.clone().unwrap(),
+            None => {
+                self.com.unwrap().update_pos();
+                self.com
+            },
             // This assumes we've pruned dead children, which we
             // haven't quite done yet.
             Some(ref reg_vec) => {

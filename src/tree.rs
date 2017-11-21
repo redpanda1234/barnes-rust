@@ -12,6 +12,9 @@ static mut NUM_THREADS: i64 = 20;
 
 // TODO: implement a method for element-wise addition on Body
 
+// TODO: implement some form of thread queue flagging at the end of
+// each velocity update run.
+
 // Body is going to end up being our class to represent masses. Each
 // one will have a float vector to describe position, then some mass
 // value assigned to it.
@@ -83,7 +86,7 @@ static MULTIPLIERS: [[f64; 2]; 4] = [
 // + collisions
 //   - really really close bodies merge, but add a bonding energy
 //     term to maintain conservation of energy
-
+// + make com no longer an option enum
  */
 #[derive(Clone)]
 pub struct Region {
@@ -193,9 +196,7 @@ impl Region {
                 }
             )
         }
-
         self.reg_vec = Some(reg_vec);
-
     }
 
     fn recurse(&mut self, split: bool) -> i32 {
@@ -218,5 +219,6 @@ impl Region {
         }
         return remove;
     }
+
 
 }

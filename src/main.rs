@@ -8,6 +8,7 @@ pub use tree::*;
 
 // TODO: use this everywhere we check dimensions
 pub const DIMS: usize = 2;
+
 pub static mut TREE_POINTER: &tree::Region =
     &mut Region{
         reg_vec: None,
