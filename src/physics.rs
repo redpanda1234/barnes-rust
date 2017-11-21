@@ -98,11 +98,10 @@ impl Body {
 }
 
 impl Region {
-    fn calc_com(&self) -> Body {
+    fn update_com(&mut self) {
         match self.reg_vec {
             None => {
                 self.com.unwrap().update_pos();
-                self.com
             },
             // This assumes we've pruned dead children, which we
             // haven't quite done yet.
@@ -110,8 +109,9 @@ impl Region {
                 let mut num = vec![0.0; DIMS as usize];
                 let mut den = 0.0;
 
-                for child in self.reg_vec.clone().unwrap().iter() {
-                    den += child.calc_com().mass;
+                for child in self.reg_vec.unwrap().iter_mut() {
+                    child.update_com();
+                    den += child.com.unwrap().mass;
                     let com = child.com.clone().unwrap();
                     // vec = self.pos_vec.clone()
                     for i in 0..DIMS {
@@ -121,13 +121,9 @@ impl Region {
                 for i in 0..DIMS {
                     num[i] /= den
                 }
-                Body {pos_vec: num, vel_vec: vec![0.0; DIMS as usize],
-                    mass: den}
+                self.com = Some(Body {pos_vec: num, vel_vec: vec![0.0;
+                    DIMS as usize], mass: den})
             }
         }
-    }
-
-    fn add_com(&mut self) {
-        self.com = Some(self.calc_com());
     }
 }
