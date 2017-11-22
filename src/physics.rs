@@ -87,7 +87,7 @@ impl Body {
     }
 
     pub fn update_pos(&mut self) {
-        for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec ) {
+        for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
             *pi += vi*DT
         }
     }
@@ -97,7 +97,9 @@ impl Region {
     fn update_com(&mut self) {
         match self.reg_vec {
             None => {
-                self.com.unwrap().update_pos();
+                let mut com = self.com.clone().unwrap();
+                com.update_pos();
+                self.com = Some(com);
                 //self.com = Some(self.com);
                 // let mut com = self.com.clone().unwrap();
                 // com.update_pos();
@@ -105,14 +107,15 @@ impl Region {
             },
             // This assumes we've pruned dead children, which we
             // haven't quite done yet.
-            Some(ref _reg_vec) => {
+            Some(ref mut reg_vec) => {
                 let mut num = vec![0.0; DIMS as usize];
                 let mut den = 0.0;
 
-                for child in self.reg_vec.unwrap().iter_mut() {
+                for child in reg_vec.iter_mut() {
                     child.update_com();
-                    den += child.com.unwrap().mass;
-                    let com = child.com.clone().unwrap();
+                    let mut child1 = child.clone();
+                    let com = child1.com.unwrap().clone();
+                    den += com.mass.clone();
                     // vec = self.pos_vec.clone()
                     for i in 0..DIMS {
                         num[i] += com.pos_vec[i] * com.mass;
