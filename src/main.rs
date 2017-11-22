@@ -25,7 +25,19 @@ lazy_static! {
             coord_vec: vec![0.0; DIMS],
             half_length: 1.0,
             remove: false, // FIXME: remove?
-            add_bucket: None,
+            add_bucket: Some(vec![
+                Body {
+                    pos_vec: vec![-1.0, 0.0, 0.0],
+                    vel_vec: vec![0.0, 0.0, 0.0],
+                    mass: 1.0
+                },
+                Body {
+                    pos_vec: vec![1.0, 0.0, 0.0],
+                    vel_vec: vec![0.0, 0.0, 0.0],
+                    mass: 1.0
+                },
+            ]),
+            // add_bucket: None,
             com: None,
         }
     );
