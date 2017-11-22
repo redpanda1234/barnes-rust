@@ -32,8 +32,8 @@ lazy_static! {
 }
 
 fn main() {
-    // TREE_POINTER.lock().unwrap().clone();
-    // for step in 0..NUMSTEPS {
-
-    // }
+    for step in 0..NUMSTEPS {
+        let printme = TREE_POINTER.lock().unwrap().update();
+        println!{"printing printme {}", printme}
+    }
 }

@@ -3,7 +3,7 @@ pub use super::{DIMS, TREE_POINTER, DT, THETA};
 
 impl Body {
 
-    fn squared_dist_to(&self, mass: &Body) -> f64 {
+    pub fn squared_dist_to(&self, mass: &Body) -> f64 {
         let mut r_squared: f64 = 0.0;
         for (qi, pi) in self.pos_vec.iter().zip(&mass.pos_vec) {
             r_squared += (qi - pi).powi(2);
@@ -11,7 +11,7 @@ impl Body {
         r_squared
     }
 
-    fn vec_rel(&self, mass: &Body) -> Vec<f64> {
+    pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
         let mut vec: Vec<f64> = vec![0.0; DIMS];
         for i in 0..DIMS {
             vec[i] = mass.pos_vec[i] - self.pos_vec[i];
@@ -19,7 +19,7 @@ impl Body {
         vec
     }
 
-    fn sq_magnitude(&self, vec: &Vec<f64>) -> f64 {
+    pub fn sq_magnitude(&self, vec: &Vec<f64>) -> f64 {
         let mut r_squared: f64 = 0.0;
         for i in 0..DIMS {
             r_squared += vec[i].powi(2)
@@ -27,7 +27,7 @@ impl Body {
         r_squared
     }
 
-    fn is_far(&self, node: &mut Region) -> bool {
+    pub fn is_far(&self, node: &mut Region) -> bool {
         // this makes me think we should store full-length instead of
         // half-length FIXME store both
         (2.0 * node.half_length /
@@ -35,7 +35,7 @@ impl Body {
             as bool
     }
 
-    fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
+    pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
         let mut rel = self.vec_rel(mass);
         let sq_mag = self.sq_magnitude(&rel);
         let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
@@ -49,7 +49,7 @@ impl Body {
         rel
     }
 
-    fn update_accel(&self, mut acc: Vec<f64>, mass: &Body) -> Vec<f64> {
+    pub fn update_accel(&self, mut acc: Vec<f64>, mass: &Body) -> Vec<f64> {
         for (mut acci, ai) in acc.iter_mut().zip(
             self.get_classical_accel(mass)) {
             *acci += ai;
@@ -57,7 +57,7 @@ impl Body {
         acc
     }
 
-    fn get_total_acc(&mut self, node: &mut Region) -> Vec<f64> {
+    pub fn get_total_acc(&mut self, node: &mut Region) -> Vec<f64> {
         let mut acc = vec![0.0; DIMS];
         match node.reg_vec.clone() {
             None => self.update_accel(acc, &node.com.clone().unwrap()),
@@ -76,7 +76,7 @@ impl Body {
         }
     }
 
-    fn update_vel(&mut self) {
+    pub fn update_vel(&mut self) {
         for (vi, ai) in
         self.vel_vec.clone().iter_mut().zip(
             self.get_total_acc(&mut TREE_POINTER.lock().unwrap().clone())
@@ -94,7 +94,7 @@ impl Body {
 }
 
 impl Region {
-    fn update_com(&mut self) {
+    pub fn update_com(&mut self) {
         match self.reg_vec {
             None => {
                 let mut com = self.com.clone().unwrap();

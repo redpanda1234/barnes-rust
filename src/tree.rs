@@ -127,7 +127,7 @@ impl Region {
         true // implicit "return true" if it doesn't fail any checks
     }
 
-    fn update(&mut self) -> i32 {
+    pub fn update(&mut self) -> i32 {
         match self.reg_vec.clone() {
             None => {
                 if self.remove {
