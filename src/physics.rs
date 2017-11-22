@@ -100,10 +100,6 @@ impl Region {
                 let mut com = self.com.clone().unwrap();
                 com.update_pos();
                 self.com = Some(com);
-                //self.com = Some(self.com);
-                // let mut com = self.com.clone().unwrap();
-                // com.update_pos();
-                // self.com = Some(com);
             },
             // This assumes we've pruned dead children, which we
             // haven't quite done yet.
@@ -113,8 +109,7 @@ impl Region {
 
                 for child in reg_vec.iter_mut() {
                     child.update_com();
-                    let mut child1 = child.clone();
-                    let com = child1.com.unwrap().clone();
+                    let com = child.clone().com.unwrap();
                     den += com.mass.clone();
                     // vec = self.pos_vec.clone()
                     for i in 0..DIMS {
