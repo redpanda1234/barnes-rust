@@ -202,10 +202,10 @@ impl Region {
     }
 
     fn recurse(&mut self, split: bool) -> i32 {
-        if split {self.split();}
+        if split {self.split(); self.update();}
         else {
-            'outer: for mass in self.add_bucket.clone().unwrap() {
-                'inner: for region in self.reg_vec.clone().unwrap() {
+            'outer: for mass in self.add_bucket.unwrap().iter_mut() {
+                'inner: for region in self.reg_vec.unwrap().iter_mut() {
                     if region.contains(&mass) {
                         region.add_bucket.map(|mut v| v.push(mass));
                         break 'inner;
