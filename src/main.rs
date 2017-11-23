@@ -27,7 +27,7 @@ pub use tree::*;
 pub use physics::*;
 
 fn main() {
-    for step in 0..NUMSTEPS {
+    for _step in 0..NUMSTEPS {
         TREE_POINTER.lock().unwrap().update();
         let printme = &TREE_POINTER.lock().unwrap().clone().reg_vec;
         println!{"printing printme {:?}", printme};

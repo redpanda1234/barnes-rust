@@ -27,6 +27,9 @@ impl Body {
         r_squared
     }
 
+    // vec_rel gets the displacement vector between the calling mass
+    // and some other passed Body.
+
     pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
         let mut vec: Vec<f64> = vec![0.0; DIMS];
         for i in 0..DIMS {
@@ -34,6 +37,14 @@ impl Body {
         }
         vec
     }
+
+    // sq_magnitude should really probably just be its own function,
+    // there's really no need to define it as a method here. TODO: fix
+    // this, by moving it to a separate module? It takes as input some
+    // vector, and finds the square of its magnitude. This is helpful
+    // to define separately from squared_dist_to, even though they're
+    // functionally equivalent (but this is slower), because we don't
+    // always need to find the displacement vector.
 
     pub fn sq_magnitude(&self, vec: &Vec<f64>) -> f64 {
         let mut r_squared: f64 = 0.0;
@@ -205,5 +216,36 @@ mod tests {
 
         assert_eq!(m1.vec_rel(&m2), vec![-1.0, 0.0, 0.0]);
         assert_eq!(m3.vec_rel(&m4), vec![3.0, 4.0, 0.0]);
+    }
+
+    #[test]
+    fn test_sq_mag() {
+        let m1 = Body {
+            pos_vec: vec![1.0, 0.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        let m2 = Body {
+            pos_vec: vec![0.0, 0.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        let m3 = Body {
+            pos_vec: vec![-3.0, 0.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        let m4 = Body {
+            pos_vec: vec![0.0, 4.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+        println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
+
+        assert_eq!(m1.sq_magnitude(&m1.vec_rel(&m2)), 1.0);
+        assert_eq!(m3.sq_magnitude(&m3.vec_rel(&m4)), 25.0);
     }
 }
