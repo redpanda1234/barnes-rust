@@ -1,7 +1,23 @@
+// The physics module is really just a collection of methods on
+// structs defined in tree that we've clustered here because they all
+// have to do with the actual physics part of the simulation. So we
+// have to move up one level (super), and import tree::*
 pub use super::tree::*;
+
+// Fetch global statics from the main function
 pub use super::{DIMS, TREE_POINTER, DT, THETA};
 
 impl Body {
+
+    // We need r^2 in Newton's law of gravity (TODO: apply small GR
+    // perturbation), and it's faster to have separately defined
+    // methods for this and finding the magnitude of the displacement
+    // vector between the two bodies, because of the way we're
+    // constructing net accelerations.
+
+    // the squared_dist_to method takes a reference to a Body struct,
+    // and iterates through pairs of coordinates in the calling Body's
+    // position and the passed mass's position to return r^2.
 
     pub fn squared_dist_to(&self, mass: &Body) -> f64 {
         let mut r_squared: f64 = 0.0;
@@ -144,6 +160,7 @@ mod tests {
         };
 
         let m3 = Body {
+
             pos_vec: vec![-3.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
             mass: 0.0

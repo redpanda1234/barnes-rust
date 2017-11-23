@@ -1,6 +1,6 @@
 // use std::thread;       // For fearless concurrency
 
-use std::fmt;
+// use std::fmt;
 
 // Static -> valid globally throughout the lifetime of the program
 // mut allows us to modify the value contained in the static.
@@ -19,6 +19,7 @@ use std::fmt;
 // Body is going to end up being our class to represent masses. Each
 // one will have a float vector to describe position, then some mass
 // value assigned to it.
+
 #[derive(Clone, Debug)]
 pub struct Body {
     pub pos_vec: Vec<f64>,
@@ -35,13 +36,16 @@ pub struct Body {
 // there to be a more intelligent way of doing this, but if you
 // examine the commit history, you'll see that we couldn't get it to
 // work with auto-generated arrays.
-*/
-static MULTIPLIERS: [[f64; 2]; 4] = [
-    [-1.0, -1.0],
-    [-1.0, 1.0],
-    [1.0, -1.0],
-    [1.0, 1.0]
-];
+
+// TOFIX: auto-generate this with lazy-static!
+ */
+
+// static MULTIPLIERS: [[f64; 2]; 4] = [
+//     [-1.0, -1.0],
+//     [-1.0, 1.0],
+//     [1.0, -1.0],
+//     [1.0, 1.0]
+// ];
 
 /*
 // This is our top-level class that we'll use to represent regions in
@@ -91,6 +95,7 @@ static MULTIPLIERS: [[f64; 2]; 4] = [
 // + reimplement contains method by constructing indices using our
 //   binary string construction method on the global multiplier array.
  */
+
 #[derive(Clone, Debug)]
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
