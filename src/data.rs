@@ -4,11 +4,10 @@ use super::*;
 
 // TODO: use this everywhere we check dimensions
 pub const DIMS: usize = 3;
-pub static THETA: f64 = 0.5;
-pub static DT: f64 = 0.01;
+pub const THETA: f64 = 0.5;
+pub const DT: f64 = 0.01;
+pub const MAX_LEN: f64 = 100.0;
 pub static mut NUM_THREADS: i64 = 20;
-
-static SEED: &[i8] = &[1, 2, 3, 4];
 
 // TODO: make our organization here more intelligent. Should probably
 // offload most statics  to their own dedicated module, along with
@@ -33,31 +32,49 @@ pub mod gen_mult {
 }
 
 pub mod generate {
+    use data::rand::*;
+    use data::{DIMS};
+    use tree::*;
 
-    static mut RNG: StdRng = SeedableRng::from_seed(SEED);
+    // Returns the initial RNG-boi we'll be using to generate our
+    // other RNG instances
+    fn get_seeder_rng() -> StdRng {
+        let seed: &[_] = &[1, 2, 3, 4];
+        SeedableRng::from_seed(seed)
+    }
 
     // When testing, we'll want to run the same simulations
     // repeatedly, to make sure we're actually modifying how the
-    // system behaves. get_seed is used to ensure that we'll be
+    // system behaves. get_rng is used to ensure that we'll be
     // seeding all random elements of the simulation with the same
     // pseudorandom conditions each time.
 
     // maybe this isn't necessary, but I wanted each of the random
     // generators to be using different rng iterators from each other?
+    // FIXME: determine wtf to do. Probably need this method for when
+    // we multithread and can't  have multiple threads calling the
+    // same rng object at the same time.
 
-    pub fn get_seed() -> f64 {
-        RNG.gen::<f64>()
-    }
+    // seed should be generated with get_seeder_rng(). Currently not
+    // sure how to make this work, FIXME
 
-    // Using a pseudo-randomly-generated scalar r, this function uses
-    // n-d spherical coordinates to transform back into a r_vec in the
+    // fn get_rng<T>(seed: Seed) -> StdRng {
+    //     SeedableRng::from_seed(seed)
+    // }
+
+    // Using a pseudo-randomly-generated scalar value for the
+    // magnitude of our output vector, this function uses n-d
+    // spherical coordinates to transform back into a r_vec in the
     // standard basis.
 
-    // Here, T is a generic type representing arbitrary rng generators
-    // for r and theta. rng is the seeded rng generator we'll be using
-    // to get the values for stuff. The additional T1 is because the
-    // last angle needs to be generated from a different range, and we
-    // don't want to write something that matches on types of T.
+    // Here, T is a generic type representing an arbitrary rng
+    // generator or theta. We made this generic so that we can look at
+    // different distributions of thetas, e.g. gamma, normal, etc. rng
+    // is the seeded rng generator we'll be using to generate our
+    // values. The additional T1 is because the last angle needs to be
+    // generated over a different range, and we don't want to write
+    // something that matches on types of T and construct a new
+    // generator just for a single value.
 
     // T should range from 0 to pi, T1 from 0 to 2pi.
 
@@ -68,15 +85,14 @@ pub mod generate {
     // for an explanation on what this function is _supposed_ to be
     // doing
 
-
-    pub fn nd_spherical_r<T, T1>(
-        r: f64,
+    pub fn nd_vec_from_mag<T>(
+        mag: f64,
         t_generator: T,
-        t1_generator: T1,
+        final_theta: f64,
         rng: StdRng
     ) -> Vec<f64> {
 
-        let mut r_vec = vec![0.0, DIMS];
+        let mut vec = vec![0.0; DIMS];
 
         // The final case is special, so we don't iterate all the way
         // through DIMS.
@@ -88,8 +104,8 @@ pub mod generate {
 
         for i in 0..(DIMS-2) {
 
-            let theta = T.ind_sample(&mut rng);
-            r_vec[i] = r*(theta.cos())*product;
+            let theta = t_generator.ind_sample(&mut rng);
+            vec[i] = mag*(theta.cos())*product;
 
             // all future calculations will involve product of
             // preceding theta.sin() values, so we increment it here
@@ -99,53 +115,41 @@ pub mod generate {
         }
 
         // The final theta value is special, as it ranges from 0 to
-        // 2pi. So we treat it (and the corresponding r coordinates
-        // whose definitions involve it) in special cases outside of
-        // our loop.
-
-        let theta = T1.ind_sample(&mut rng);
-        r_vec[DIMS-2] = r * theta.cos() * product;
-
+        // 2pi. So we treat it the r coordinates whose definitions
+        // involve it in special cases outside of our loop. Note that
         // the final r_vec entry involves just .sin()'s, no .cos()'s.
-        r_vec[DIMS-1] = r * theta.sin() * product;
 
-        // return r_vec
-        r_vec
+        vec[DIMS-2] = mag * final_theta.cos() * product;
+        vec[DIMS-1] = mag * final_theta.sin() * product;
+
+        // return vec
+        vec
     }
 
-    // a generic body generator that takes generic random generators
-    // of types R, M, and V.
-    pub fn gen_body<R, V, M, T>(
-        r_generator: R,
-        v_generator: V,
-        m_generator: M,
-        t_generator: T
-    ) -> Body {
-        let mut rng: StdRng = SeedableRng::from_seed(get_seed());
+    // gb is for gen_body
+    // a generic body generator that takes a generic random number
+    // generator for obtaining thetas.
 
+    pub fn gb_from_mags<T>(
+        t_f: f64,
+        p_mag: f64,
+        v_mag: f64,
+        m: f64,
+        t_generator: T,
+        seeder: StdRng
+    ) -> Body {
         Body {
-            pos_vec: nd_spherical_r(r_generator, t_generator, rng)
-                vel_vec:
-            mass:
+            pos_vec: nd_vec_from_mag(p_mag, t_generator, t_f, seeder),
+            vel_vec: nd_vec_from_mag(v_mag, t_generator, t_f, seeder),
+            mass: m
         }
     }
-    // pub mod r_funcs {
 
-    //     pub fn linear_gen_r(rand_gen: Range) {
-    //         // let range = rand::Range::new(10, 10000);
-    //         // let mut rng = rand::thread_rng();
-    //         // let mut sum = 0;
-    //         // for _ in 0..1000 {
-    //         //     sum += between.ind_sample(&mut rng);
-    //         // }
-    //         // println!("{}", sum);
-    //     }
+    // gt is for gen_tree
+    pub fn gt_ranges(num_bodies: usize) -> Region {
 
-    //     fn gamma_gen_r() {
+    }
 
-    //     }
-
-    // }
 }
 
 lazy_static! {
@@ -192,6 +196,6 @@ lazy_static! {
     */
 
     pub static ref MULTIPLIERS: Mutex<Vec<Vec<f64>>> = Mutex::new(
-        gen_populate_mult(DIMS, 0.0)
+        gen_mult::populate_mult(DIMS, 0.0)
     );
 }
