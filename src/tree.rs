@@ -3,6 +3,7 @@
 // use std::fmt;
 
 use super::data::*;
+use super::physics::*;
 
 // Static -> valid globally throughout the lifetime of the program
 // mut allows us to modify the value contained in the static.
@@ -115,15 +116,20 @@ impl Region {
         true // implicit "return true" if it doesn't fail any checks
     }
 
-    // update does two jobs at once. It recursively pushes masses from add queues
+    // update does two jobs at once. It recursively pushes masses from
+    // add queues
     pub fn update(&mut self) -> i32 {
+
+        // First check whether the calling region has any child
+        // regions. This will determine how we handle our updating.
+        // Currently, we check whether
         match self.reg_vec.clone() {
             None => {
                 if self.remove {
                     self.com = None;
                     match self.add_bucket.clone() {
                         None => 0,
-                        Some(ref bucket) => {
+                        Some(ref mut bucket) => {
                             if bucket.len() == 1 {
                                 self.com = Some(bucket[0].clone());
                                 1
@@ -148,6 +154,10 @@ impl Region {
                 }
             },
 
+            // Case that our region has a defined vector of child
+            // regions. TODO: check for dead regions, and prune those.
+            // Perhaps we should make each of the entries in the
+            // vector options on Regions?
             Some(mut _reg_vec) => {
                 self.com = None;
                 match self.add_bucket.clone() {
