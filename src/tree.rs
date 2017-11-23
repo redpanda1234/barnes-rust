@@ -146,7 +146,9 @@ impl Region {
                                 None => 1,
                                 Some(_com) => {
                                     bucket.push(self.com.clone().unwrap());
-                                    self.recurse(true)
+                                    let return_me = self.recurse(true);
+                                    self.update_com();
+                                    return_me
                                 }
                             }
                         },

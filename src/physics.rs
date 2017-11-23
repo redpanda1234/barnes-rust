@@ -54,12 +54,26 @@ impl Body {
         r_squared
     }
 
+    // is_far calculates a distance metric between the calling mass
+    // (which really should only ever be the com of a leaf node in the
+    // tree) and a passed region.
+
     pub fn is_far(&self, node: &mut Region) -> bool {
         // this makes me think we should store full-length instead of
-        // half-length FIXME store both
-        (2.0 * node.half_length /
-         (self.squared_dist_to(&node.com.clone().unwrap())) <= THETA)
-            as bool
+        // half-length FIXME
+        match node.com.clone() {
+            // FIXME: make sure this doesn't allow infinite loops;
+            // i.e. that node.com will only be none if there's stuff
+            // in the region_vec or add_queue.
+            None => {node.update_com(); self.is_far(node)},
+            Some(_com) => {
+                (
+                    2.0 * node.half_length /
+                        self.squared_dist_to(&node.com.clone().unwrap())
+                )
+                    <= THETA
+            }
+        }
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
@@ -124,9 +138,14 @@ impl Region {
     pub fn update_com(&mut self) {
         match self.reg_vec {
             None => {
-                let mut com = self.com.clone().unwrap();
-                com.update_pos();
-                self.com = Some(com);
+                match self.com.clone() {
+                    None => (),
+                    Some(_com) => {
+                        let mut com = self.com.clone().unwrap();
+                        com.update_pos();
+                        self.com = Some(com);
+                    },
+                }
             },
             // This assumes we've pruned dead children, which we
             // haven't quite done yet.
