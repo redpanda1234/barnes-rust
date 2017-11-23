@@ -2,6 +2,8 @@
 
 // use std::fmt;
 
+use super::data::*;
+
 // Static -> valid globally throughout the lifetime of the program
 // mut allows us to modify the value contained in the static.
 // TODO: implement a more intelligent thread limit thing.
@@ -113,6 +115,7 @@ impl Region {
         true // implicit "return true" if it doesn't fail any checks
     }
 
+    // update does two jobs at once. It recursively pushes masses from add queues
     pub fn update(&mut self) -> i32 {
         match self.reg_vec.clone() {
             None => {
@@ -171,7 +174,7 @@ impl Region {
         let quarter_length = self.half_length * 0.5;
         // let mult = self.populate_mult(2, 0.0);
 
-        for vec in MULTIPLIERS.iter() {
+        for vec in MULTIPLIERS.lock().unwrap().clone().iter() {
             // have to define copy_pos this jenky way because we
             // defined our MULTIPLIERS as a static array
             let mut copy_pos = vec![vec[0], vec[1]];

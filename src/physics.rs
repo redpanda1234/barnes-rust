@@ -5,7 +5,7 @@
 pub use super::tree::*;
 
 // Fetch global statics from the main function
-pub use super::{DIMS, TREE_POINTER, DT, THETA};
+pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 impl Body {
 
