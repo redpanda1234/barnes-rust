@@ -28,26 +28,6 @@ pub struct Body {
 }
 
 /*
-// MULTIPLIERS is a static array that we'll use later to quickly
-// determine the centers of subregions when we recurse. If we multiply
-// each of the sub-arrays in MULTIPLIERS by the sidelength of our
-// region, then _add_ those to our position vector for our starting
-// region, it'll get us the center of our new region. We'd like for
-// there to be a more intelligent way of doing this, but if you
-// examine the commit history, you'll see that we couldn't get it to
-// work with auto-generated arrays.
-
-// TOFIX: auto-generate this with lazy-static!
- */
-
-// static MULTIPLIERS: [[f64; 2]; 4] = [
-//     [-1.0, -1.0],
-//     [-1.0, 1.0],
-//     [1.0, -1.0],
-//     [1.0, 1.0]
-// ];
-
-/*
 // This is our top-level class that we'll use to represent regions in
 // our recursive tree. We made the mistake of defining everything with
 // option enums --- FIXME: refactor to make this not be the case.

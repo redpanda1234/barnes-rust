@@ -21,6 +21,10 @@ pub static DT: f64 = 0.01;
 pub static NUMSTEPS: i16 = 10;
 pub static mut NUM_THREADS: i64 = 20;
 
+// TODO: make our organization here more intelligent. Should probably
+// offload most statics  to their own dedicated module, along with
+// static generation. Maybe data.rs?
+
 pub mod gen_mult {
     
     pub fn populate_mult(n: usize, mult: f64) -> Vec<Vec<f64>> {
@@ -41,9 +45,14 @@ pub mod gen_mult {
     }
 }
 
+lazy_static! {
 
-
-lazy_static! {    
+    // I know, I know... Making a global variable is bad enough, but
+    // _this_... I mean, why not just construct it in main, and pass a
+    // reference to all functions that need it?? Answer: refactoring
+    // is a pain. Will fix later. 
+    
+    // TODO: auto-generate this in data.rs 
     pub static ref TREE_POINTER: Mutex<Region> = Mutex::new(
         Region{
             reg_vec: None,
@@ -67,6 +76,14 @@ lazy_static! {
         }
     );
 
+    /*
+    // MULTIPLIERS is a static array that we'll use later to quickly
+    // determine the centers of subregions when we recurse. If we multiply
+    // each of the sub-arrays in MULTIPLIERS by the sidelength of our
+    // region, then _add_ those to our position vector for our starting
+    // region, it'll get us the center of our new region. 
+    */
+    
     pub static ref MULTIPLIERS: Mutex<Vec<Vec<f64>>> = Mutex::new(
         populate_mult(DIMS, 0.0)
     );
