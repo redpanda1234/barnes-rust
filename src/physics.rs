@@ -67,10 +67,8 @@ impl Body {
             // in the region_vec or add_queue.
             None => {node.update_com(); self.is_far(node)},
             Some(_com) => {
-                (
-                    2.0 * node.half_length /
-                        self.squared_dist_to(&node.com.clone().unwrap())
-                )
+                ( 2.0 * node.half_length /
+                  self.squared_dist_to(&node.com.clone().unwrap()) )
                     <= THETA
             }
         }
