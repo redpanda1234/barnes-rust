@@ -125,3 +125,68 @@ impl Region {
         }
     }
 }
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dist_sq() {
+        let m1 = Body {
+            pos_vec: vec![1.0, 0.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        let m2 = Body {
+            pos_vec: vec![0.0, 0.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        let m3 = Body {
+            pos_vec: vec![-3.0, 0.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        let m4 = Body {
+            pos_vec: vec![0.0, 4.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        assert_eq!(m1.squared_dist_to(&m2), 1.0);
+        assert_eq!(m3.squared_dist_to(&m4), 25.0);
+    }
+
+    #[test]
+    fn test_vec_rel() {
+        let m1 = Body {
+            pos_vec: vec![1.0, 0.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        let m2 = Body {
+            pos_vec: vec![0.0, 0.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        let m3 = Body {
+            pos_vec: vec![-3.0, 0.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+
+        let m4 = Body {
+            pos_vec: vec![0.0, 4.0, 0.0],
+            vel_vec: vec![0.0, 0.0, 0.0],
+            mass: 0.0
+        };
+        println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
+
+        assert_eq!(m1.vec_rel(&m2), vec![-1.0, 0.0, 0.0]);
+        assert_eq!(m3.vec_rel(&m4), vec![3.0, 4.0, 0.0]);
+    }
+}

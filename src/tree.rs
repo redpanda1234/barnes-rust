@@ -1,9 +1,10 @@
 // use std::thread;       // For fearless concurrency
 
+use std::fmt;
+
 // Static -> valid globally throughout the lifetime of the program
 // mut allows us to modify the value contained in the static.
 // TODO: implement a more intelligent thread limit thing.
-static mut NUM_THREADS: i64 = 20;
 
 // derive(Clone) tells rust to try and implement the clone trait on
 // our Coord automatically. This allows us to clone the data inside of
@@ -18,7 +19,7 @@ static mut NUM_THREADS: i64 = 20;
 // Body is going to end up being our class to represent masses. Each
 // one will have a float vector to describe position, then some mass
 // value assigned to it.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Body {
     pub pos_vec: Vec<f64>,
     pub vel_vec: Vec<f64>,
@@ -90,7 +91,7 @@ static MULTIPLIERS: [[f64; 2]; 4] = [
 // + reimplement contains method by constructing indices using our
 //   binary string construction method on the global multiplier array.
  */
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
     pub coord_vec: Vec<f64>,
