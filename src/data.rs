@@ -32,7 +32,9 @@ pub mod gen_mult {
 }
 
 pub mod generate {
+
     use data::rand::*;
+    use data::rand::distributions::{IndependentSample};
     use data::{DIMS};
     use tree::*;
 
@@ -130,7 +132,7 @@ pub mod generate {
     // a generic body generator that takes a generic random number
     // generator for obtaining thetas.
 
-    pub fn gb_from_mags<T>(
+    pub fn gb_from_mags<T: IndependentSample>(
         t_f: f64,
         p_mag: f64,
         v_mag: f64,
@@ -146,9 +148,9 @@ pub mod generate {
     }
 
     // gt is for gen_tree
-    pub fn gt_ranges(num_bodies: usize) -> Region {
-        // test
-    }
+    // pub fn gt_ranges(num_bodies: usize) -> Region {
+
+    // }
 
 }
 
