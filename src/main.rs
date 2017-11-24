@@ -34,5 +34,4 @@ fn main() {
         let printme = &TREE_POINTER.lock().unwrap().clone().reg_vec;
         println!{"printing printme {:?}", printme};
     }
-
 }

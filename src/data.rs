@@ -87,11 +87,11 @@ pub mod generate {
     // for an explanation on what this function is _supposed_ to be
     // doing
 
-    pub fn nd_vec_from_mag<T>(
+    pub fn nd_vec_from_mag<T: IndependentSample<f64>>(
         mag: f64,
-        t_generator: T,
+        t_generator: &T,
         final_theta: f64,
-        rng: StdRng
+        mut rng: StdRng
     ) -> Vec<f64> {
 
         let mut vec = vec![0.0; DIMS];
@@ -132,7 +132,7 @@ pub mod generate {
     // a generic body generator that takes a generic random number
     // generator for obtaining thetas.
 
-    pub fn gb_from_mags<T: IndependentSample>(
+    pub fn gb_from_mags<T: IndependentSample<f64>>(
         t_f: f64,
         p_mag: f64,
         v_mag: f64,
@@ -141,8 +141,8 @@ pub mod generate {
         seeder: StdRng
     ) -> Body {
         Body {
-            pos_vec: nd_vec_from_mag(p_mag, t_generator, t_f, seeder),
-            vel_vec: nd_vec_from_mag(v_mag, t_generator, t_f, seeder),
+            pos_vec: nd_vec_from_mag(p_mag, &t_generator, t_f, seeder),
+            vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
             mass: m
         }
     }
