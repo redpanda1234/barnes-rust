@@ -1,4 +1,4 @@
-extern crate rand;
+pub extern crate rand;
 
 use super::*;
 
@@ -52,10 +52,10 @@ pub mod generate {
 
     // Returns the initial RNG-boi we'll be using to generate our
     // other RNG instances
-    fn get_seeder_rng() -> StdRng {
-        let seed: &[_] = &[1, 2, 3, 4];
-        SeedableRng::from_seed(seed)
-    }
+    // fn get_seeder_rng() -> StdRng {
+    //     let seed: &[_] = &[1, 2, 3, 4];
+    //     SeedableRng::from_seed(seed)
+    // }
 
     // When testing, we'll want to run the same simulations
     // repeatedly, to make sure we're actually modifying how the
@@ -73,12 +73,12 @@ pub mod generate {
     // sure how to make this work, FIXME
 
     fn get_rng(mut rng: StdRng) -> StdRng {
-        let mut seed = format!("{:0b}", rng.gen::<usize>());
+        let seed = format!("{:0b}", rng.gen::<usize>());
         let mut vec = Vec::new();
         for si in seed.chars() {
             vec.push(si.to_digit(10).unwrap() as usize);
         }
-
+        println!("{:?}", vec);
         let array: &[_] = &[
             vec.pop().unwrap(),
             vec.pop().unwrap(),
@@ -86,7 +86,6 @@ pub mod generate {
             vec.pop().unwrap(),
             vec.pop().unwrap()
         ];
-
         SeedableRng::from_seed(array)
     }
 
@@ -166,19 +165,19 @@ pub mod generate {
         t_generator: T,
         seeder: StdRng
     ) -> Body {
-
-        Body {
+        let body = Body {
             pos_vec: nd_vec_from_mag(p_mag, &t_generator, t_f, seeder),
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
             mass: m
-        }
-
+        };
+        println!("{:?}", body);
+        body
     }
 
     // gt is for gen_tree
-    pub fn gt_all_ranges(num_bodies: usize) {
+    pub fn gt_all_ranges(num_bodies: usize, mut seeder: StdRng) {
         use data::rand::distributions::*;
-        let seeder = get_seeder_rng();
+        // let mut seeder = get_seeder_rng();
 
         let m_gen = Range::new(0.0, MAX_MASS);
         let p_mag_gen = Range::new(0.0, MAX_LEN);
@@ -186,22 +185,21 @@ pub mod generate {
         // TODO: let's make sure stuff isn't getting relativistic here
         let v_mag_gen = Range::new(0.0, 500_000.0);
         let t_gen = Range::new(0.0, PI);
-        let t_f_gen = Range::new(0.0, 2.0*PI);
+        let t_f_gen = &Range::new(0.0, 2.0*PI);
 
         for _ in 0..num_bodies {
             TREE_POINTER.lock().unwrap().clone().add_queue.unwrap().push(
                 gb_from_mags(
-                    t_f_gen.ind_sample(&mut get_rng(seeder)),
-                    p_mag_gen.ind_sample(&mut get_rng(seeder)),
-                    v_mag_gen.ind_sample(&mut get_rng(seeder)),
-                    m_gen.ind_sample(&mut get_rng(seeder)),
+                    t_f_gen.ind_sample(&mut seeder),
+                    p_mag_gen.ind_sample(&mut seeder),
+                    v_mag_gen.ind_sample(&mut seeder),
+                    m_gen.ind_sample(&mut seeder),
                     t_gen,
                     get_rng(seeder)
                 )
             )
         }
     }
-
 }
 
 lazy_static! {
@@ -241,4 +239,5 @@ lazy_static! {
     pub static ref MULTIPLIERS: Mutex<Vec<Vec<f64>>> = Mutex::new(
         gen_mult::populate_mult(DIMS, 0.0)
     );
+
 }
