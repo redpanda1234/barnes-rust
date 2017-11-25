@@ -153,16 +153,23 @@ impl Region {
 
                 for child in reg_vec.iter_mut() {
                     child.update_com();
-                    let com = child.clone().com.unwrap();
-                    den += com.mass.clone();
-                    // vec = self.pos_vec.clone()
-                    for i in 0..DIMS {
-                        num[i] += com.pos_vec[i] * com.mass;
+                    match child.com.clone() {
+                        None => continue,
+                        Some(mut com) => {
+                            let com = child.clone().com.unwrap();
+                            den += com.mass.clone();
+                            // vec = self.pos_vec.clone()
+                            for i in 0..DIMS {
+                                num[i] += com.pos_vec[i] * com.mass;
+                            }
+                        }
                     }
                 }
+
                 for i in 0..DIMS {
                     num[i] /= den
                 }
+
                 self.com = Some(Body {pos_vec: num, vel_vec: vec![0.0;
                     DIMS as usize], mass: den})
             }

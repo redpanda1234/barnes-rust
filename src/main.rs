@@ -34,8 +34,9 @@ fn main() {
     let seeder = SeedableRng::from_seed(seed);
     generate::gt_all_ranges(5, seeder);
     for _ in 0..NUMSTEPS {
-        // let printme = TREE_POINTER.lock().unwrap().update();
-        let printme = &TREE_POINTER.lock().unwrap().clone().add_queue.unwrap().len();
+        TREE_POINTER.lock().unwrap().update();
+        let printme = TREE_POINTER.lock().unwrap().clone();
+        // let printme = &TREE_POINTER.lock().unwrap().clone().add_queue.unwrap().len();
         println!{"printing printme {:?}", printme};
     }
 }

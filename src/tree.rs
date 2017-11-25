@@ -120,6 +120,9 @@ impl Region {
     // add queues
     pub fn update(&mut self) -> i32 {
 
+        // println!("updating {:?}", self);
+        // println!("helooooo");
+
         // First check whether the calling region has any child
         // regions. This will determine how we handle our updating.
         // Currently, we check whether
@@ -127,6 +130,8 @@ impl Region {
         match self.reg_vec.clone() {
 
             None => {
+
+                // println!("rv: None {:?}", self);
 
                 // if we don't have a defined region vector, then that
                 // means that either we're a leaf node, or we're doing
@@ -139,6 +144,8 @@ impl Region {
                 // moved into a different region.
 
                 if self.remove {
+
+                    // println!("rv: None. rem: 1 {:?}", self);
 
                     self.com = None;
 
@@ -162,6 +169,8 @@ impl Region {
 
                         Some(ref mut queue) => {
 
+                            // println!("rv: None. rem: 1. aq: S {:?}", self);
+
                             // If we only have one mass in the queue,
                             // then we can just store it as the center
                             // of mass of our entire Region. Also,
@@ -184,6 +193,8 @@ impl Region {
                         },
                     }
                 } else {
+
+                    // println!("rv: None. rem: 0 {:?}", self);
 
                     // if we don't have to modify the current
                     // com...hang on, that can't be right. We'll
@@ -216,7 +227,17 @@ impl Region {
                                 // Here's a possibly bug-filled
                                 // implementation.
 
-                                None => {self.recurse(true); self.update_com()},
+                                None => {
+                                    let return_me = self.recurse(true);
+                                    self.update_com();
+                                    return_me
+                                },
+
+                                // If we have a current com, we push
+                                // it into the queue (because we're
+                                // still at a leaf node), and then
+                                // subdivide accordingly, returning
+                                // the number of submasses contained.
 
                                 Some(_com) => {
                                     queue.push(self.com.clone().unwrap());
@@ -235,11 +256,25 @@ impl Region {
             // Perhaps we should make each of the entries in the
             // vector options on Regions?
 
-            Some(mut _reg_vec) => {
+            Some(mut reg_vec) => {
+
                 self.com = None;
                 match self.add_queue.clone() {
-                    None => 1,
+
+                    None => {
+                        let mut return_me = 0;
+
+                        for reg in reg_vec.iter_mut() {
+                            return_me += reg.update();
+                        };
+
+                        self.reg_vec = Some(reg_vec);
+                        return_me
+                    },
+
                     Some(ref _queue) => {
+                        // recurse on false because we don't need to
+                        // split the region (it's already splitted)
                         let result = self.recurse(false);
                         if result == 0 {
                             self.reg_vec = None
