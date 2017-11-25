@@ -169,21 +169,55 @@ impl Region {
                             // down at all.
 
                             if queue.len() == 1 {
+
                                 self.com = Some(queue[0].clone());
                                 self.add_queue = None; // clear queue
                                 1 // There's one body stored below
+
                             } else {
-                                // else, we want
+
+                                // else, we want to recursively inject
+                                // the masses
                                 self.recurse(true)
+
                             }
                         },
                     }
                 } else {
+
+                    // if we don't have to modify the current
+                    // com...hang on, that can't be right. We'll
+                    // always need to modify the com. FIXME! Unless
+                    // handle updating the com's of leaf nodes
+                    // directly. Whi
+
                     match self.add_queue.clone() {
-                        None => 1,
+
+                        // If the add queue is empty, we still need to
+                        // update the single body that's in the
+                        // calling region, which will just be
+                        // self.com
+
+                        None => {self.update_com(); 1},
+
+                        // else, we need to recursively ingest the
+                        // masses.
+
                         Some(ref mut queue) => {
+
                             match self.com.clone() {
-                                None => 1,
+
+                                // This doesn't make a great deal of
+                                // sense. In fact, I think it makes no
+                                // sense. We need to recurse down the
+                                // tree if we have a com that doesn't
+                                // need removing, and update the
+                                // calling region's com accordingly.
+                                // Here's a possibly bug-filled
+                                // implementation.
+
+                                None => {self.recurse(true); self.update_com()},
+
                                 Some(_com) => {
                                     queue.push(self.com.clone().unwrap());
                                     let return_me = self.recurse(true);
@@ -200,6 +234,7 @@ impl Region {
             // regions. TODO: check for dead regions, and prune those.
             // Perhaps we should make each of the entries in the
             // vector options on Regions?
+
             Some(mut _reg_vec) => {
                 self.com = None;
                 match self.add_queue.clone() {
