@@ -31,10 +31,10 @@ static NUMSTEPS: usize = 10;
 fn main() {
     use data::rand::SeedableRng;
     let seed: &[_] = &[1, 2, 3, 4];
-    let mut seeder = SeedableRng::from_seed(seed);
+    let seeder = SeedableRng::from_seed(seed);
     generate::gt_all_ranges(5, seeder);
     for _ in 0..NUMSTEPS {
-        TREE_POINTER.lock().unwrap().update();
+        // let printme = TREE_POINTER.lock().unwrap().update();
         let printme = &TREE_POINTER.lock().unwrap().clone().add_queue.unwrap().len();
         println!{"printing printme {:?}", printme};
     }

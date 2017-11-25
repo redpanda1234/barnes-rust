@@ -15,8 +15,8 @@ pub const DT: f64 = 0.01;
 // pub const MAX_MASS: f64 =
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
-pub const MAX_LEN: f64 = 1_000_000_000_000_000.0;
-pub const MAX_MASS: f64 = 1_000_000_000_000_000_000.0;
+pub const MAX_LEN: f64 = 1_000_000_000_000.0;
+pub const MAX_MASS: f64 = 1_000_000_000_000_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
 // TODO: make our organization here more intelligent. Should probably
@@ -78,7 +78,10 @@ pub mod generate {
         for si in seed.chars() {
             vec.push(si.to_digit(10).unwrap() as usize);
         }
-        println!("{:?}", vec);
+
+        // println!("{:?}", vec);
+
+        // seeds for SeedableRng are references to arrays
         let array: &[_] = &[
             vec.pop().unwrap(),
             vec.pop().unwrap(),
@@ -86,6 +89,7 @@ pub mod generate {
             vec.pop().unwrap(),
             vec.pop().unwrap()
         ];
+
         SeedableRng::from_seed(array)
     }
 
@@ -183,7 +187,7 @@ pub mod generate {
         let p_mag_gen = Range::new(0.0, MAX_LEN);
 
         // TODO: let's make sure stuff isn't getting relativistic here
-        let v_mag_gen = Range::new(0.0, 500_000.0);
+        let v_mag_gen = Range::new(0.0, 50_000.0);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
@@ -197,7 +201,8 @@ pub mod generate {
                     t_gen,
                     get_rng(seeder)
                 )
-            )
+            );
+
         }
     }
 }

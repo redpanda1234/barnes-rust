@@ -86,7 +86,7 @@ pub struct Region {
     pub half_length: f64,
     pub remove: bool, // FIXME: remove?
     pub add_queue: Option<Vec<Body>>,
-    pub com: Option<Body>,
+    pub com: Option<Body>
 }
 
 
@@ -123,17 +123,57 @@ impl Region {
         // First check whether the calling region has any child
         // regions. This will determine how we handle our updating.
         // Currently, we check whether
+
         match self.reg_vec.clone() {
+
             None => {
+
+                // if we don't have a defined region vector, then that
+                // means that either we're a leaf node, or we're doing
+                // the first initial push of masses into the tree.
+
+                // The remove flag tells us whether or not the current
+                // COM defined in our object is no longer valid. This
+                // would happen if we need to redefine the center of
+                // mass, e.g. if one of the sub-masses in the tree has
+                // moved into a different region.
+
                 if self.remove {
+
                     self.com = None;
+
+                    // Now we want to check whether there are any new
+                    // masses waiting to be added to our region. If
+                    // there aren't, we return 0 (because Harry had
+                    // the idea of using our recursive update function
+                    // to simultaneously calculate how many bodies
+                    // were contained in subregions of our region, as
+                    // idea of calculating a metric for the number of
+                    // bodies contained below the given body, which
+                    // will be useful in multithreading), else we
+                    // recurse down into the tree.
+
                     match self.add_queue.clone() {
+
                         None => 0,
+
+                        // if our add_queue is nonempty, then we need
+                        // to handle ingesting of the masses.
+
                         Some(ref mut queue) => {
+
+                            // If we only have one mass in the queue,
+                            // then we can just store it as the center
+                            // of mass of our entire Region. Also,
+                            // this means we don't need to recurse
+                            // down at all.
+
                             if queue.len() == 1 {
                                 self.com = Some(queue[0].clone());
-                                1
+                                self.add_queue = None; // clear queue
+                                1 // There's one body stored below
                             } else {
+                                // else, we want
                                 self.recurse(true)
                             }
                         },
