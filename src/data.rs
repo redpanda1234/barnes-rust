@@ -72,11 +72,21 @@ pub mod generate {
     // seed should be generated with get_seeder_rng(). Currently not
     // sure how to make this work, FIXME
 
-    fn get_rng<T>(rng: StdRng) -> StdRng {
-        let mut array: &[_] = &[1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        for i in 0..10 {
-            array[i] = rng.gen::<usize>();
+    fn get_rng(mut rng: StdRng) -> StdRng {
+        let mut seed = format!("{:0b}", rng.gen::<usize>());
+        let mut vec = Vec::new();
+        for si in seed.chars() {
+            vec.push(si.to_digit(10).unwrap() as usize);
         }
+
+        let array: &[_] = &[
+            vec.pop().unwrap(),
+            vec.pop().unwrap(),
+            vec.pop().unwrap(),
+            vec.pop().unwrap(),
+            vec.pop().unwrap()
+        ];
+
         SeedableRng::from_seed(array)
     }
 
@@ -166,16 +176,9 @@ pub mod generate {
     }
 
     // gt is for gen_tree
-    pub fn gt_all_ranges(num_bodies: usize) -> Region {
+    pub fn gt_all_ranges(num_bodies: usize) {
         use data::rand::distributions::*;
         let seeder = get_seeder_rng();
-
-        // let s1 = seeder.gen::<f64>();
-        // let s2 = seeder.gen::<f64>();
-        // let s3 = seeder.gen::<f64>();
-        // let s4 = seeder.gen::<f64>();
-        // let s5 = seeder.gen::<f64>();
-        // let s6 = seeder.gen::<f64>();
 
         let m_gen = Range::new(0.0, MAX_MASS);
         let p_mag_gen = Range::new(0.0, MAX_LEN);
@@ -188,12 +191,12 @@ pub mod generate {
         for _ in 0..num_bodies {
             TREE_POINTER.lock().unwrap().add_queue.unwrap().push(
                 gb_from_mags(
-                    t_f_gen.ind_sample(get_rng(seeder)),
-                    p_mag_gen.ind_sample(SeedableRng::from_seed(s2)),
-                    v_mag_gen.ind_sample(SeedableRng::from_seed(s3)),
-                    m_gen.ind_sample(SeedableRng::from_seed(s4)),
-                    t_f_gen.ind_sample(SeedableRng::from_seed(s5)),
-                    SeedableRng::from_seed(s6)
+                    t_f_gen.ind_sample(&mut get_rng(seeder)),
+                    p_mag_gen.ind_sample(&mut get_rng(seeder)),
+                    v_mag_gen.ind_sample(&mut get_rng(seeder)),
+                    m_gen.ind_sample(&mut get_rng(seeder)),
+                    t_gen,
+                    get_rng(seeder)
                 )
             )
         }
