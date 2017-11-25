@@ -33,10 +33,12 @@ fn main() {
     let seed: &[_] = &[1, 2, 3, 4];
     let seeder = SeedableRng::from_seed(seed);
     generate::gt_all_ranges(5, seeder);
+    // println!("MULTIPLIERS is {:?}", MULTIPLIERS);
     for _ in 0..NUMSTEPS {
-        TREE_POINTER.lock().unwrap().update();
-        let printme = TREE_POINTER.lock().unwrap().clone();
         // let printme = &TREE_POINTER.lock().unwrap().clone().add_queue.unwrap().len();
-        println!{"printing printme {:?}", printme};
+        let printme = TREE_POINTER.lock().unwrap().clone();
+        TREE_POINTER.lock().unwrap().update();
+
+        println!{"printing printme {:#?}", printme};
     }
 }

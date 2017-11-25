@@ -240,7 +240,7 @@ lazy_static! {
     // vector for our starting region, it'll get us the center of our
     // new region.
     */
-
+    #[derive(Debug)]
     pub static ref MULTIPLIERS: Mutex<Vec<Vec<f64>>> = Mutex::new(
         gen_mult::populate_mult(DIMS, 0.0)
     );

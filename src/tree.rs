@@ -299,8 +299,8 @@ impl Region {
         for vec in MULTIPLIERS.lock().unwrap().clone().iter() {
             // have to define copy_pos this jenky way because we
             // defined our MULTIPLIERS as a static array
-            let mut copy_pos = vec![vec[0], vec[1]];
-            for i in 0..copy_pos.len() {
+            let mut copy_pos = vec![0.0; DIMS];
+            for i in 0..DIMS {
                 copy_pos[i] += 0.5 * vec[i] * self.half_length;
             }
             reg_vec.push(
@@ -338,3 +338,9 @@ impl Region {
         return remove;
     }
 }
+
+// impl fmt::Debug for Region {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Region {{ x: {}, y: {} }}", self.x, self.y)
+//     }
+// }
