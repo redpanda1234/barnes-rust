@@ -6,7 +6,17 @@ use super::*;
 pub const DIMS: usize = 3;
 pub const THETA: f64 = 0.5;
 pub const DT: f64 = 0.01;
-pub const MAX_LEN: f64 = 100.0;
+
+// approximate radius of the milky way
+//pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
+
+// approximate mass of R136a1 --- for obvious reasons, we probably
+// shouldn't actually use this.
+// pub const MAX_MASS: f64 =
+// 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
+
+pub const MAX_LEN: f64 = 1_000_000_000_000_000.0;
+pub const MAX_MASS: f64 = 1_000_000_000_000_000_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
 // TODO: make our organization here more intelligent. Should probably
@@ -35,8 +45,10 @@ pub mod generate {
 
     use data::rand::*;
     use data::rand::distributions::{IndependentSample};
-    use data::{DIMS};
+    use data::*;
     use tree::*;
+
+    use std::f64::consts::PI;
 
     // Returns the initial RNG-boi we'll be using to generate our
     // other RNG instances
@@ -60,9 +72,13 @@ pub mod generate {
     // seed should be generated with get_seeder_rng(). Currently not
     // sure how to make this work, FIXME
 
-    // fn get_rng<T>(seed: Seed) -> StdRng {
-    //     SeedableRng::from_seed(seed)
-    // }
+    fn get_rng<T>(rng: StdRng) -> StdRng {
+        let mut array: &[_] = &[1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        for i in 0..10 {
+            array[i] = rng.gen::<usize>();
+        }
+        SeedableRng::from_seed(array)
+    }
 
     // Using a pseudo-randomly-generated scalar value for the
     // magnitude of our output vector, this function uses n-d
@@ -140,17 +156,48 @@ pub mod generate {
         t_generator: T,
         seeder: StdRng
     ) -> Body {
+
         Body {
             pos_vec: nd_vec_from_mag(p_mag, &t_generator, t_f, seeder),
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
             mass: m
         }
+
     }
 
     // gt is for gen_tree
-    // pub fn gt_ranges(num_bodies: usize) -> Region {
+    pub fn gt_all_ranges(num_bodies: usize) -> Region {
+        use data::rand::distributions::*;
+        let seeder = get_seeder_rng();
 
-    // }
+        // let s1 = seeder.gen::<f64>();
+        // let s2 = seeder.gen::<f64>();
+        // let s3 = seeder.gen::<f64>();
+        // let s4 = seeder.gen::<f64>();
+        // let s5 = seeder.gen::<f64>();
+        // let s6 = seeder.gen::<f64>();
+
+        let m_gen = Range::new(0.0, MAX_MASS);
+        let p_mag_gen = Range::new(0.0, MAX_LEN);
+
+        // TODO: let's make sure stuff isn't getting relativistic here
+        let v_mag_gen = Range::new(0.0, 500_000.0);
+        let t_gen = Range::new(0.0, PI);
+        let t_f_gen = Range::new(0.0, 2.0*PI);
+
+        for _ in 0..num_bodies {
+            TREE_POINTER.lock().unwrap().add_queue.unwrap().push(
+                gb_from_mags(
+                    t_f_gen.ind_sample(get_rng(seeder)),
+                    p_mag_gen.ind_sample(SeedableRng::from_seed(s2)),
+                    v_mag_gen.ind_sample(SeedableRng::from_seed(s3)),
+                    m_gen.ind_sample(SeedableRng::from_seed(s4)),
+                    t_f_gen.ind_sample(SeedableRng::from_seed(s5)),
+                    SeedableRng::from_seed(s6)
+                )
+            )
+        }
+    }
 
 }
 
@@ -162,7 +209,10 @@ lazy_static! {
     // is a pain. Will fix later? Maybe with our data-generation
     // scheme this might be ideal.
 
-    // TODO: auto-generate this in data.rs
+    // TOFIX: redefine TREE_POINTER such that we can access the global
+    // region_vector without locking the Region itself. This will
+    // allow us to handle the add_queue and reg_vec separately, which
+    // will improve computation times.
 
     pub static ref TREE_POINTER: Mutex<Region> = Mutex::new(
         Region {
@@ -170,21 +220,9 @@ lazy_static! {
             coord_vec: vec![0.0; DIMS],
             half_length: 1.0,
             remove: false, // FIXME: remove?
-            add_bucket: Some(vec![
-                Body {
-                    pos_vec: vec![-0.5, 0.0, 0.0],
-                    vel_vec: vec![0.0, 0.0, 0.0],
-                    mass: 1.0
-                },
-
-                Body {
-                    pos_vec: vec![0.5, 0.0, 0.0],
-                    vel_vec: vec![0.0, 0.0, 0.0],
-                    mass: 1.0
-                },
-            ]),
-            // add_bucket: None,
-            com: None,
+            add_queue: Some(Vec::new()),
+            // add_queue: None,
+            com: None
         }
     );
 

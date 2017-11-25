@@ -53,7 +53,7 @@ pub struct Body {
 // should even be a part of our struct or not. It seems that the com
 // should _always_ change after a timestep.
 
-// add_bucket is an optional queue for pushing masses into the region.
+// add_queue is an optional queue for pushing masses into the region.
 // The way our code currently works, when a mass enters some region,
 // we push it into an add-queue for the region. Then, our region
 // determines whether or not it needs to split into sub-regions, and
@@ -85,7 +85,7 @@ pub struct Region {
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
     pub remove: bool, // FIXME: remove?
-    pub add_bucket: Option<Vec<Body>>,
+    pub add_queue: Option<Vec<Body>>,
     pub com: Option<Body>,
 }
 
@@ -127,11 +127,11 @@ impl Region {
             None => {
                 if self.remove {
                     self.com = None;
-                    match self.add_bucket.clone() {
+                    match self.add_queue.clone() {
                         None => 0,
-                        Some(ref mut bucket) => {
-                            if bucket.len() == 1 {
-                                self.com = Some(bucket[0].clone());
+                        Some(ref mut queue) => {
+                            if queue.len() == 1 {
+                                self.com = Some(queue[0].clone());
                                 1
                             } else {
                                 self.recurse(true)
@@ -139,13 +139,13 @@ impl Region {
                         },
                     }
                 } else {
-                    match self.add_bucket.clone() {
+                    match self.add_queue.clone() {
                         None => 1,
-                        Some(ref mut bucket) => {
+                        Some(ref mut queue) => {
                             match self.com.clone() {
                                 None => 1,
                                 Some(_com) => {
-                                    bucket.push(self.com.clone().unwrap());
+                                    queue.push(self.com.clone().unwrap());
                                     let return_me = self.recurse(true);
                                     self.update_com();
                                     return_me
@@ -162,9 +162,9 @@ impl Region {
             // vector options on Regions?
             Some(mut _reg_vec) => {
                 self.com = None;
-                match self.add_bucket.clone() {
+                match self.add_queue.clone() {
                     None => 1,
-                    Some(ref _bucket) => {
+                    Some(ref _queue) => {
                         let result = self.recurse(false);
                         if result == 0 {
                             self.reg_vec = None
@@ -198,7 +198,7 @@ impl Region {
                     reg_vec: None,
                     coord_vec: copy_pos,
                     remove: false,
-                    add_bucket: None,
+                    add_queue: None,
                     com: None,
                     half_length: quarter_length,
                 }
@@ -210,16 +210,16 @@ impl Region {
     fn recurse(&mut self, split: bool) -> i32 {
         if split {self.split(); self.update();}
         else {
-            'outer: for mass in self.add_bucket.clone().unwrap() {
+            'outer: for mass in self.add_queue.clone().unwrap() {
                 'inner: for region in self.reg_vec.clone().unwrap() {
                     if region.contains(&mass) {
-                        region.add_bucket.map(|mut v| v.push(mass));
+                        region.add_queue.map(|mut v| v.push(mass));
                         break 'inner;
                     }
                 }
             }
         }
-        // self.add_bucket = None;
+        // self.add_queue = None;
 
         let mut remove = 0;
         for mut region in self.reg_vec.clone().unwrap() {
