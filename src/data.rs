@@ -192,17 +192,40 @@ pub mod generate {
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
         for _ in 0..num_bodies {
-            TREE_POINTER.lock().unwrap().clone().add_queue.unwrap().push(
-                gb_from_mags(
-                    t_f_gen.ind_sample(&mut seeder),
-                    p_mag_gen.ind_sample(&mut seeder),
-                    v_mag_gen.ind_sample(&mut seeder),
-                    m_gen.ind_sample(&mut seeder),
-                    t_gen,
-                    get_rng(seeder)
-                )
-            );
+            let match_me = TREE_POINTER.lock().unwrap().add_queue.clone();
+            match match_me {
+                None => {
+                    let mut add_me  = Vec::new();
+                    add_me.push(
+                        gb_from_mags(
+                            t_f_gen.ind_sample(&mut seeder),
+                            p_mag_gen.ind_sample(&mut seeder),
+                            v_mag_gen.ind_sample(&mut seeder),
+                            m_gen.ind_sample(&mut seeder),
+                            t_gen,
+                            get_rng(seeder)
+                        )
+                    );
+                    TREE_POINTER.lock().unwrap().add_queue = Some(add_me);
+                },
 
+                Some(_) => {
+                    TREE_POINTER.lock().unwrap().add_queue.take().unwrap_or(Vec::new()).push(
+                        gb_from_mags(
+                            t_f_gen.ind_sample(&mut seeder),
+                            p_mag_gen.ind_sample(&mut seeder),
+                            v_mag_gen.ind_sample(&mut seeder),
+                            m_gen.ind_sample(&mut seeder),
+                            t_gen,
+                            get_rng(seeder)
+                        )
+                    );
+                },
+            }
+
+            // lazy_static! {
+            //     pub static ref
+            // }
         }
     }
 }
@@ -240,9 +263,8 @@ lazy_static! {
     // vector for our starting region, it'll get us the center of our
     // new region.
     */
-    #[derive(Debug)]
+
     pub static ref MULTIPLIERS: Mutex<Vec<Vec<f64>>> = Mutex::new(
         gen_mult::populate_mult(DIMS, 0.0)
     );
-
 }

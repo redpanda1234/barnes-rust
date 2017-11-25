@@ -26,17 +26,24 @@ pub use data::*;
 pub use tree::*;
 pub use physics::*;
 
-static NUMSTEPS: usize = 10;
+static NUMSTEPS: usize = 2;
 
 fn main() {
+
     use data::rand::SeedableRng;
     let seed: &[_] = &[1, 2, 3, 4];
     let seeder = SeedableRng::from_seed(seed);
-    generate::gt_all_ranges(5, seeder);
-    // println!("MULTIPLIERS is {:?}", MULTIPLIERS);
+
+    // generate the main tree
+    generate::gt_all_ranges(10, seeder);
+
     for _ in 0..NUMSTEPS {
         // let printme = &TREE_POINTER.lock().unwrap().clone().add_queue.unwrap().len();
+
+        // println!("{:?}", printme);
+
         let printme = TREE_POINTER.lock().unwrap().clone();
+
         TREE_POINTER.lock().unwrap().update();
 
         println!{"printing printme {:#?}", printme};
