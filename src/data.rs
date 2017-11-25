@@ -189,7 +189,7 @@ pub mod generate {
         let t_f_gen = Range::new(0.0, 2.0*PI);
 
         for _ in 0..num_bodies {
-            TREE_POINTER.lock().unwrap().add_queue.unwrap().push(
+            TREE_POINTER.lock().unwrap().clone().add_queue.unwrap().push(
                 gb_from_mags(
                     t_f_gen.ind_sample(&mut get_rng(seeder)),
                     p_mag_gen.ind_sample(&mut get_rng(seeder)),
