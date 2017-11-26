@@ -251,7 +251,13 @@ lazy_static! {
             remove: false, // FIXME: remove?
             add_queue: Some(Vec::new()),
             // add_queue: None,
-            com: None
+            com: Some(
+                Body {
+                    pos_vec: vec![0.0; DIMS],
+                    vel_vec: vec![0.0; DIMS],
+                    mass: 0.0
+                }
+            )
         }
     );
 
