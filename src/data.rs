@@ -214,14 +214,18 @@ pub mod generate {
                 add_me.push(
                     body
                 );
+
                 TREE_POINTER.lock().unwrap().add_queue = Some(add_me);
+                println!("Tree pointer was None, is now {:#?}",
+                TREE_POINTER.lock().unwrap().clone().add_queue);
             },
 
             Some(_) => {
-                TREE_POINTER.lock().unwrap().add_queue.take().unwrap_or(Vec::new()).push(
-                    body
-                );
-
+                // TREE_POINTER.lock().unwrap().add_queue =
+                let mut queue =
+                    TREE_POINTER.lock().unwrap().add_queue.clone().unwrap();
+                queue.push(body);
+                TREE_POINTER.lock().unwrap().add_queue = Some(queue);
             }
         }
     }
