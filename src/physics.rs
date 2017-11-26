@@ -133,21 +133,45 @@ impl Body {
 }
 
 impl Region {
+
     pub fn update_com(&mut self) {
+
+        // we check whether we have child regions to determine whether
+        // or not we're in a leaf node. If we are, we should just
+        // update the com (assumign there is one), else we should
+        // recurse into child regions and update those.
+
         match self.reg_vec {
+
             None => {
+
+                // None means we're in a leaf node (or we have masses
+                // waiting to be injected, which shouldn't happen)
+
                 match self.com.clone() {
-                    None => (),
+
+                    None => println!("superfluous call to update_com. change line 153 in physics.rs to panic! and use backtrace to see where."),
+
                     Some(_com) => {
+
+                        match self.add_queue {
+                            None => (),
+                            Some(_) => panic!("cannot update com with masses waiting to be queued!"),
+                        };
+
                         let mut com = self.com.clone().unwrap();
                         com.update_pos();
                         self.com = Some(com);
+
                     },
                 }
             },
+
             // This assumes we've pruned dead children, which we
             // haven't quite done yet.
+
             Some(ref mut reg_vec) => {
+                println!("I see dead children");
                 let mut num = vec![0.0; DIMS as usize];
                 let mut den = 0.0;
 
@@ -164,7 +188,9 @@ impl Region {
                         },
                     }
                 }
-
+                if den == 0.0 {
+                    den = 1.0;
+                }
                 for i in 0..DIMS {
                     num[i] /= den
                 }
@@ -173,7 +199,6 @@ impl Region {
                     DIMS as usize], mass: den});
             }
         }
-        // println!("{:#?}", self.com);
     }
 }
 
@@ -267,7 +292,7 @@ mod tests {
             vel_vec: vec![0.0, 0.0, 0.0],
             mass: 0.0
         };
-        println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
+        // println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
 
         assert_eq!(m1.sq_magnitude(&m1.vec_rel(&m2)), 1.0);
         assert_eq!(m3.sq_magnitude(&m3.vec_rel(&m4)), 25.0);

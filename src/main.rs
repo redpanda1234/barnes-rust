@@ -26,7 +26,7 @@ pub use data::*;
 pub use tree::*;
 pub use physics::*;
 
-static NUMSTEPS: usize = 2;
+static NUMSTEPS: usize = 3;
 
 fn main() {
 
@@ -42,10 +42,10 @@ fn main() {
 
         // println!("{:?}", printme);
 
-        let printme = TREE_POINTER.lock().unwrap().clone();
+        // let printme = TREE_POINTER.lock().unwrap().clone();
 
         TREE_POINTER.lock().unwrap().update();
 
-        println!{"printing printme {:#?}", printme};
+        // println!{"printing printme {:#?}", printme};
     }
 }
