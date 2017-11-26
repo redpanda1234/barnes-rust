@@ -173,7 +173,7 @@ impl Region {
                     DIMS as usize], mass: den});
             }
         }
-        println!("{:#?}", self.com);
+        // println!("{:#?}", self.com);
     }
 }
 

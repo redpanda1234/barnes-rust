@@ -219,7 +219,7 @@ impl Region {
                         // calling region, which will just be
                         // self.com
 
-                        None => {println!("updating com with None queue"); self.update_com(); 1},
+                        None => {self.update_com(); 1},
 
                         // else, we need to recursively ingest the
                         // masses.
@@ -239,7 +239,7 @@ impl Region {
 
                                 None => {
                                     let return_me = self.recurse(true);
-                                    println!("updating com from Some(ref mut queue) with None com");
+                                    // println!("updating com from Some(ref mut queue) with None com");
                                     self.update_com();
                                     return_me
                                 },
@@ -251,7 +251,7 @@ impl Region {
                                 // the number of submasses contained.
 
                                 Some(_com) => {
-                                    println!("updating com from Some(ref mut queue) with Some com");
+                                    // println!("updating com from Some(ref mut queue) with Some com");
                                     queue.push(self.com.clone().unwrap());
                                     let return_me = self.recurse(true);
                                     self.update_com();
@@ -281,7 +281,7 @@ impl Region {
                     // If the add_queue is None, we only want to look
                     // at the child regions.
                     None => {
-                        println!("updating children");
+                        // println!("updating children");
                         let mut return_me = 0;
 
                         for reg in reg_vec.iter_mut() {
@@ -295,7 +295,7 @@ impl Region {
                     Some(_) => {
                         // for some reason, this case is never
                         // reached.
-                        println!("injectiong bodies into child regions");
+                        // println!("injectiong bodies into child regions");
                         // recurse on false because we don't need to
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
@@ -312,42 +312,55 @@ impl Region {
     fn split(&mut self) {
         // println!("splitting the region...");
         // TODO: parallelize stuff
+        match self.reg_vec {
+            None => {
+                let mut reg_vec = Vec::new();
+                let quarter_length = self.half_length * 0.5;
 
-        let mut reg_vec = Vec::new();
-        let quarter_length = self.half_length * 0.5;
-
-        for vec in MULTIPLIERS.lock().unwrap().clone().iter() {
-            // have to define copy_pos this jenky way because we
-            // defined our MULTIPLIERS as a static array
-            let mut copy_pos = vec![0.0; DIMS];
-            for i in 0..DIMS {
-                copy_pos[i] += 0.5 * vec[i] * self.half_length;
-            }
-            reg_vec.push(
-                Region {
-                    reg_vec: None,
-                    coord_vec: copy_pos,
-                    remove: false,
-                    add_queue: None,
-                    com: None,
-                    half_length: quarter_length,
+                for vec in MULTIPLIERS.lock().unwrap().clone().iter() {
+                    // have to define copy_pos this jenky way because we
+                    // defined our MULTIPLIERS as a static array
+                    let mut copy_pos = vec![0.0; DIMS];
+                    for i in 0..DIMS {
+                        copy_pos[i] += 0.5 * vec[i] * self.half_length;
+                    }
+                    reg_vec.push(
+                        Region {
+                            reg_vec: None,
+                            coord_vec: copy_pos,
+                            remove: false,
+                            add_queue: None,
+                            com: None,
+                            half_length: quarter_length,
+                        }
+                    )
                 }
-            )
+                let printme = reg_vec.clone();
+                // println!("done. reg_vec is Some({:?})", printme);
+                self.reg_vec = Some(reg_vec);
+            },
+
+            Some(_) => {
+                panic!("this wasn't supposed to happen. {:#?}", self);
+            }
         }
-        let printme = reg_vec.clone();
-        println!("done. reg_vec is Some({:?})", printme);
-        self.reg_vec = Some(reg_vec);
     }
 
     fn recurse(&mut self, split: bool) -> i32 {
         // we call recurse(true) only when we need to split the
         // region, so first call split then recurse on false.
         if split {
-            println!("splitting the region...");
-            self.split();
-            self.recurse(false);
+            // println!("splitting the region...");
+            if self.add_queue.clone().unwrap().len() == 1 {
+                self.com = self.add_queue.clone().unwrap().pop();
+                self.add_queue = None;
+                return 1
+            } else {
+                self.split();
+                return self.recurse(false)
+            }
         } else {
-            println!("moving to else case.");
+            // println!("moving to else case.");
             // println!("Bodies left to inject: {:#?}",
             // self.add_queue.clone().unwrap().len());
 
@@ -355,7 +368,7 @@ impl Region {
 
             // we clone the queue so that we can pop masses out of it
             // as we're working. Shouldn't need to do this though.
-            println!("{:#?}", self.add_queue);
+            // println!("{:#?}", self.add_queue);
             let mut queue = self.add_queue.clone().unwrap();
 
             // take the raw Option enum on the vector of child regions
@@ -368,37 +381,46 @@ impl Region {
                 None => {
                     // If we don't have a set of child regions, then
                     self.com = queue.pop();
-                    println!("\n udpated COM, {:?}", self.com);
-                    println!("from calling region {:#?}", self);
+                    // println!("\n udpated COM, {:?}", self.com);
+                    // println!("from calling region {:#?}", self);
                     assert_eq!(queue.len(), 0);
                 },
 
                 Some(mut reg_vec) => {
                     // println!("reg_vec is {:#?} \n\n\n\n", reg_vec);
-                    'outer: for _ in 0..queue.len() {
+                    'outer: while !queue.is_empty() {
                         let mass = queue.pop().unwrap();
-                        println!("{:?}", reg_vec);
+                        // println!("before: {:#?}", reg_vec);
                         'inner: for region in reg_vec.iter_mut() {
                             // println!("should've updated {:?}", reg_vec);
                             let mut reg_queue = region.add_queue.clone();
 
                             let mut reg_queue = match reg_queue {
-                                None => {println!("Gave child region a vec");Some(Vec::new())},
-                                Some(_) => {println!("child region doesn't need a vec"); reg_queue},
+                                None => {Some(Vec::new())},
+                                Some(_) => {reg_queue},
                             }.unwrap();
 
                             if region.contains(&mass) {
+                                // println!("hah! gotttem");
                                 // println!("reg_queue is {:?}", reg_queue);
                                 reg_queue.push(mass);
                                 // println!("reg_queue is {:?}", reg_queue);
                                 region.add_queue = Some(reg_queue);
-                                println!("{:?}", region);
+                                // println!("{:?}", region);
                                 break 'inner
                             } else {
-                                region.add_queue = None;
+                                if reg_queue.len() == 0 {
+                                    // println!("ooooOOoo Nothing to see here");
+                                    region.add_queue = None;
+                                } else {
+                                    // println!("mabe there's somethign to see here");
+                                    continue 'inner
+                                }
                             }
                         }
-                        println!("{:?}", reg_vec);
+                        // println!("after: {:#?}", reg_vec);
+                        // println!("add_queue: {:#?}", queue);
+                        // println!("i = {}, add_queue_len = {} ", i, queue.len())
                     }
 
                     self.add_queue = None;
