@@ -287,14 +287,11 @@ impl Region {
     }
 
     fn split(&mut self) {
+        println!("splitting the region...");
         // TODO: parallelize stuff
-        // if MULTIPLIERS.dumbass[0].len() != self.coord_vec.len() {
-        //     panic!("Not enough frosh chem");
-        // }
 
         let mut reg_vec = Vec::new();
         let quarter_length = self.half_length * 0.5;
-        // let mult = self.populate_mult(2, 0.0);
 
         for vec in MULTIPLIERS.lock().unwrap().clone().iter() {
             // have to define copy_pos this jenky way because we
@@ -314,27 +311,56 @@ impl Region {
                 }
             )
         }
+        // let printme = reg_vec.clone();
+        // println!("done. reg_vec is Some({:?})", printme);
         self.reg_vec = Some(reg_vec);
     }
 
     fn recurse(&mut self, split: bool) -> i32 {
-        if split {self.split(); self.update();}
-        else {
-            'outer: for mass in self.add_queue.clone().unwrap() {
-                'inner: for region in self.reg_vec.clone().unwrap() {
+        if split {
+            self.split();
+            self.recurse(false);
+        } else {
+            let mut queue = self.add_queue.clone().unwrap();
+            let mut reg_vec = self.reg_vec.clone().unwrap();
+
+            'outer: for _ in 0..queue.len() {
+                let mass = queue.pop().unwrap();
+
+                'inner: for region in reg_vec.iter_mut() {
+                    let mut reg_queue = region.add_queue.clone();
+
+                    let mut reg_queue = match reg_queue {
+                        None => Some(Vec::new()),
+                        Some(_) => reg_queue,
+                    }.unwrap();
+
+                    // let mut reg_queue = reg_queue.unwrap();
+                    // println!("unwrapped it all\n\n\n\n");
+                    // println!("region {:#?} \n mass {:#?}", region, mass);
                     if region.contains(&mass) {
-                        region.add_queue.map(|mut v| v.push(mass));
-                        break 'inner;
+                        // println!("\n\n\nshould contain a mass!\n\n\n");
+                        reg_queue.push(mass);
+                        region.add_queue = Some(reg_queue);
+                        break 'inner
                     }
                 }
             }
+
+            self.add_queue = None;
+            self.reg_vec = Some(reg_vec);
+
         }
-        // self.add_queue = None;
 
         let mut remove = 0;
-        for mut region in self.reg_vec.clone().unwrap() {
+
+        let mut reg_vec = self.reg_vec.clone().unwrap();
+
+        for region in reg_vec.iter_mut() {
             remove += region.update();
         }
+        self.reg_vec = Some(reg_vec);
+
         return remove;
     }
 }

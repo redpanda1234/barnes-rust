@@ -3,7 +3,7 @@ pub extern crate rand;
 use super::*;
 
 // TODO: use this everywhere we check dimensions
-pub const DIMS: usize = 3;
+pub const DIMS: usize = 2;
 pub const THETA: f64 = 0.5;
 pub const DT: f64 = 0.01;
 
@@ -15,8 +15,8 @@ pub const DT: f64 = 0.01;
 // pub const MAX_MASS: f64 =
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
-pub const MAX_LEN: f64 = 1_000_000_000_000.0;
-pub const MAX_MASS: f64 = 1_000_000_000_000_000.0;
+pub const MAX_LEN: f64 = 1_000.0;
+pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
 // TODO: make our organization here more intelligent. Should probably
@@ -221,7 +221,6 @@ pub mod generate {
             },
 
             Some(_) => {
-                // TREE_POINTER.lock().unwrap().add_queue =
                 let mut queue =
                     TREE_POINTER.lock().unwrap().add_queue.clone().unwrap();
                 queue.push(body);
@@ -248,7 +247,7 @@ lazy_static! {
         Region {
             reg_vec: None,
             coord_vec: vec![0.0; DIMS],
-            half_length: 1.0,
+            half_length: MAX_LEN,
             remove: false, // FIXME: remove?
             add_queue: Some(Vec::new()),
             // add_queue: None,
