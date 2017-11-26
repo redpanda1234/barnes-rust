@@ -317,7 +317,7 @@ impl Region {
                     // defined our MULTIPLIERS as a static array
                     let mut copy_pos = vec![0.0; DIMS];
                     for i in 0..DIMS {
-                        copy_pos[i] += 0.5 * vec[i] * self.half_length;
+                        copy_pos[i] += vec[i] * quarter_length;
                     }
                     reg_vec.push(
                         Region {
@@ -435,7 +435,6 @@ impl Region {
                 }
 
                 self.add_queue = None;
-                // println!("after {:#?}", reg_vec.clone());
                 self.reg_vec = Some(reg_vec);
 
             }

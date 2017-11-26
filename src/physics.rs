@@ -202,6 +202,7 @@ impl Region {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -239,32 +240,32 @@ mod tests {
     #[test]
     fn test_vec_rel() {
         let m1 = Body {
-            pos_vec: vec![1.0, 0.0, 0.0],
-            vel_vec: vec![0.0, 0.0, 0.0],
+            pos_vec: vec![1.0; DIMS],
+            vel_vec: vec![0.0; DIMS],
             mass: 0.0
         };
 
         let m2 = Body {
-            pos_vec: vec![0.0, 0.0, 0.0],
-            vel_vec: vec![0.0, 0.0, 0.0],
+            pos_vec: vec![0.0; DIMS],
+            vel_vec: vec![0.0; DIMS],
             mass: 0.0
         };
 
-        let m3 = Body {
-            pos_vec: vec![-3.0, 0.0, 0.0],
-            vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
-        };
+        // let m3 = Body {
+        //     pos_vec: vec![-3.0; DIMS],
+        //     vel_vec: vec![0.0; DIMS],
+        //     mass: 0.0
+        // };
 
-        let m4 = Body {
-            pos_vec: vec![0.0, 4.0, 0.0],
-            vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
-        };
+        // let m4 = Body {
+        //     pos_vec: vec![4.0].extend([0.0; DIMS-1].iter()),
+        //     vel_vec: vec![0.0; DIMS],
+        //     mass: 0.0
+        // };
         println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
 
-        assert_eq!(m1.vec_rel(&m2), vec![-1.0, 0.0, 0.0]);
-        assert_eq!(m3.vec_rel(&m4), vec![3.0, 4.0, 0.0]);
+        assert_eq!(m1.vec_rel(&m2), vec![-1.0; DIMS]);
+        // assert_eq!(m3.vec_rel(&m4), vec![7.0].extend(vec![0.0; DIMS-1]));
     }
 
     #[test]
@@ -297,4 +298,67 @@ mod tests {
         assert_eq!(m1.sq_magnitude(&m1.vec_rel(&m2)), 1.0);
         assert_eq!(m3.sq_magnitude(&m3.vec_rel(&m4)), 25.0);
     }
+
+    #[test]
+    fn test_is_far() {
+        for dims in 1..8 {
+            let x = (4.0/(dims as f64)).sqrt();
+
+            let body = Body {
+                pos_vec: vec![x; dims],
+                vel_vec: vec![0.0; dims],
+                mass: 0.0
+            };
+
+            let mut node = Region {
+
+                reg_vec: None,
+                coord_vec: vec![0.0; dims],
+                half_length: 0.5,
+                remove: false, // FIXME: remove?
+                add_queue: None,
+                com:
+                Some(
+                    Body {
+                        pos_vec: vec![0.0; dims],
+                        vel_vec: vec![0.0; dims],
+                        mass: 0.0
+                    }
+                )
+
+            };
+            assert!(body.is_far(&mut node))
+        }
+    }
+
+    #[test]
+    fn test_get_classical_accel() {
+
+    }
+
+    #[test]
+    fn test_update_accel() {
+
+    }
+
+    #[test]
+    fn test_get_total_acc() {
+
+    }
+
+    #[test]
+    fn test_update_vel() {
+
+    }
+
+    #[test]
+    fn test_update_pos() {
+
+    }
+
+    #[test]
+    fn test_update_com() {
+
+    }
+
 }
