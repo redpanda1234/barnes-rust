@@ -30,9 +30,9 @@ impl Body {
     // vec_rel gets the displacement vector between the calling mass
     // and some other passed Body.
 
-    pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
-        let mut vec: Vec<f64> = vec![0.0; DIMS];
-        for i in 0..DIMS {
+    pub fn vec_rel(&self, mass: &Body, dims: usize) -> Vec<f64> {
+        let mut vec: Vec<f64> = vec![0.0; dims];
+        for i in 0..dims {
             vec[i] = mass.pos_vec[i] - self.pos_vec[i];
         }
         vec
@@ -46,9 +46,9 @@ impl Body {
     // functionally equivalent (but this is slower), because we don't
     // always need to find the displacement vector.
 
-    pub fn sq_magnitude(&self, vec: &Vec<f64>) -> f64 {
+    pub fn sq_magnitude(&self, vec: &Vec<f64>, dims: usize) -> f64 {
         let mut r_squared: f64 = 0.0;
-        for i in 0..DIMS {
+        for i in 0..dims {
             r_squared += vec[i].powi(2)
         }
         r_squared
@@ -74,23 +74,25 @@ impl Body {
         }
     }
 
-    pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
-        let mut rel = self.vec_rel(mass);
-        let sq_mag = self.sq_magnitude(&rel);
+    pub fn get_classical_accel(&self, mass: &Body, dims: usize) -> Vec<f64> {
+        let mut rel = self.vec_rel(mass, dims);
+        let sq_mag = self.sq_magnitude(&rel, dims);
+        println!("{}, {:#?}", sq_mag, rel);
         let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
         let r = sq_mag.sqrt();
 
-        for i in 0..DIMS {
+        for i in 0..dims {
             // TODO: make this work for generic number of dimensions
             // vec.push(self.pos_vec[i] * acc / r) // pos_vec[i]/r is trig
             rel[i] *= acc/r;
         }
+        println!("{:#?}", rel);
         rel
     }
 
-    pub fn update_accel(&self, mut acc: Vec<f64>, mass: &Body) -> Vec<f64> {
+    pub fn update_accel(&self, mut acc: Vec<f64>, mass: &Body, dims: usize ) -> Vec<f64> {
         for (mut acci, ai) in acc.iter_mut().zip(
-            self.get_classical_accel(mass)) {
+            self.get_classical_accel(mass, dims)) {
             *acci += ai;
         }
         acc
@@ -99,14 +101,14 @@ impl Body {
     pub fn get_total_acc(&mut self, node: &mut Region) -> Vec<f64> {
         let mut acc = vec![0.0; DIMS];
         match node.reg_vec.clone() {
-            None => self.update_accel(acc, &node.com.clone().unwrap()),
+            None => self.update_accel(acc, &node.com.clone().unwrap(), DIMS),
             Some(ref reg_vec) => {
                 if self.is_far(node) {
-                    self.update_accel(acc, &node.com.clone().unwrap())
+                    self.update_accel(acc, &node.com.clone().unwrap(), DIMS)
                 } else {
                     for child in reg_vec.iter() {
                         acc = self.update_accel(
-                            acc, &child.com.clone().unwrap()
+                            acc, &child.com.clone().unwrap(), DIMS
                         );
                     }
                     acc
@@ -262,9 +264,9 @@ mod tests {
         //     vel_vec: vec![0.0; DIMS],
         //     mass: 0.0
         // };
-        println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
+        // println!("m1 rel m2 {:?}", m1.vec_rel(&m2, DIMS));
 
-        assert_eq!(m1.vec_rel(&m2), vec![-1.0; DIMS]);
+        assert_eq!(m1.vec_rel(&m2, DIMS), vec![-1.0; DIMS]);
         // assert_eq!(m3.vec_rel(&m4), vec![7.0].extend(vec![0.0; DIMS-1]));
     }
 
@@ -295,13 +297,13 @@ mod tests {
         };
         // println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
 
-        assert_eq!(m1.sq_magnitude(&m1.vec_rel(&m2)), 1.0);
-        assert_eq!(m3.sq_magnitude(&m3.vec_rel(&m4)), 25.0);
+        assert_eq!(m1.sq_magnitude(&m1.vec_rel(&m2, 3), 3), 1.0);
+        assert_eq!(m3.sq_magnitude(&m3.vec_rel(&m4, 3), 3), 25.0);
     }
 
     #[test]
     fn test_is_far() {
-        for dims in 1..8 {
+        for dims in 1..9 {
             let x = (4.0/(dims as f64)).sqrt();
 
             let body = Body {
@@ -327,18 +329,56 @@ mod tests {
                 )
 
             };
-            assert!(body.is_far(&mut node))
+            assert!(body.is_far(&mut node));
         }
     }
 
     #[test]
     fn test_get_classical_accel() {
 
+        for dims in 1..9 {
+            let body1 = Body {
+                pos_vec: vec![1.0; dims],
+                vel_vec: vec![0.0; dims],
+                mass: 1.0
+            };
+
+            let body2 = Body {
+                pos_vec: vec![0.0; dims],
+                vel_vec: vec![0.0; dims],
+                mass: 1.0
+            };
+
+            assert_eq!(
+                body1.sq_magnitude(
+                    &body1.get_classical_accel(&body2, dims), dims
+                ).sqrt(),
+                ( 6.674 / (1_000_000_000_00.0 * (dims as f64)) )
+            );
+        }
     }
 
     #[test]
     fn test_update_accel() {
+        for dims in 1..9 {
 
+            let body1 = Body {
+                pos_vec: vec![1.0; dims],
+                vel_vec: vec![0.0; dims],
+                mass: 1.0
+            };
+
+            let body2 = Body {
+                pos_vec: vec![0.0; dims],
+                vel_vec: vec![0.0; dims],
+                mass: 1.0
+            };
+
+            let acc = vec![0.0; dims];
+            let entry = -1.0 * (6.674 / 1_000_000_000_00.0) / (dims as f64).sqrt() / (dims as f64);
+            assert_eq!(body1.update_accel(acc, &body2, dims), vec![entry; dims]);
+
+        }
     }
 
     #[test]
