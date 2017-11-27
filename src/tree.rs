@@ -86,7 +86,6 @@ pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
-    pub remove: bool, // FIXME: remove?
     pub add_queue: Option<Vec<Body>>,
     pub com: Option<Body>
 }
@@ -141,119 +140,73 @@ impl Region {
 
             None => {
 
-                // println!("rv: None {:?}", self);
-
                 // if we don't have a defined region vector, then that
                 // means that either we're a leaf node, or we're doing
                 // the first initial push of masses into the tree.
 
-                // The remove flag tells us whether or not the current
-                // COM defined in our object is no longer valid. This
-                // would happen if we need to redefine the center of
-                // mass, e.g. if one of the sub-masses in the tree has
-                // moved into a different region.
+                // we want to check whether there are any new
+                // masses waiting to be added to our region. If
+                // there aren't, we return 0 (because Harry had
+                // the idea of using our recursive update function
+                // to simultaneously calculate how many bodies
+                // were contained in subregions of our region, as
+                // idea of calculating a metric for the number of
+                // bodies contained below the given body, which
+                // will be useful in multithreading), else we
+                // recurse down into the tree.
 
-                if self.remove {
+                match self.add_queue.clone() {
 
-                    // println!("rv: None. rem: 1 {:?}", self);
+                    // If the add queue is empty, we still need to
+                    // update the single body that's in the
+                    // calling region, which will just be
+                    // self.com
 
-                    self.com = None;
+                    None => {
+                        match self.com.clone() {
+                            None => 0,
+                            Some(_) => {
+                                self.update_com();
+                                1
+                            }
+                        }
+                    },
 
-                    // Now we want to check whether there are any new
-                    // masses waiting to be added to our region. If
-                    // there aren't, we return 0 (because Harry had
-                    // the idea of using our recursive update function
-                    // to simultaneously calculate how many bodies
-                    // were contained in subregions of our region, as
-                    // idea of calculating a metric for the number of
-                    // bodies contained below the given body, which
-                    // will be useful in multithreading), else we
-                    // recurse down into the tree.
+                    // if our add_queue is nonempty, then we need
+                    // to handle ingesting of the masses.
 
-                    match self.add_queue.clone() {
+                    Some(ref mut queue) => {
 
-                        None => 0,
+                        match self.com.clone() {
 
-                        // if our add_queue is nonempty, then we need
-                        // to handle ingesting of the masses.
+                            // This doesn't make a great deal of
+                            // sense. In fact, I think it makes no
+                            // sense. We need to recurse down the
+                            // tree if we have a com that doesn't
+                            // need removing, and update the
+                            // calling region's com accordingly.
+                            // Here's a possibly bug-filled
+                            // implementation.
 
-                        Some(ref mut queue) => {
+                            None => {
 
-                            // println!("rv: None. rem: 1. aq: S {:?}", self);
-
-                            // If we only have one mass in the queue,
-                            // then we can just store it as the center
-                            // of mass of our entire Region. Also,
-                            // this means we don't need to recurse
-                            // down at all.
-
-                            if queue.len() == 1 {
-                                // println!("queue is len 1");
-                                self.com = Some(queue[0].clone());
-                                self.add_queue = None; // clear queue
-                                1 // There's one body stored below
-
-                            } else {
-                                // println!("{}", queue.len());
-                                // else, we want to recursively inject
-                                // the masses
                                 self.recurse(true)
 
-                            }
-                        },
-                    }
-                } else {
+                            },
 
-                    // println!("rv: None. rem: 0 {:?}", self);
+                            // If we have a current com, we push
+                            // it into the queue (because we're
+                            // still at a leaf node), and then
+                            // subdivide accordingly, returning
+                            // the number of submasses contained.
 
-                    // if we don't have to modify the current
-                    // com...hang on, that can't be right. We'll
-                    // always need to modify the com. FIXME! Unless
-                    // handle updating the com's of leaf nodes
-                    // directly. Whi
-
-                    match self.add_queue.clone() {
-
-                        // If the add queue is empty, we still need to
-                        // update the single body that's in the
-                        // calling region, which will just be
-                        // self.com
-
-                        None => {self.update_com(); 1},
-
-                        // else, we need to recursively ingest the
-                        // masses.
-
-                        Some(ref mut queue) => {
-
-                            match self.com.clone() {
-
-                                // This doesn't make a great deal of
-                                // sense. In fact, I think it makes no
-                                // sense. We need to recurse down the
-                                // tree if we have a com that doesn't
-                                // need removing, and update the
-                                // calling region's com accordingly.
-                                // Here's a possibly bug-filled
-                                // implementation.
-
-                                None => {
-                                    self.recurse(true)
-                                },
-
-                                // If we have a current com, we push
-                                // it into the queue (because we're
-                                // still at a leaf node), and then
-                                // subdivide accordingly, returning
-                                // the number of submasses contained.
-
-                                Some(mut com) => {
-                                    queue.push(com);
-                                    self.recurse(true)
-                                }
-                            }
-                        },
-                    }
+                            Some(mut com) => {
+                                self.com = None;
+                                queue.push(com);
+                                self.recurse(true)
+                            },
+                        }
+                    },
                 }
             },
 
@@ -361,7 +314,6 @@ impl Region {
                             // so we call .to_vec() on it to extrac
                             // the underlying vec.
                             coord_vec: vec.to_vec(),
-                            remove: false,
                             add_queue: None,
                             com: None,
                             half_length: quarter_length,

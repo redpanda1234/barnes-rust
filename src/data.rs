@@ -249,7 +249,6 @@ lazy_static! {
             reg_vec: None,
             coord_vec: vec![0.0; DIMS],
             half_length: MAX_LEN,
-            remove: false, // FIXME: remove?
             add_queue: Some(Vec::new()),
             // add_queue: None,
             com: Some(
