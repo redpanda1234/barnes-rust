@@ -277,6 +277,7 @@ impl Region {
 
                     // If the add_queue is None, we only want to look
                     // at the child regions.
+
                     None => {
                         // println!("updating children");
                         let mut return_me = 0;
@@ -307,22 +308,62 @@ impl Region {
     }
 
     fn split(&mut self) {
+
+        // First, we check whether the calling region has any child
+        // regions or not. Don't want to split a region that's already
+        // been split.
+
         match self.reg_vec {
+
             None => {
+
+                // There's no children (as expected), so we'll create
+                // the children vector. First, we need to make a
+                // placeholder vector to write to, since None can't be
+                // unwrapped.
+
                 let mut reg_vec = Vec::new();
+
+                // quarter_length will be used to efficiently
+                // calculate the coordinate vectors of the
+                // newly-created child regions. We compute
+                // it up here so that we don't have to during each
+                // iteration of the loop below.
+
                 let quarter_length = self.half_length * 0.5;
 
-                for vec in MULTIPLIERS.lock().unwrap().clone().iter() {
-                    // have to define copy_pos this jenky way because we
-                    // defined our MULTIPLIERS as a static array
-                    let mut copy_pos = vec![0.0; DIMS];
+                // MULTIPLIERS is stored in a Mutex, so we have to
+                // lock and unwrap it, then clone it so that we can
+                // use its data while freeing it for other waiting
+                // threads to access threads can access it once we're
+                // done. FIXME: why do we need a mutex for multipliers
+                // at all...? I can't see why we'd be modifying it.
+                // I think it'd be faster to just pass a reference to
+                // the global MULTIPLIERS vector everywhere than it is
+                // locking and unwrapping it.
+
+                for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
+
+                    // Here, MULTIPLIERS represents all the possible
+                    // displacement vectors between the center of the
+                    // calling region and the centers of its child
+                    // regions, scaled by a factor of quarter_length.
+
                     for i in 0..DIMS {
-                        copy_pos[i] += vec[i] * quarter_length;
+                        vec[i] *= quarter_length;
                     }
+
+                    // Construct the empty child region corresponding
+                    // to the relative position given by vec, and push
+                    // it into the calling region's region vector
+
                     reg_vec.push(
                         Region {
                             reg_vec: None,
-                            coord_vec: copy_pos,
+                            // vec is currently a mutable reference,
+                            // so we call .to_vec() on it to extrac
+                            // the underlying vec.
+                            coord_vec: vec.to_vec(),
                             remove: false,
                             add_queue: None,
                             com: None,
@@ -330,10 +371,18 @@ impl Region {
                         }
                     )
                 }
-                let printme = reg_vec.clone();
+
+                // Now that we're done pushing all the child regions,
+                // we write reg_vec out to the calling region, and
+                // place it into an Option enum so that we can perform
+                // matches on it later.
+
                 self.reg_vec = Some(reg_vec);
+
             },
 
+            // We shouldn't ever be calling split on a pre-split
+            // region, so one of the calls must've been wrong.
             Some(_) => {
                 panic!("this wasn't supposed to happen. {:#?}", self);
             }

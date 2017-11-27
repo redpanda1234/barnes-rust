@@ -122,7 +122,6 @@ impl Body {
         self.vel_vec.clone().iter_mut().zip(
             self.get_total_acc(&mut TREE_POINTER.lock().unwrap().clone())
         ) {
-
             *vi += ai*DT
         }
     }
