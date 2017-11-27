@@ -249,8 +249,8 @@ impl Region {
                                 // subdivide accordingly, returning
                                 // the number of submasses contained.
 
-                                Some(_com) => {
-                                    queue.push(self.com.clone().unwrap());
+                                Some(mut com) => {
+                                    queue.push(com);
                                     let return_me = self.recurse(true);
                                     return_me
                                 }
@@ -420,7 +420,7 @@ impl Region {
             Some(mut reg_vec) => {
 
                 for region in reg_vec.iter_mut() {
-                    println!("updating child regions");
+                    // println!("updating child regions");
                     remove += region.update();
                 }
                 self.reg_vec = Some(reg_vec);
@@ -480,7 +480,7 @@ impl Region {
                             continue 'outer
                         }
                     }
-                    println!("{:#?}", reg_vec);
+                    // println!("{:#?}", reg_vec);
                 }
 
                 self.add_queue = None;

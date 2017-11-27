@@ -77,7 +77,7 @@ impl Body {
     pub fn get_classical_accel(&self, mass: &Body, dims: usize) -> Vec<f64> {
         let mut rel = self.vec_rel(mass, dims);
         let sq_mag = self.sq_magnitude(&rel, dims);
-        println!("{}, {:#?}", sq_mag, rel);
+        // println!("{}, {:#?}", sq_mag, rel);
         let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
         let r = sq_mag.sqrt();
 
@@ -86,7 +86,7 @@ impl Body {
             // vec.push(self.pos_vec[i] * acc / r) // pos_vec[i]/r is trig
             rel[i] *= acc/r;
         }
-        println!("{:#?}", rel);
+        // println!("{:#?}", rel);
         rel
     }
 
@@ -139,7 +139,7 @@ impl Region {
 
         // we check whether we have child regions to determine whether
         // or not we're in a leaf node. If we are, we should just
-        // update the com (assumign there is one), else we should
+        // update the com (assuming there is one), else we should
         // recurse into child regions and update those.
 
         match self.reg_vec {
@@ -147,20 +147,26 @@ impl Region {
             None => {
 
                 // None means we're in a leaf node (or we have masses
-                // waiting to be injected, which shouldn't happen)
+                // waiting to be injected, which shouldn't happen).
+                // Once we're confident we'll never call on an empty
+                // add queue, we can probably unwrap straight away ---
+                // although match operations _are_ cheap...
 
                 match self.com.clone() {
 
-                    None => println!("superfluous call to update_com. change line 153 in physics.rs to panic! and use backtrace to see where."),
+                    None => println!("superfluous (?) call to update_com. change line 153 in physics.rs to panic! and use backtrace to see where."),
 
-                    Some(_com) => {
+                    Some(mut com) => {
+
+                        // Double check to make sure we don't have any
+                        // masses waiting to be added to the region,
+                        // as that'd mess up the com we calculate.
 
                         match self.add_queue {
                             None => (),
                             Some(_) => panic!("cannot update com with masses waiting to be queued!"),
                         };
 
-                        let mut com = self.com.clone().unwrap();
                         com.update_pos();
                         self.com = Some(com);
 
