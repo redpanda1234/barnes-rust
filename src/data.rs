@@ -174,7 +174,7 @@ pub mod generate {
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
             mass: m
         };
-        println!("{:?}", body);
+        // println!("{:?}", body);
         body
     }
 
@@ -192,6 +192,7 @@ pub mod generate {
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
         for _ in 0..num_bodies {
+
             push_body_global(
                 gb_from_mags(
                     t_f_gen.ind_sample(&mut seeder),

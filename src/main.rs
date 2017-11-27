@@ -34,18 +34,20 @@ fn main() {
     let seed: &[_] = &[1, 2, 3, 4];
     let seeder = SeedableRng::from_seed(seed);
 
-    // generate the main tree
+    // generate the main tree. First argument gives the number of
+    // masses we want to simulate, second argument passes the random
+    // generation function the rng object we've just seeded. Seeding
+    // is generally good while we're still in the testing phase, since
+    // it gives us reproducible results.
+
     generate::gt_all_ranges(10, seeder);
 
+    println!("done generating");
+
     for _ in 0..NUMSTEPS {
-        // let printme = &TREE_POINTER.lock().unwrap().clone().add_queue.unwrap().len();
-
-        // println!("{:?}", printme);
-
         // let printme = TREE_POINTER.lock().unwrap().clone();
-
-        TREE_POINTER.lock().unwrap().update();
-
         // println!{"printing printme {:#?}", printme};
+        TREE_POINTER.lock().unwrap().update();
     }
+    println!("done.");
 }
