@@ -26,7 +26,7 @@ pub use data::*;
 pub use tree::*;
 pub use physics::*;
 
-static NUMSTEPS: usize = 3;
+static NUMSTEPS: usize = 2;
 
 fn main() {
 
@@ -40,13 +40,13 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    generate::gt_all_ranges(10, seeder);
+    generate::gt_all_ranges(5, seeder);
 
     println!("done generating");
 
     for _ in 0..NUMSTEPS {
-        // let printme = TREE_POINTER.lock().unwrap().clone();
-        // println!{"printing printme {:#?}", printme};
+        let printme = TREE_POINTER.lock().unwrap().clone();
+        println!{"printing printme {:#?}", printme};
         TREE_POINTER.lock().unwrap().update();
     }
     println!("done.");

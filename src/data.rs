@@ -251,13 +251,7 @@ lazy_static! {
             half_length: MAX_LEN,
             add_queue: Some(Vec::new()),
             // add_queue: None,
-            com: Some(
-                Body {
-                    pos_vec: vec![0.0; DIMS],
-                    vel_vec: vec![0.0; DIMS],
-                    mass: 0.0
-                }
-            )
+            com: None
         }
     );
 

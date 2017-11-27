@@ -117,8 +117,9 @@ impl Region {
             // be directly on the boundary... I think this is handeled
             // because we'll pop a mass as soon as it passes for one
             // of the regions, but let's double-check.
-
+            // println!("qi = {:#?}, pi = {:#?}, half_length = {:#?}", qi, pi, self.half_length);
             if (qi-pi).abs() > self.half_length {
+                // println!("shit, return false");
                 return false
             }
         }
@@ -175,7 +176,7 @@ impl Region {
                     // if our add_queue is nonempty, then we need
                     // to handle ingesting of the masses.
 
-                    Some(ref mut queue) => {
+                    Some(mut queue) => {
 
                         match self.com.clone() {
 
@@ -188,11 +189,7 @@ impl Region {
                             // Here's a possibly bug-filled
                             // implementation.
 
-                            None => {
-
-                                self.recurse(true)
-
-                            },
+                            None => self.recurse(true),
 
                             // If we have a current com, we push
                             // it into the queue (because we're
@@ -203,6 +200,7 @@ impl Region {
                             Some(mut com) => {
                                 self.com = None;
                                 queue.push(com);
+                                self.add_queue = Some(queue);
                                 self.recurse(true)
                             },
                         }
@@ -218,7 +216,7 @@ impl Region {
             Some(mut reg_vec) => {
 
                 // Invalidate com, because it's gonna be invalid no
-                // matter what.
+                // matter what if we aren't at a leaf node.
 
                 self.com = None;
 
@@ -231,7 +229,7 @@ impl Region {
                     None => {
                         // println!("updating children");
                         let mut return_me = 0;
-
+                        // TODO: before and after check here.
                         for reg in reg_vec.iter_mut() {
                             return_me += reg.update();
                         };
@@ -258,7 +256,7 @@ impl Region {
     }
 
     fn split(&mut self) {
-
+        // println!("\n\n\n\nsplitting self: \n {:#?}", self);
         // First, we check whether the calling region has any child
         // regions or not. Don't want to split a region that's already
         // been split.
@@ -301,6 +299,7 @@ impl Region {
 
                     for i in 0..DIMS {
                         vec[i] *= quarter_length;
+                        vec[i] += self.coord_vec[i];
                     }
 
                     // Construct the empty child region corresponding
@@ -339,7 +338,7 @@ impl Region {
     }
 
     fn recurse(&mut self, split: bool) -> i32 {
-
+        // println!("\n\n\nrecursing with {} on self: \n{:#?}", split, self);
         // we call recurse(true) only when we need to split the
         // region, so first call split then recurse on false.
 
@@ -360,32 +359,35 @@ impl Region {
 
         } else {
             self.push_masses_to_children();
-        }
 
-        let mut remove = 0;
+            let mut remove = 0;
 
-        match self.reg_vec.clone() {
-            None => 1,
-            Some(mut reg_vec) => {
+            match self.reg_vec.clone() {
+                None => 1,
+                Some(mut reg_vec) => {
 
-                for region in reg_vec.iter_mut() {
-                    // println!("updating child regions");
-                    remove += region.update();
+                    for region in reg_vec.iter_mut() {
+                        // println!("updating child regions");
+                        remove += region.update();
+                    }
+                    // println!("child regions are {:#?}", reg_vec);
+                    self.reg_vec = Some(reg_vec);
+
+                    return remove;
                 }
-                self.reg_vec = Some(reg_vec);
-
-                return remove;
             }
         }
     }
 
     pub fn push_masses_to_children(&mut self) {
-        // TOFIX: do this actually properly.
+        // println!("\n\n\npushing masses to children \n {:#?}", self);
+        // FIXME: do this actually properly.
 
         // we clone the queue so that we can pop masses out of it
         // as we're working. Shouldn't need to do this though.
 
         let mut queue = self.add_queue.clone().unwrap();
+        let queue_len = queue.clone().len();
 
         // take the raw Option enum on the vector of child regions
         // and not the wrapped vector itself, so that we can do
@@ -401,19 +403,22 @@ impl Region {
                 // should only be one thing, else we'd have split in
                 // the self.recurse() call)
                 self.com = queue.pop();
+                // never triggered because handeled in recurse. FIXME
+                // panic!("aaaa! why isn't this case ever triggered???");
+                // println!("None case com is \n{:#?}", self.com);
                 assert_eq!(queue.len(), 0);
             },
 
             Some(mut reg_vec) => {
-                // println!("before {:#?}", reg_vec.clone());
-                'outer: while !queue.is_empty() {
+                // let vec_len = reg_vec.len();
 
-                    // println!("{:#?}", queue.clone());
-
+                'outer: for _ in 0..queue_len {
+                    // println!("this mass is \n{:#?}", mass.clone());
+                    // println!("the queue is {:#?}", queue.clone());
+                    // println!("the current region vector is {:#?}", reg_vec);
                     let mass = queue.pop().unwrap();
 
                     'inner: for region in reg_vec.iter_mut() {
-
                         if region.contains(&mass) {
                             // define reg_queue here for the Some arm
                             // of our match
@@ -428,13 +433,14 @@ impl Region {
                             region.add_queue = Some(reg_queue);
                             continue 'outer
                         }
+
                     }
                     // println!("{:#?}", reg_vec);
                 }
 
                 self.add_queue = None;
+                // println!("\n\n\n\n about to write add_queue \n{:#?}\n\n\n\n", reg_vec);
                 self.reg_vec = Some(reg_vec);
-
             }
         }
     }
