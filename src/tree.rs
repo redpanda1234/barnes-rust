@@ -238,9 +238,7 @@ impl Region {
                                 // implementation.
 
                                 None => {
-                                    let return_me = self.recurse(true);
-                                    // self.update_com();
-                                    return_me
+                                    self.recurse(true)
                                 },
 
                                 // If we have a current com, we push
@@ -251,8 +249,7 @@ impl Region {
 
                                 Some(mut com) => {
                                     queue.push(com);
-                                    let return_me = self.recurse(true);
-                                    return_me
+                                    self.recurse(true)
                                 }
                             }
                         },
