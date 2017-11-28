@@ -106,14 +106,15 @@ impl fmt::Display for Region {
 
             None => {
                 match self.com.clone() {
-                    None => write!(f, ""),
-                    Some(com) => write!(f, "\n├──{}\n", com)
+                    None => write!(f, "──o\n"),
+                    Some(com) => write!(f, "──{}\n", com)
                 }
             },
 
             Some(ref mut reg_vec) => {
+                write!(f,"──o\n    ");
                 for child in self.reg_vec.clone().unwrap().iter() {
-                    try!(write!(f, "│\n│─{}\n", child))
+                    try!(write!(f, "├─{}", child))
                 }
                 Ok(())
             }
