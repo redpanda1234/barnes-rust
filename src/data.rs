@@ -167,12 +167,16 @@ pub mod generate {
         v_mag: f64,
         m: f64,
         t_generator: T,
-        seeder: StdRng
+        seeder: StdRng,
+        id: usize
     ) -> Body {
+        let mut id_str = String::from("m");
+        id_str.push_str(id.to_string().as_str());
         let body = Body {
             pos_vec: nd_vec_from_mag(p_mag, &t_generator, t_f, seeder),
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
-            mass: m
+            mass: m,
+            id: id_str
         };
         // println!("{:?}", body);
         body
@@ -191,7 +195,7 @@ pub mod generate {
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
-        for _ in 0..num_bodies {
+        for id in 0..num_bodies {
 
             push_body_global(
                 gb_from_mags(
@@ -200,7 +204,8 @@ pub mod generate {
                     v_mag_gen.ind_sample(&mut seeder),
                     m_gen.ind_sample(&mut seeder),
                     t_gen,
-                    get_rng(seeder)
+                    get_rng(seeder),
+                    id
                 )
             )
         }
@@ -251,13 +256,7 @@ lazy_static! {
             half_length: MAX_LEN,
             add_queue: Some(Vec::new()),
             // add_queue: None,
-            com: Some(
-                Body {
-                    pos_vec: vec![0.0; DIMS],
-                    vel_vec: vec![0.0; DIMS],
-                    mass: 0.0
-                }
-            )
+            com: None
         }
     );
 

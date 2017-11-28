@@ -179,11 +179,18 @@ impl Region {
                 if den == 0.0 {
                     den = 1.0;
                 }
+<<<<<<< HEAD
                 
                 num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
 
+=======
+                for i in 0..DIMS {
+                    num[i] /= den
+                }
+                let node_id = String::from("o");
+>>>>>>> c9b9cfcbd9b948ebc97f1aaabd4d7c42a8c1940b
                 self.com = Some(Body {pos_vec: num, vel_vec: vec![0.0;
-                    DIMS as usize], mass: den});
+                    DIMS as usize], mass: den, id: node_id});
             }
         }
     }
@@ -198,26 +205,30 @@ mod tests {
         let m1 = Body {
             pos_vec: vec![1.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m1")
         };
 
         let m2 = Body {
             pos_vec: vec![0.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m2")
         };
 
         let m3 = Body {
 
             pos_vec: vec![-3.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m3")
         };
 
         let m4 = Body {
             pos_vec: vec![0.0, 4.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m4")
         };
 
         assert_eq!(m1.squared_dist_to(&m2), 1.0);
@@ -229,13 +240,15 @@ mod tests {
         let m1 = Body {
             pos_vec: vec![1.0; DIMS],
             vel_vec: vec![0.0; DIMS],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m1")
         };
 
         let m2 = Body {
             pos_vec: vec![0.0; DIMS],
             vel_vec: vec![0.0; DIMS],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m1")
         };
 
         // let m3 = Body {
@@ -260,25 +273,29 @@ mod tests {
         let m1 = Body {
             pos_vec: vec![1.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m1")
         };
 
         let m2 = Body {
             pos_vec: vec![0.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m1")
         };
 
         let m3 = Body {
             pos_vec: vec![-3.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m1")
         };
 
         let m4 = Body {
             pos_vec: vec![0.0, 4.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0
+            mass: 0.0,
+            id: String::from("m1")
         };
         // println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
 
@@ -294,7 +311,8 @@ mod tests {
             let body = Body {
                 pos_vec: vec![x; dims],
                 vel_vec: vec![0.0; dims],
-                mass: 0.0
+                mass: 0.0,
+                id: String::from("m1")
             };
 
             let mut node = Region {
@@ -308,7 +326,8 @@ mod tests {
                     Body {
                         pos_vec: vec![0.0; dims],
                         vel_vec: vec![0.0; dims],
-                        mass: 0.0
+                        mass: 0.0,
+                        id: String::from("m1")
                     }
                 )
 
@@ -324,13 +343,15 @@ mod tests {
             let body1 = Body {
                 pos_vec: vec![1.0; dims],
                 vel_vec: vec![0.0; dims],
-                mass: 1.0
+                mass: 1.0,
+                id: String::from("m1")
             };
 
             let body2 = Body {
                 pos_vec: vec![0.0; dims],
                 vel_vec: vec![0.0; dims],
-                mass: 1.0
+                mass: 1.0,
+                id: String::from("m1")
             };
 
             assert_eq!(
@@ -349,13 +370,15 @@ mod tests {
             let body1 = Body {
                 pos_vec: vec![1.0; dims],
                 vel_vec: vec![0.0; dims],
-                mass: 1.0
+                mass: 1.0,
+                id: String::from("m1")
             };
 
             let body2 = Body {
                 pos_vec: vec![0.0; dims],
                 vel_vec: vec![0.0; dims],
-                mass: 1.0
+                mass: 1.0,
+                id: String::from("m1")
             };
 
             let acc = vec![0.0; dims];
