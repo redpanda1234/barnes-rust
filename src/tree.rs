@@ -117,7 +117,8 @@ impl fmt::Display for Region {
                     try!(write!(f, "├─{}", child))
                 }
                 Ok(())
-            }
+            },
+
         }
     }
 }
