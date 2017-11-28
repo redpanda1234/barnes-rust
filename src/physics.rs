@@ -20,22 +20,16 @@ impl Body {
     // position and the passed mass's position to return r^2.
 
     pub fn squared_dist_to(&self, mass: &Body) -> f64 {
-        let mut r_squared: f64 = 0.0;
-        for (qi, pi) in self.pos_vec.iter().zip(&mass.pos_vec) {
-            r_squared += (qi - pi).powi(2);
-        }
-        r_squared
+        self.pos_vec.iter().zip(&mass.pos_vec)
+            .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
 
     // vec_rel gets the displacement vector between the calling mass
     // and some other passed Body.
-
-    pub fn vec_rel(&self, mass: &Body, dims: usize) -> Vec<f64> {
-        let mut vec: Vec<f64> = vec![0.0; dims];
-        for i in 0..dims {
-            vec[i] = mass.pos_vec[i] - self.pos_vec[i];
-        }
-        vec
+    pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
+        self.pos_vec.iter().zip(&mass.pos_vec)
+            .map(|(pi, mi)| mi - pi)
+                .collect::<Vec<f64>>()
     }
 
     // sq_magnitude should really probably just be its own function,
@@ -46,12 +40,8 @@ impl Body {
     // functionally equivalent (but this is slower), because we don't
     // always need to find the displacement vector.
 
-    pub fn sq_magnitude(&self, vec: &Vec<f64>, dims: usize) -> f64 {
-        let mut r_squared: f64 = 0.0;
-        for i in 0..dims {
-            r_squared += vec[i].powi(2)
-        }
-        r_squared
+    pub fn sq_magnitude(&self, vec: &Vec<f64>) -> f64 {
+        vec.iter().fold(0.0,|sum,vi| sum + vi.powi(2))
     }
 
     // is_far calculates a distance metric between the calling mass
@@ -74,42 +64,32 @@ impl Body {
         }
     }
 
-    pub fn get_classical_accel(&self, mass: &Body, dims: usize) -> Vec<f64> {
-        let mut rel = self.vec_rel(mass, dims);
-        let sq_mag = self.sq_magnitude(&rel, dims);
+    pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
+        let mut rel = self.vec_rel(mass);
+        let sq_mag = self.sq_magnitude(&rel);
         // println!("{}, {:#?}", sq_mag, rel);
         let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
         let r = sq_mag.sqrt();
 
-        for i in 0..dims {
-            // TODO: make this work for generic number of dimensions
-            // vec.push(self.pos_vec[i] * acc / r) // pos_vec[i]/r is trig
-            rel[i] *= acc/r;
-        }
-        // println!("{:#?}", rel);
-        rel
+        rel.iter().map(|ri| ri * acc/r).collect::<Vec<f64>>()
     }
 
-    pub fn update_accel(&self, mut acc: Vec<f64>, mass: &Body, dims: usize ) -> Vec<f64> {
-        for (mut acci, ai) in acc.iter_mut().zip(
-            self.get_classical_accel(mass, dims)) {
-            *acci += ai;
-        }
-        acc
+    pub fn update_accel(&self, mut acc: Vec<f64>, mass: &Body) -> Vec<f64> {
+        acc.iter().zip(self.get_classical_accel(mass))
+            .map(|(accSelf, accOther)| accSelf + accOther).collect::<Vec<f64>>()
     }
 
     pub fn get_total_acc(&mut self, node: &mut Region) -> Vec<f64> {
-        let mut acc = vec![0.0; DIMS];
+        let mut acc = vec![0.0; node.reg_vec.iter().len()];
         match node.reg_vec.clone() {
-            None => self.update_accel(acc, &node.com.clone().unwrap(), DIMS),
+            None => self.update_accel(acc, &node.com.clone().unwrap()),
             Some(ref reg_vec) => {
                 if self.is_far(node) {
-                    self.update_accel(acc, &node.com.clone().unwrap(), DIMS)
+                    self.update_accel(acc, &node.com.clone().unwrap())
                 } else {
                     for child in reg_vec.iter() {
                         acc = self.update_accel(
-                            acc, &child.com.clone().unwrap(), DIMS
-                        );
+                            acc, &child.com.clone().unwrap());
                     }
                     acc
                 }
@@ -118,14 +98,13 @@ impl Body {
     }
 
     pub fn update_vel(&mut self) {
-        for (vi, ai) in
-        self.vel_vec.clone().iter_mut().zip(
-            self.get_total_acc(&mut TREE_POINTER.lock().unwrap().clone())
-        ) {
-            *vi += ai*DT
-        }
+        //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
+        self.vel_vec = self.vel_vec.clone().iter_mut().zip(
+            self.get_total_acc(&mut TREE_POINTER.lock().unwrap().clone()))
+            .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
     }
 
+    //TODO: make update_pos use function programming
     pub fn update_pos(&mut self) {
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
             *pi += vi*DT
@@ -167,6 +146,7 @@ impl Region {
                             Some(_) => panic!("cannot update com with masses waiting to be queued!"),
                         };
 
+                        com.update_vel();
                         com.update_pos();
                         self.com = Some(com);
 
@@ -189,18 +169,18 @@ impl Region {
                         Some(ref com) => {
                             let mut com = com.clone();
                             den += com.mass;
-                            for i in 0..DIMS {
-                                num[i] += com.pos_vec[i] * com.mass;
-                            }
+                            //TODO: we shouldn't have to be cloning pos_vec
+                            num = num.iter().zip(com.pos_vec.clone()).map(|(pi, pv)| pi + pv * com.mass)
+                                .collect::<Vec<f64>>();
                         },
                     }
                 }
+                //if we didn't add any masses, make sure we're not dividing by 0
                 if den == 0.0 {
                     den = 1.0;
                 }
-                for i in 0..DIMS {
-                    num[i] /= den
-                }
+                
+                num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
 
                 self.com = Some(Body {pos_vec: num, vel_vec: vec![0.0;
                     DIMS as usize], mass: den});
@@ -271,7 +251,7 @@ mod tests {
         // };
         // println!("m1 rel m2 {:?}", m1.vec_rel(&m2, DIMS));
 
-        assert_eq!(m1.vec_rel(&m2, DIMS), vec![-1.0; DIMS]);
+        assert_eq!(m1.vec_rel(&m2), vec![-1.0; DIMS]);
         // assert_eq!(m3.vec_rel(&m4), vec![7.0].extend(vec![0.0; DIMS-1]));
     }
 
@@ -302,8 +282,8 @@ mod tests {
         };
         // println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
 
-        assert_eq!(m1.sq_magnitude(&m1.vec_rel(&m2, 3), 3), 1.0);
-        assert_eq!(m3.sq_magnitude(&m3.vec_rel(&m4, 3), 3), 25.0);
+        assert_eq!(m1.sq_magnitude(&m1.vec_rel(&m2)), 1.0);
+        assert_eq!(m3.sq_magnitude(&m3.vec_rel(&m4)), 25.0);
     }
 
     #[test]
@@ -322,7 +302,6 @@ mod tests {
                 reg_vec: None,
                 coord_vec: vec![0.0; dims],
                 half_length: 0.5,
-                remove: false, // FIXME: remove?
                 add_queue: None,
                 com:
                 Some(
@@ -356,8 +335,7 @@ mod tests {
 
             assert_eq!(
                 body1.sq_magnitude(
-                    &body1.get_classical_accel(&body2, dims), dims
-                ).sqrt(),
+                    &body1.get_classical_accel(&body2)).sqrt(),
                 ( 6.674 / (1_000_000_000_00.0 * (dims as f64)) )
             );
         }
@@ -382,7 +360,7 @@ mod tests {
 
             let acc = vec![0.0; dims];
             let entry = -1.0 * (6.674 / 1_000_000_000_00.0) / (dims as f64).sqrt() / (dims as f64);
-            assert_eq!(body1.update_accel(acc, &body2, dims), vec![entry; dims]);
+            assert_eq!(body1.update_accel(acc, &body2), vec![entry; dims]);
 
         }
     }
