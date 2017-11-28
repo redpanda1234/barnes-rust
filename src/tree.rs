@@ -30,6 +30,7 @@ pub struct Body {
     pub pos_vec: Vec<f64>,
     pub vel_vec: Vec<f64>,
     pub mass: f64,
+    pub id: String,
 }
 
 /*
@@ -92,12 +93,33 @@ pub struct Region {
 
 // tree building characters. TODO: implement tree-style printing
 // ├ └ ─ │
+use std::fmt;
+impl fmt::Display for Body {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.id)
+    }
+}
 
-// impl fmt::Display for Region {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "({}, {})",  )
-//     }
-// }
+impl fmt::Display for Region {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.reg_vec.clone() {
+
+            None => {
+                match self.com.clone() {
+                    None => write!(f, ""),
+                    Some(com) => write!(f, "\n├──{}\n", com)
+                }
+            },
+
+            Some(ref mut reg_vec) => {
+                for child in self.reg_vec.clone().unwrap().iter() {
+                    try!(write!(f, "│\n│─{}\n", child))
+                }
+                Ok(())
+            }
+        }
+    }
+}
 
 // Let's implement methods on REgion!
 impl Region {

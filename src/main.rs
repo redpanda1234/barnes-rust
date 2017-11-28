@@ -40,13 +40,13 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    generate::gt_all_ranges(5, seeder);
+    generate::gt_all_ranges(10, seeder);
 
     println!("done generating");
 
     for _ in 0..NUMSTEPS {
         let printme = TREE_POINTER.lock().unwrap().clone();
-        println!{"printing printme {:#?}", printme};
+        println!{"printing printme \n{}\n\n\n\n\n\n", printme};
         TREE_POINTER.lock().unwrap().update();
     }
     println!("done.");
