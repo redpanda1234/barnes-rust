@@ -179,9 +179,16 @@ impl Region {
                 if den == 0.0 {
                     den = 1.0;
                 }
+<<<<<<< HEAD
                 
                 num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
 
+=======
+
+                num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
+
+                let node_id = String::from("o");
+>>>>>>> 8bd2c0a7fd7df47c53e285ea97567f49bb2fa862
                 self.com = Some(Body {pos_vec: num, vel_vec: vec![0.0;
                     DIMS as usize], mass: den, id: node_id});
             }
