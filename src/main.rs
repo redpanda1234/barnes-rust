@@ -44,10 +44,13 @@ fn main() {
 
     println!("done generating");
 
+    unsafe {
     for _ in 0..NUMSTEPS {
         let printme = TREE_POINTER.lock().unwrap().clone();
         println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
-        TREE_POINTER.lock().unwrap().update();
+        TREE_POINTER.lock().unwrap().clone().update_com();
+        TREE_POINTER.lock().unwrap().clone().update();
+    }
     }
     println!("done.");
 }

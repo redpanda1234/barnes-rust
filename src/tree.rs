@@ -153,6 +153,7 @@ impl Region {
     // update does two jobs at once. It recursively pushes masses from
     // add queues
     pub fn update(&mut self) -> i32 {
+        println!("called update");
 
         // println!("updating {:?}", self);
         // println!("helooooo");
