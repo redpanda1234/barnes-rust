@@ -154,7 +154,7 @@ impl Region {
         println!("called update");
 
         // println!("updating {:?}", self);
-        // println!("helooooo");
+        println!("helooooo");
 
         // First check whether the calling region has any child
         // regions. This will determine how we handle our updating.

@@ -55,5 +55,6 @@ fn main() {
         TREE_POINTER.lock().unwrap().tree = tree;
     }
     }
+
     println!("done.");
 }

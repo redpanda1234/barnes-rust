@@ -107,6 +107,7 @@ impl Body {
     }
 
     pub fn update_vel(&mut self) {
+        // println!("aaaaa");
         //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
         //TODO: tree should be a reference so we don't have to copy it every time
         println!("updating vel");
@@ -114,6 +115,7 @@ impl Body {
         self.vel_vec = self.vel_vec.clone().iter_mut().zip(
             self.get_total_acc(&mut tree))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
+        println!("udpated acc");
     }
 
     //TODO: make update_pos use functional programming
@@ -214,12 +216,11 @@ impl Region {
                             None => (),
                             Some(_) => panic!("cannot update com with masses waiting to be queued!"),
                         };
-
+                        println!("updating vel and pos");
                         com.update_vel();
                         //I believe we shouldn't be updating position yet:
                         //com.update_pos();
                         self.com = Some(com);
-
                     },
                 }
             },
