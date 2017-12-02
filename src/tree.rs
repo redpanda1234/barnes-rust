@@ -155,7 +155,7 @@ impl Region {
     pub fn update(&mut self) -> i32 {
 
         // println!("updating {:?}", self);
-        // println!("helooooo");
+        println!("helooooo");
 
         // First check whether the calling region has any child
         // regions. This will determine how we handle our updating.
@@ -222,8 +222,8 @@ impl Region {
                             // the number of submasses contained.
 
                             Some(mut com) => {
-                                self.com = None;
                                 queue.push(com);
+                                self.com = None;
                                 self.add_queue = Some(queue);
                                 self.recurse(true)
                             },

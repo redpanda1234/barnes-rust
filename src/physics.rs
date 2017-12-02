@@ -80,6 +80,7 @@ impl Body {
     }
 
     pub fn get_total_acc(&mut self, node: &mut Region) -> Vec<f64> {
+        // println!("updating total acc");
         let mut acc = vec![0.0; node.reg_vec.iter().len()];
         match node.reg_vec.clone() {
             None => self.update_accel(acc, &node.com.clone().unwrap()),
@@ -98,13 +99,15 @@ impl Body {
     }
 
     pub fn update_vel(&mut self) {
+        // println!("aaaaa");
         //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
         self.vel_vec = self.vel_vec.clone().iter_mut().zip(
             self.get_total_acc(&mut TREE_POINTER.lock().unwrap().clone()))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
+        println!("udpated acc");
     }
 
-    //TODO: make update_pos use function programming
+    //TODO: make update_pos use functional programming
     pub fn update_pos(&mut self) {
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
             *pi += vi*DT
@@ -145,11 +148,11 @@ impl Region {
                             None => (),
                             Some(_) => panic!("cannot update com with masses waiting to be queued!"),
                         };
-
+                        println!("updating vel and pos");
                         com.update_vel();
+                        println!("updated vel");
                         com.update_pos();
                         self.com = Some(com);
-
                     },
                 }
             },
