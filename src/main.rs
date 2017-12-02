@@ -44,13 +44,14 @@ fn main() {
 
     println!("done generating");
 
-    for i in 0..NUMSTEPS {
-        println!("looping, {}", i);
-        // let printme = TREE_POINTER.lock().unwrap().clone();
-        // println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
-        let wheee = TREE_POINTER.lock().unwrap().clone();
-        wheee.update();
-        TREE_POINTER = Mutex::new(TREE_POINTER.into_inner().update());
+    unsafe {
+        for _ in 0..NUMSTEPS {
+            let printme = TREE_POINTER.lock().unwrap().clone();
+            println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
+            TREE_POINTER.lock().unwrap().clone().update_com();
+            TREE_POINTER.lock().unwrap().clone().update();
+        }
     }
+
     println!("done.");
 }

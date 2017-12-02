@@ -109,8 +109,10 @@ impl Body {
 
     //TODO: make update_pos use functional programming
     pub fn update_pos(&mut self) {
+        println!("updating pos");
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
-            *pi += vi*DT
+            //*pi += vi*DT
+            *pi = 0.0;
         }
     }
 }
