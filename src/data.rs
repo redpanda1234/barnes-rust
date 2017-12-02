@@ -19,6 +19,10 @@ pub const MAX_LEN: f64 = 1_000.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
+pub struct TreeWrapper {
+    pub tree: Region
+}
+
 // TODO: make our organization here more intelligent. Should probably
 // offload most statics  to their own dedicated module, along with
 // static generation. Maybe data.rs?
@@ -212,25 +216,23 @@ pub mod generate {
     }
 
     fn push_body_global(body: Body) {
-        let match_me = TREE_POINTER.lock().unwrap().add_queue.clone();
-        match match_me {
+        let ref match_me = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
+        match *match_me {
 
             None => {
                 let mut add_me  = Vec::new();
-                add_me.push(
-                    body
-                );
+                add_me.push(body);
 
-                TREE_POINTER.lock().unwrap().add_queue = Some(add_me);
+                TREE_POINTER.lock().unwrap().tree.add_queue = Some(add_me);
                 println!("Tree pointer was None, is now {:#?}",
-                TREE_POINTER.lock().unwrap().clone().add_queue);
+                TREE_POINTER.lock().unwrap().tree.add_queue);
             },
 
             Some(_) => {
                 let mut queue =
-                    TREE_POINTER.lock().unwrap().add_queue.clone().unwrap();
+                    TREE_POINTER.lock().unwrap().tree.add_queue.clone().unwrap();
                 queue.push(body);
-                TREE_POINTER.lock().unwrap().add_queue = Some(queue);
+                TREE_POINTER.lock().unwrap().tree.add_queue = Some(queue);
             }
         }
     }
@@ -249,14 +251,18 @@ lazy_static! {
     // allow us to handle the add_queue and reg_vec separately, which
     // will improve computation times.
 
-    pub static ref TREE_POINTER: Mutex<Region> = Mutex::new(
-        Region {
-            reg_vec: None,
-            coord_vec: vec![0.0; DIMS],
-            half_length: MAX_LEN,
-            add_queue: Some(Vec::new()),
-            // add_queue: None,
-            com: None
+
+
+    //Stores a TreeWrapper that holds the global tree
+    pub static ref TREE_POINTER: Mutex<TreeWrapper> = Mutex::new(
+        TreeWrapper {
+            tree: Region {
+                    reg_vec: None,
+                    coord_vec: vec![0.0; DIMS],
+                    half_length: MAX_LEN,
+                    add_queue: Some(Vec::new()),
+                    com: None
+                  }
         }
     );
 

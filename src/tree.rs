@@ -71,13 +71,11 @@ pub struct Body {
 
 // ******** TODO / TOFIX ********
 // + calculate distance metric in parent node
-// + store at most one mass in the
 // + create better implementations for generic-dimensional spaces
 // + implement dropping of dead branches
 // + collisions
 //   - really really close bodies merge, but add a bonding energy
 //     term to maintain conservation of energy
-// + make com no longer an option enum
 // + reimplement contains method by constructing indices using our
 //   binary string construction method on the global multiplier array.
  */
@@ -183,18 +181,11 @@ impl Region {
 
                 match self.add_queue.clone() {
 
-                    // If the add queue is empty, we still need to
-                    // update the single body that's in the
-                    // calling region, which will just be
-                    // self.com
-
                     None => {
+                        println!("nothing to add");
                         match self.com.clone() {
                             None => 0,
-                            Some(_) => {
-                                self.update_com();
-                                1
-                            }
+                            Some(_) => 1
                         }
                     },
 
@@ -202,19 +193,13 @@ impl Region {
                     // to handle ingesting of the masses.
 
                     Some(mut queue) => {
+                        println!("adding something");
 
                         match self.com.clone() {
 
-                            // This doesn't make a great deal of
-                            // sense. In fact, I think it makes no
-                            // sense. We need to recurse down the
-                            // tree if we have a com that doesn't
-                            // need removing, and update the
-                            // calling region's com accordingly.
-                            // Here's a possibly bug-filled
-                            // implementation.
-
-                            None => self.recurse(true),
+                            None => {
+                               self.recurse(true)
+                            },
 
                             // If we have a current com, we push
                             // it into the queue (because we're
@@ -223,8 +208,8 @@ impl Region {
                             // the number of submasses contained.
 
                             Some(mut com) => {
-                                self.com = None;
                                 queue.push(com);
+                                self.com = None;
                                 self.add_queue = Some(queue);
                                 self.recurse(true)
                             },
@@ -252,7 +237,7 @@ impl Region {
                     // at the child regions.
 
                     None => {
-                        // println!("updating children");
+                        println!("updating children");
                         let mut return_me = 0;
                         // TODO: before and after check here.
                         for reg in reg_vec.iter_mut() {
@@ -265,8 +250,8 @@ impl Region {
 
                     Some(_) => {
                         // for some reason, this case is never
-                        // reached.
-                        // println!("injectiong bodies into child regions");
+                        // reached. (or is it?)
+                        println!("injecting bodies into child regions");
                         // recurse on false because we don't need to
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
@@ -405,7 +390,7 @@ impl Region {
     }
 
     pub fn push_masses_to_children(&mut self) {
-        // println!("\n\n\npushing masses to children \n {:#?}", self);
+        println!("pushing masses to children");
         // FIXME: do this actually properly.
 
         // we clone the queue so that we can pop masses out of it
@@ -468,5 +453,8 @@ impl Region {
                 self.reg_vec = Some(reg_vec);
             }
         }
+
+        //empty the add queue
+        self.add_queue = None;
     }
 }

@@ -48,20 +48,18 @@ impl Body {
     // (which really should only ever be the com of a leaf node in the
     // tree) and a passed region.
 
-    pub fn is_far(&self, node: &mut Region) -> bool {
+    pub fn is_far(&self, node: &Region) -> bool {
         // this makes me think we should store full-length instead of
         // half-length FIXME
-        match node.com.clone() {
-            // FIXME: make sure this doesn't allow infinite loops;
-            // i.e. that node.com will only be none if there's stuff
-            // in the region_vec or add_queue.
-            None => {node.update_com(); self.is_far(node)},
-            Some(_com) => {
-                ( 2.0 * node.half_length /
-                  self.squared_dist_to(&node.com.clone().unwrap()) )
-                    <= THETA
-            }
-        }
+        // FIXME: make sure this doesn't allow infinite loops;
+        // i.e. that node.com will only be none if there's stuff
+        // in the region_vec or add_queue.
+
+        //Note: nodes are now guaranteed to have valid com when this is called
+            ( 2.0 * node.half_length /
+                self.squared_dist_to(&node.com.clone().unwrap()) )
+                <= THETA
+        
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
@@ -76,20 +74,31 @@ impl Body {
 
     pub fn update_accel(&self, mut acc: Vec<f64>, mass: &Body) -> Vec<f64> {
         acc.iter().zip(self.get_classical_accel(mass))
-            .map(|(accSelf, accOther)| accSelf + accOther).collect::<Vec<f64>>()
+            .map(|(acc_self, acc_other)| acc_self + acc_other).collect::<Vec<f64>>()
     }
 
-    pub fn get_total_acc(&mut self, node: &mut Region) -> Vec<f64> {
+    pub fn get_total_acc(&mut self, node: &Region) -> Vec<f64> {
         let mut acc = vec![0.0; node.reg_vec.iter().len()];
+        //check to see if we have child nodes
+        println!("updating acceleration");
         match node.reg_vec.clone() {
-            None => self.update_accel(acc, &node.com.clone().unwrap()),
+            //if this is a leaf, find the acceleration between us and its com
+            None => {
+                match node.com {
+                    None => acc,
+                    Some(ref com) => self.update_accel(acc, com)
+                }
+            }
+            //if this node has children, find the acceleration from each of them
             Some(ref reg_vec) => {
                 if self.is_far(node) {
-                    self.update_accel(acc, &node.com.clone().unwrap())
+                    match node.com {
+                        None => acc,
+                        Some(ref com) => self.update_accel(acc, com)
+                    }
                 } else {
                     for child in reg_vec.iter() {
-                        acc = self.update_accel(
-                            acc, &child.com.clone().unwrap());
+                        acc = self.get_total_acc(&child);
                     }
                     acc
                 }
@@ -99,12 +108,15 @@ impl Body {
 
     pub fn update_vel(&mut self) {
         //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
+        //TODO: tree should be a reference so we don't have to copy it every time
+        println!("updating vel");
+        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         self.vel_vec = self.vel_vec.clone().iter_mut().zip(
-            self.get_total_acc(&mut TREE_POINTER.lock().unwrap().clone()))
+            self.get_total_acc(&mut tree))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
     }
 
-    //TODO: make update_pos use function programming
+    //TODO: make update_pos use functional programming
     pub fn update_pos(&mut self) {
         println!("updating pos");
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
@@ -116,12 +128,66 @@ impl Body {
 
 impl Region {
 
+    // Recursively update the accelerations and velocities of masses
+    pub fn deep_update_vel(&mut self) {
+        println!("deep updating vel");
+        match self.reg_vec {
+            //if we're at the leaf node, call update_vel if we have a mass
+            None => {
+                match self.com {
+                    None => (),
+                    Some(ref mut com) => {
+                        com.update_vel();
+                        //TODO: find out if it's actually necessary to re-wrap this
+                        //self.com = Some(*com);
+                    }
+                }
+            },
+            //if we have children, call recursively
+            Some(ref mut reg_vec) => {
+                for mut child in reg_vec {
+                    child.deep_update_vel();
+                }
+                //TODO: we REALLY need to find out if this is necessary
+                //self.reg_vec = Some(*reg_vec);
+            }
+        }
+    }
+
+    // Recursively update the postions of masses
+    pub fn deep_update_pos(&mut self) {
+        println!("deep updating pos");
+        match self.reg_vec.clone() {
+            //if we're at the leaf node, call update_pos if we have a mass
+            None => {
+                match self.com {
+                    None => (),
+                    Some(ref mut com) => {
+                        com.update_pos();
+                        //TODO: find out if it's actually necessary to re-wrap this
+                        //self.com = Some(*com);
+                    }
+                }
+            },
+            //if we have children, call recursively
+            Some(ref mut reg_vec) => {
+                for mut child in reg_vec {
+                    child.deep_update_pos();
+                }
+                //TODO: we REALLY need to find out whether this is necessary
+                //self.reg_vec = Some(*reg_vec);
+                self.update_com();
+            }
+        }
+    }
+
     pub fn update_com(&mut self) {
+        println!("called update_com");
 
         // we check whether we have child regions to determine whether
         // or not we're in a leaf node. If we are, we should just
-        // update the com (assuming there is one), else we should
-        // recurse into child regions and update those.
+        // update the com (assuming there is one)
+        // otherwise, update based on the coms of the children
 
         match self.reg_vec {
 
@@ -135,7 +201,8 @@ impl Region {
 
                 match self.com.clone() {
 
-                    None => println!("superfluous (?) call to update_com. change line 153 in physics.rs to panic! and use backtrace to see where."),
+                    None => println!("superfluous (?) call to update_com. 
+                        change this line in physics.rs to panic! and use backtrace to see where."),
 
                     Some(mut com) => {
 
@@ -149,15 +216,13 @@ impl Region {
                         };
 
                         com.update_vel();
-                        com.update_pos();
+                        //I believe we shouldn't be updating position yet:
+                        //com.update_pos();
                         self.com = Some(com);
 
                     },
                 }
             },
-
-            // This assumes we've pruned dead children, which we
-            // haven't quite done yet.
 
             Some(ref mut reg_vec) => {
                 println!("I see dead children");
@@ -165,7 +230,6 @@ impl Region {
                 let mut den = 0.0;
 
                 for child in reg_vec.iter_mut() {
-                    child.update_com();
                     match child.com {
                         None => continue,
                         Some(ref com) => {
