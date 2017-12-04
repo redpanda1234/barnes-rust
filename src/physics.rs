@@ -29,7 +29,7 @@ impl Body {
     pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
         self.pos_vec.iter().zip(&mass.pos_vec)
             .map(|(pi, mi)| mi - pi)
-                .collect::<Vec<f64>>()
+            .collect::<Vec<f64>>()
     }
 
     // sq_magnitude should really probably just be its own function,
@@ -56,9 +56,9 @@ impl Body {
         // in the region_vec or add_queue.
 
         //Note: nodes are now guaranteed to have valid com when this is called
-            ( 2.0 * node.half_length /
-                self.squared_dist_to(&node.com.clone().unwrap()) )
-                <= THETA
+        ( 2.0 * node.half_length /
+          self.squared_dist_to(&node.com.clone().unwrap()) )
+            <= THETA
 
     }
 
@@ -79,8 +79,8 @@ impl Body {
 
     pub fn get_total_acc(&mut self, mut node: &mut Region) -> Vec<f64> {
         let mut acc = vec![0.0; node.reg_vec.iter().len()];
-        //check to see if we have child nodes
-        println!("updating acceleration");
+        // check to see if we have child nodes
+        // println!("updating acceleration");
         match node.reg_vec.clone() {
             //if this is a leaf, find the acceleration between us and its com
             None => {
@@ -118,17 +118,17 @@ impl Body {
         // println!("aaaaa");
         //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
         //TODO: tree should be a reference so we don't have to copy it every time
-        println!("updating vel");
+        // println!("updating vel");
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         self.vel_vec = self.vel_vec.clone().iter_mut().zip(
             self.get_total_acc(&mut tree))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
-        println!("udpated acc");
+        // println!("udpated acc");
     }
 
     //TODO: make update_pos use functional programming
     pub fn update_pos(&mut self) {
-        println!("updating pos");
+        // println!("updating pos");
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
             //*pi += vi*DT
             *pi = 0.0;
@@ -140,7 +140,7 @@ impl Region {
 
     // Recursively update the accelerations and velocities of masses
     pub fn deep_update_vel(&mut self) {
-        println!("deep updating vel");
+        // println!("deep updating vel");
         match self.reg_vec {
             //if we're at the leaf node, call update_vel if we have a mass
             None => {
@@ -166,7 +166,7 @@ impl Region {
 
     // Recursively update the postions of masses
     pub fn deep_update_pos(&mut self) {
-        println!("deep updating pos");
+        // println!("deep updating pos");
         match self.reg_vec.clone() {
             //if we're at the leaf node, call update_pos if we have a mass
             None => {
@@ -192,7 +192,7 @@ impl Region {
     }
 
     pub fn update_com(&mut self) {
-        println!("called update_com");
+        // println!("called update_com");
 
         // we check whether we have child regions to determine whether
         // or not we're in a leaf node. If we are, we should just
@@ -224,7 +224,7 @@ impl Region {
                             None => (),
                             Some(_) => panic!("cannot update com with masses waiting to be queued!"),
                         };
-                        println!("updating vel and pos");
+                        // println!("updating vel and pos");
                         com.update_vel();
                         //I believe we shouldn't be updating position yet:
                         //com.update_pos();
@@ -234,7 +234,7 @@ impl Region {
             },
 
             Some(ref mut reg_vec) => {
-                println!("I see dead children");
+                // println!("I see dead children");
                 let mut num = vec![0.0; DIMS as usize];
                 let mut den = 0.0;
 
@@ -259,7 +259,7 @@ impl Region {
 
                 let node_id = String::from("o");
                 self.com = Some(Body {pos_vec: num, vel_vec: vec![0.0;
-                    DIMS as usize], mass: den, id: node_id});
+                                                                  DIMS as usize], mass: den, id: node_id});
             }
         }
     }

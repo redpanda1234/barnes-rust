@@ -26,7 +26,7 @@ pub use data::*;
 pub use tree::*;
 pub use physics::*;
 
-static NUMSTEPS: usize = 2;
+static NUMSTEPS: usize = 1000;
 
 fn main() {
 
@@ -44,17 +44,17 @@ fn main() {
 
     println!("done generating");
 
-    unsafe {
-    for _ in 0..NUMSTEPS {
-        let printme = TREE_POINTER.lock().unwrap().tree.clone();
-        println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
-        tree.update();
-        tree.deep_update_vel();
-        tree.deep_update_pos();
-        TREE_POINTER.lock().unwrap().tree = tree;
-    }
-    }
+    // unsafe {
+        for _ in 0..NUMSTEPS {
+            // let printme = TREE_POINTER.lock().unwrap().tree.clone();
+            // println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
+            let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+            tree.update();
+            tree.deep_update_vel();
+            tree.deep_update_pos();
+            TREE_POINTER.lock().unwrap().tree = tree;
+        }
+    // }
 
     println!("done.");
 }

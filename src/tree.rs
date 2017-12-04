@@ -151,10 +151,10 @@ impl Region {
     // update does two jobs at once. It recursively pushes masses from
     // add queues
     pub fn update(&mut self) -> i32 {
-        println!("called update");
+        // println!("called update");
 
         // println!("updating {:?}", self);
-        println!("helooooo");
+        // println!("helooooo");
 
         // First check whether the calling region has any child
         // regions. This will determine how we handle our updating.
@@ -182,7 +182,7 @@ impl Region {
                 match self.add_queue.clone() {
 
                     None => {
-                        println!("nothing to add");
+                        // println!("nothing to add");
                         match self.com.clone() {
                             None => 0,
                             Some(_) => 1
@@ -193,12 +193,12 @@ impl Region {
                     // to handle ingesting of the masses.
 
                     Some(mut queue) => {
-                        println!("adding something");
+                        // println!("adding something");
 
                         match self.com.clone() {
 
                             None => {
-                               self.recurse(true)
+                                self.recurse(true)
                             },
 
                             // If we have a current com, we push
@@ -237,7 +237,7 @@ impl Region {
                     // at the child regions.
 
                     None => {
-                        println!("updating children");
+                        // println!("updating children");
                         let mut return_me = 0;
                         // TODO: before and after check here.
                         for reg in reg_vec.iter_mut() {
@@ -251,7 +251,7 @@ impl Region {
                     Some(_) => {
                         // for some reason, this case is never
                         // reached. (or is it?)
-                        println!("injecting bodies into child regions");
+                        // println!("injecting bodies into child regions");
                         // recurse on false because we don't need to
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
@@ -390,7 +390,7 @@ impl Region {
     }
 
     pub fn push_masses_to_children(&mut self) {
-        println!("pushing masses to children");
+        // println!("pushing masses to children");
         // FIXME: do this actually properly.
 
         // we clone the queue so that we can pop masses out of it
