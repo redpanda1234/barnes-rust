@@ -63,7 +63,7 @@ impl Body {
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
-        let mut rel = self.vec_rel(mass);
+        let rel = self.vec_rel(mass);
         let sq_mag = self.sq_magnitude(&rel);
         // println!("{}, {:#?}", sq_mag, rel);
         let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
@@ -96,7 +96,7 @@ impl Body {
                         node.update_com();
                         self.get_total_acc(&mut node)
                     }
-                    Some(ref com) => {
+                    Some(_) => {
                         if self.is_far(node) {
                             match node.com {
                                 None => acc,
@@ -130,8 +130,8 @@ impl Body {
     pub fn update_pos(&mut self) {
         // println!("updating pos");
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
-            //*pi += vi*DT
-            *pi = 0.0;
+            *pi += vi*DT
+            //*pi = 0.0;
         }
     }
 }

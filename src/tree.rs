@@ -109,7 +109,7 @@ impl fmt::Display for Region {
                 }
             },
 
-            Some(ref mut reg_vec) => {
+            Some(_) => {
                 write!(f,"──o\n    ");
                 for child in self.reg_vec.clone().unwrap().iter() {
                     try!(write!(f, "├─{}", child))

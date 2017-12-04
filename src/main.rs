@@ -46,8 +46,8 @@ fn main() {
 
     // unsafe {
         for _ in 0..NUMSTEPS {
-            // let printme = TREE_POINTER.lock().unwrap().tree.clone();
-            // println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
+            let printme = TREE_POINTER.lock().unwrap().tree.clone();
+            println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
             let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
             tree.update();
             tree.deep_update_vel();
