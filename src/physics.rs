@@ -59,7 +59,7 @@ impl Body {
             ( 2.0 * node.half_length /
                 self.squared_dist_to(&node.com.clone().unwrap()) )
                 <= THETA
-        
+
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
@@ -72,12 +72,12 @@ impl Body {
         rel.iter().map(|ri| ri * acc/r).collect::<Vec<f64>>()
     }
 
-    pub fn update_accel(&self, mut acc: Vec<f64>, mass: &Body) -> Vec<f64> {
+    pub fn update_accel(&self, acc: Vec<f64>, mass: &Body) -> Vec<f64> {
         acc.iter().zip(self.get_classical_accel(mass))
             .map(|(acc_self, acc_other)| acc_self + acc_other).collect::<Vec<f64>>()
     }
 
-    pub fn get_total_acc(&mut self, node: &Region) -> Vec<f64> {
+    pub fn get_total_acc(&mut self, mut node: &mut Region) -> Vec<f64> {
         let mut acc = vec![0.0; node.reg_vec.iter().len()];
         //check to see if we have child nodes
         println!("updating acceleration");
@@ -90,17 +90,25 @@ impl Body {
                 }
             }
             //if this node has children, find the acceleration from each of them
-            Some(ref reg_vec) => {
-                if self.is_far(node) {
-                    match node.com {
-                        None => acc,
-                        Some(ref com) => self.update_accel(acc, com)
+            Some(ref mut reg_vec) => {
+                match node.com {
+                    None => {
+                        node.update_com();
+                        self.get_total_acc(&mut node)
                     }
-                } else {
-                    for child in reg_vec.iter() {
-                        acc = self.get_total_acc(&child);
+                    Some(ref com) => {
+                        if self.is_far(node) {
+                            match node.com {
+                                None => acc,
+                                Some(ref com) => self.update_accel(acc, com)
+                            }
+                        } else {
+                            for mut child in reg_vec.iter_mut() {
+                                acc = self.get_total_acc(&mut child);
+                            }
+                            acc
+                        }
                     }
-                    acc
                 }
             }
         }
@@ -203,7 +211,7 @@ impl Region {
 
                 match self.com.clone() {
 
-                    None => println!("superfluous (?) call to update_com. 
+                    None => println!("superfluous (?) call to update_com.
                         change this line in physics.rs to panic! and use backtrace to see where."),
 
                     Some(mut com) => {
