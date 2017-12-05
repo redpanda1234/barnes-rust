@@ -45,15 +45,17 @@ fn main() {
     println!("done generating");
 
     // unsafe {
-        for _ in 0..NUMSTEPS {
             let printme = TREE_POINTER.lock().unwrap().tree.clone();
             println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
+        for _ in 0..NUMSTEPS {
             let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
             tree.update();
-            tree.deep_update_vel();
+            //tree.deep_update_vel();
             tree.deep_update_pos();
             TREE_POINTER.lock().unwrap().tree = tree;
         }
+            let printme = TREE_POINTER.lock().unwrap().tree.clone();
+            println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
     // }
 
     println!("done.");
