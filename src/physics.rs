@@ -69,7 +69,27 @@ impl<'a> Body<'a> {
         let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
         let r = sq_mag.sqrt();
 
+        //if the distance is 0, just return 0
+        if(r == 0) {
+            return vec![0.0; vec_rel.length()];
+        }
+
         rel.iter().map(|ri| ri * acc/r).collect::<Vec<f64>>()
+    }
+
+    pub fn get_classical_potential(&self, mass: &Body) -> Vec<f64> {
+        let rel = self.vec_rel(mass);
+        let sq_mag = self.sq_magnitude(&rel);
+        // println!("{}, {:#?}", sq_mag, rel);
+        let r = sq_mag.sqrt();
+        let pot = mass.mass * (6.674 / (1_000_000_000_00.0)) / r;
+
+        //if the distance is 0, just return 0
+        if(r == 0) {
+            return vec![0.0; vec_rel.length()];
+        }
+
+        rel.iter().map(|ri| ri * pot/r).collect::<Vec<f64>>()
     }
 
     pub fn update_accel(&self, acc: Vec<f64>, mass: &Body) -> Vec<f64> {
@@ -480,4 +500,59 @@ mod tests {
 
     }
 
+}
+
+mod analysis {
+    use super::*;
+
+    /* 
+    Function to get the distribution of the radii of particles 
+    in the simulation.
+    This assumes a force center at the origin.
+    It would be easy to modify to give the distances from some other point,
+    but this is probably unnecessary.
+    */
+    fn radial_distribution() {
+        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let masses = tree.list_masses();
+        let distances = masses.into_iter().map(|m| m.pos_vec.sq_magnitude());
+
+        //then we can print/graph the distance distributions
+
+    }
+
+    /*
+    Finds the total (nonrelativistic) kinetic energy of particles.
+    */
+    fn kinetic_energy() {
+        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let masses = tree.list_masses();
+        let energies = masses.into_iter().map(|m| 
+                            0.5*m.mass*m.vel_vec.sq_magnitude())
+                            .collect::<Vec<f64>>();
+
+        //we could do something with the energy distribution, but for now we'll
+        //just print the total kinetic energy
+
+        let total_energy = energies.iter()
+                                .fold(0.0,|m,sum| m + sum);
+
+    }
+
+    /*
+    Function to find the exact gravitational potential energy.
+    Note that this doesn't make the same approximation as
+    the acceleration calculations.
+    TODO: add an option to calculate with this approximation, both for faster
+        calculation and more consistent results
+    */
+    fn potential_energy() {
+        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let masses = tree.list_masses();
+
+        let potential_energies = masses.iter()
+                                    .zip(masses.clone().iter())
+                                    .map(|m1, m2| m1.get_classical_potential(m2));
+    }
+    
 }

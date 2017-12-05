@@ -460,4 +460,24 @@ impl<'a> Region<'a> {
         //empty the add queue
         self.add_queue = None;
     }
+
+    fn list_masses(&self) -> Vec<Body> {
+
+        match self.reg_vec.clone() {
+            None => {
+                match self.com.clone {
+                    None => vec![],
+                    Some(ref mut com) => vec![self.com]
+                }
+            },
+            Some(ref reg_vec) {
+                let mut result = vec![];
+                for mut child in reg_vec {
+                    result.append(child.list_masses());
+                }
+                result
+            }
+        }
+
+    }
 }
