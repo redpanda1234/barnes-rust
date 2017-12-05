@@ -15,7 +15,7 @@ pub struct Frame {
     gl: GlGraphics, // OpenGL backend for drawing
     tree: Region // the tree we're gonna be drawing
 }
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Pixel {
     gl: GlGraphics,
     normalized_coords: Vec<f64>

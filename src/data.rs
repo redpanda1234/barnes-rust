@@ -174,7 +174,7 @@ pub mod generate {
         t_generator: T,
         seeder: StdRng,
         id: usize
-    ) -> Body {
+    ) -> Body<'a> {
         let pos_vec = nd_vec_from_mag(p_mag, &t_generator, t_f, seeder);
         let normalized_vec = pos_vec.iter_mut().map(|n| *n * 1080.0 / MAX_LEN).collect::<Vec<f64>>();
         let mut id_str = String::from("m");
@@ -184,7 +184,7 @@ pub mod generate {
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
             mass: m,
             id: id_str,
-            pixel: Some(Omg::new_pixel(normalized_vec))
+            pixel: Some(&'a Omg::new_pixel(normalized_vec))
         };
         // println!("{:?}", body);
         body

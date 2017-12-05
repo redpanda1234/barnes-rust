@@ -27,12 +27,12 @@ use super::gfx::{ Pixel };
 
 // todo: temporarily implement an ID
 #[derive(Clone, Debug)]
-pub struct Body {
+pub struct Body<'a> {
     pub pos_vec: Vec<f64>,
     pub vel_vec: Vec<f64>,
     pub mass: f64,
     pub id: String,
-    pub pixel: Option<Pixel>
+    pub pixel: Option<&'a Pixel>
 }
 
 /*
@@ -41,6 +41,7 @@ pub struct Body {
 // option enums --- FIXME: refactor to make this not be the case.
 // reg_vec is an optional vector of child regions --- if we're at a
 // leaf in the tree, then this will be None, else we'll have a Some
+
 // containing a vector of references to child regions.
 
 // coord_vec is going to be a vector of floats describing the position
@@ -87,14 +88,14 @@ pub struct Region {
     pub reg_vec: Option<Vec<Region>>,
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
-    pub add_queue: Option<Vec<Body>>,
-    pub com: Option<Body>
+    pub add_queue: Option<Vec<Body<'a>>>,
+    pub com: Option<Body<'a>>
 }
 
 // tree building characters. TODO: implement tree-style printing
 // ├ └ ─ │
 use std::fmt;
-impl fmt::Display for Body {
+impl fmt::Display for Body<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.id)
     }
