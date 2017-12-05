@@ -157,11 +157,12 @@ impl<'a> Region<'a> {
             },
             //if we have children, call recursively
             Some(ref mut reg_vec) => {
+                let mut temp = vec![];
                 for mut child in reg_vec {
                     child.deep_update_vel();
+                    temp.push(child.clone());
                 }
-                //TODO: we REALLY need to find out if this is necessary
-                //self.reg_vec = Some(*reg_vec);
+                self.reg_vec = Some(temp);
             }
         }
     }
@@ -189,8 +190,6 @@ impl<'a> Region<'a> {
                     temp.push(child.clone());
                 }
                 self.reg_vec = Some(temp);
-                //TODO: we REALLY need to find out whether this is necessary
-                //self.reg_vec = Some(*reg_vec);
                 self.update_com();
             }
         };

@@ -184,7 +184,7 @@ pub mod generate {
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
             mass: m,
             id: id_str,
-            pixel: Some(&'a Omg::new_pixel(normalized_vec))
+            pixel: Some(& Omg::new_pixel(normalized_vec))
         };
         // println!("{:?}", body);
         body
@@ -258,8 +258,8 @@ lazy_static! {
 
 
     //Stores a TreeWrapper that holds the global tree
-    pub static ref TREE_POINTER: Mutex<TreeWrapper<'z,'a>> = Mutex::new(
-        TreeWrappe {
+    pub static ref TREE_POINTER: Mutex<TreeWrapper><'a> = Mutex::new(
+        TreeWrapper {
             tree: Region {
                 reg_vec: None,
                 coord_vec: vec![0.0; DIMS],
