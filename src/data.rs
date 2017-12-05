@@ -19,8 +19,8 @@ pub const MAX_LEN: f64 = 1_000.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
-pub struct TreeWrapper {
-    pub tree: Region
+pub struct TreeWrapper<'z, 'a> {
+    pub tree: Region<'a>
 }
 
 // TODO: make our organization here more intelligent. Should probably
@@ -166,7 +166,7 @@ pub mod generate {
     // a generic body generator that takes a generic random number
     // generator for obtaining thetas.
 
-    pub fn gb_from_mags<T: IndependentSample<f64>>(
+    pub fn gb_from_mags<'a, T: IndependentSample<f64>>(
         t_f: f64,
         p_mag: f64,
         v_mag: f64,
@@ -258,15 +258,15 @@ lazy_static! {
 
 
     //Stores a TreeWrapper that holds the global tree
-    pub static ref TREE_POINTER: Mutex<TreeWrapper> = Mutex::new(
-        TreeWrapper {
+    pub static ref TREE_POINTER: Mutex<TreeWrapper<'z,'a>> = Mutex::new(
+        TreeWrappe {
             tree: Region {
-                    reg_vec: None,
-                    coord_vec: vec![0.0; DIMS],
-                    half_length: MAX_LEN,
-                    add_queue: Some(Vec::new()),
-                    com: None
-                  }
+                reg_vec: None,
+                coord_vec: vec![0.0; DIMS],
+                half_length: MAX_LEN,
+                add_queue: Some(Vec::new()),
+                com: None
+            }
         }
     );
 

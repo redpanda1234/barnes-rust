@@ -7,7 +7,7 @@ pub use super::tree::*;
 // Fetch global statics from the main function
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
-impl Body {
+impl<'a> Body<'a> {
 
     // We need r^2 in Newton's law of gravity (TODO: apply small GR
     // perturbation), and it's faster to have separately defined
@@ -138,7 +138,7 @@ impl Body {
     }
 }
 
-impl Region {
+impl<'a> Region<'a> {
 
     // Recursively update the accelerations and velocities of masses
     pub fn deep_update_vel(&mut self) {

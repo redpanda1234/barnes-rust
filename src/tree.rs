@@ -84,24 +84,24 @@ pub struct Body<'a> {
  */
 
 #[derive(Clone, Debug)]
-pub struct Region {
-    pub reg_vec: Option<Vec<Region>>,
+pub struct Region<'a, 'b> {
+    pub reg_vec: Option<Vec<Region<'a>>>,
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
-    pub add_queue: Option<Vec<Body<'a>>>,
-    pub com: Option<Body<'a>>
+    pub add_queue: Option<Vec<Body<'b>>>,
+    pub com: Option<Body<'b>>
 }
 
 // tree building characters. TODO: implement tree-style printing
 // ├ └ ─ │
 use std::fmt;
-impl fmt::Display for Body<'a> {
+impl<'b> fmt::Display for Body<'b> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.id)
     }
 }
 
-impl fmt::Display for Region {
+impl<'a> fmt::Display for Region<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.reg_vec.clone() {
 
@@ -125,7 +125,7 @@ impl fmt::Display for Region {
 }
 
 // Let's implement methods on REgion!
-impl Region {
+impl<'a> Region<'a> {
 
     // contains takes some body, and then compares each of the i
     // coordinates in its position vector to determine whether it's
