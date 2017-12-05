@@ -11,6 +11,18 @@
 #[macro_use]
 extern crate lazy_static;
 
+// graphics
+extern crate piston;
+extern crate graphics;
+extern crate glutin_window;
+extern crate opengl_graphics;
+
+use piston::window::WindowSettings;
+use piston::event_loop::*;
+use piston::input::*;
+use glutin_window::GlutinWindow as Window;
+use opengl_graphics::{ GlGraphics, OpenGL };
+
 // This allows us to make mutable calls to our lazy_static generated
 // stuffs! Particularly useful when we're holding some global mutable
 // data that all threads need to be able to access.
@@ -25,10 +37,26 @@ mod physics;
 pub use data::*;
 pub use tree::*;
 pub use physics::*;
+pub use gfx::*;
+
+
 
 static NUMSTEPS: usize = 1000;
 
 fn main() {
+
+    // Change this to OpenGL::V2_1 if not working.
+    let opengl = OpenGL::V3_2;
+
+    // Create an Glutin window.
+    let mut window: Window = WindowSettings::new(
+            "sim",
+            [1080, 1080]
+        )
+        .opengl(opengl)
+        .exit_on_esc(true)
+        .build()
+        .unwrap();
 
     use data::rand::SeedableRng;
     let seed: &[_] = &[1, 2, 3, 4];
@@ -40,21 +68,30 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    generate::gt_all_ranges(5, seeder);
+    let num_bodies = 1000;
+
+    generate::gt_all_ranges(num_bodies, seeder);
+
+    let mut frame = Frame {
+        gl: GlGraphics::new(opengl),
+        tree: TREE_POINTER.lock().unwrap().tree.clone()
+    };
 
     println!("done generating");
 
-    // unsafe {
-        for _ in 0..NUMSTEPS {
-            let printme = TREE_POINTER.lock().unwrap().tree.clone();
-            println!{"printing printme \n{:#?}\n\n\n\n\n\n", printme};
-            let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
-            tree.update();
-            tree.deep_update_vel();
-            tree.deep_update_pos();
-            TREE_POINTER.lock().unwrap().tree = tree;
+    let mut events = Events::new(EventSettings::new());
+
+    while let Some(e) = events.next(&mut window) {
+        if let Some(r) = e.render_args() {
+            app.render(&r);
         }
-    // }
+
+        if let Some(u) = e.update_args() {
+            let frame.tree = TREE_POINTER.lock().unwrap().tree.clone();
+            TREE_POINTER.lock().unwrap().tree = frame.tree;
+            app.update(&u);
+        }
+    }
 
     println!("done.");
 }

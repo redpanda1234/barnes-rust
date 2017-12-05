@@ -3,8 +3,16 @@ name = "barnes-rust"
 version = "0.1.0"
 authors = ["redpanda1234 <fkobayashi@hmc.edu>"]
 
+[[bin]]
+name = "sim"
+
 [dependencies]
 rand = "0.3"
 num_cpus = "1.0"
 itertools = "0.7.1"
 lazy_static = "0.2"
+
+piston = "0.35.0"
+piston2d-graphics = "0.24.0"
+pistoncore-glutin_window = "0.43.0"
+piston2d-opengl_graphics = "0.50.0"
