@@ -130,9 +130,11 @@ impl Body {
     pub fn update_pos(&mut self) {
         // println!("updating pos");
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
-            *pi += vi*DT
-            //*pi = 0.0;
+            *pi += vi*DT;
         }
+
+        // TODO update the normalized coordinates too
+
     }
 }
 
@@ -170,25 +172,28 @@ impl Region {
         match self.reg_vec.clone() {
             //if we're at the leaf node, call update_pos if we have a mass
             None => {
-                match self.com {
+                match self.com.clone() {
                     None => (),
                     Some(ref mut com) => {
                         com.update_pos();
                         //TODO: find out if it's actually necessary to re-wrap this
-                        //self.com = Some(*com);
+                        self.com = Some(com.clone());
                     }
                 }
             },
             //if we have children, call recursively
             Some(ref mut reg_vec) => {
+                let mut temp = vec![];
                 for mut child in reg_vec {
                     child.deep_update_pos();
+                    temp.push(child.clone());
                 }
+                self.reg_vec = Some(temp);
                 //TODO: we REALLY need to find out whether this is necessary
                 //self.reg_vec = Some(*reg_vec);
                 self.update_com();
             }
-        }
+        };
     }
 
     pub fn update_com(&mut self) {
@@ -224,10 +229,6 @@ impl Region {
                             None => (),
                             Some(_) => panic!("cannot update com with masses waiting to be queued!"),
                         };
-                        // println!("updating vel and pos");
-                        com.update_vel();
-                        //I believe we shouldn't be updating position yet:
-                        //com.update_pos();
                         self.com = Some(com);
                     },
                 }
@@ -251,15 +252,18 @@ impl Region {
                     }
                 }
                 //if we didn't add any masses, make sure we're not dividing by 0
-                if den == 0.0 {
-                    den = 1.0;
+                if den != 0.0 {
+                    num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
                 }
 
-                num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
-
                 let node_id = String::from("o");
-                self.com = Some(Body {pos_vec: num, vel_vec: vec![0.0;
-                                                                  DIMS as usize], mass: den, id: node_id});
+                self.com = Some(Body {pos_vec: num,
+                                      vel_vec: vec![0.0; DIMS as usize],
+                                      mass: den,
+                                      id: node_id,
+                                      pixel: None
+                }
+                );
             }
         }
     }

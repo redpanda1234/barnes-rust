@@ -32,13 +32,13 @@ use std::sync::Mutex;
 mod data;
 mod tree;
 mod physics;
+mod gfx;
 
 // import all needed parts of the simulation into our current scope
+pub use gfx::*;
 pub use data::*;
 pub use tree::*;
 pub use physics::*;
-pub use gfx::*;
-
 
 
 static NUMSTEPS: usize = 1000;
@@ -79,18 +79,21 @@ fn main() {
 
     println!("done generating");
 
+
     let mut events = Events::new(EventSettings::new());
 
     while let Some(e) = events.next(&mut window) {
+
         if let Some(r) = e.render_args() {
-            app.render(&r);
+            frame.render(&r);
         }
 
         if let Some(u) = e.update_args() {
-            let frame.tree = TREE_POINTER.lock().unwrap().tree.clone();
-            TREE_POINTER.lock().unwrap().tree = frame.tree;
-            app.update(&u);
+            // let frame.tree = TREE_POINTER.lock().unwrap().tree.clone();
+            // TREE_POINTER.lock().unwrap().tree = frame.tree;
+            frame.update(&u);
         }
+
     }
 
     println!("done.");

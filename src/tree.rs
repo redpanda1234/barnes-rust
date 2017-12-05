@@ -4,6 +4,7 @@
 
 use super::data::*;
 use super::physics::*;
+use super::gfx::{ Pixel };
 
 // Static -> valid globally throughout the lifetime of the program
 // mut allows us to modify the value contained in the static.
@@ -31,6 +32,7 @@ pub struct Body {
     pub vel_vec: Vec<f64>,
     pub mass: f64,
     pub id: String,
+    pub pixel: Option<Pixel>
 }
 
 /*

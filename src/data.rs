@@ -5,7 +5,7 @@ use super::*;
 // TODO: use this everywhere we check dimensions
 pub const DIMS: usize = 2;
 pub const THETA: f64 = 0.5;
-pub const DT: f64 = 0.01;
+pub const DT: f64 = 0.001;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
@@ -51,6 +51,7 @@ pub mod generate {
     use data::rand::distributions::{IndependentSample};
     use data::*;
     use tree::*;
+    use gfx::{Pixel, Omg};
 
     use std::f64::consts::PI;
 
@@ -174,13 +175,16 @@ pub mod generate {
         seeder: StdRng,
         id: usize
     ) -> Body {
+        let pos_vec = nd_vec_from_mag(p_mag, &t_generator, t_f, seeder);
+        let normalized_vec = pos_vec.iter_mut().map(|n| *n * 1080.0 / MAX_LEN).collect::<Vec<f64>>();
         let mut id_str = String::from("m");
         id_str.push_str(id.to_string().as_str());
         let body = Body {
             pos_vec: nd_vec_from_mag(p_mag, &t_generator, t_f, seeder),
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
             mass: m,
-            id: id_str
+            id: id_str,
+            pixel: Some(Omg::new_pixel(normalized_vec))
         };
         // println!("{:?}", body);
         body
