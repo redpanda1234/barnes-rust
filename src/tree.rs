@@ -27,12 +27,12 @@ use super::gfx::{ Pixel };
 
 // todo: temporarily implement an ID
 #[derive(Clone, Debug)]
-pub struct Body<'a> {
+pub struct Body {
     pub pos_vec: Vec<f64>,
     pub vel_vec: Vec<f64>,
     pub mass: f64,
     pub id: String,
-    pub pixel: Option<&'a Pixel>
+    pub pixel: Option<Pixel>
 }
 
 /*
@@ -84,24 +84,24 @@ pub struct Body<'a> {
  */
 
 #[derive(Clone, Debug)]
-pub struct Region<'a, 'b> {
-    pub reg_vec: Option<Vec<Region<'a>>>,
+pub struct Region {
+    pub reg_vec: Option<Vec<Region>>,
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
-    pub add_queue: Option<Vec<Body<'b>>>,
-    pub com: Option<Body<'b>>
+    pub add_queue: Option<Vec<Body>>,
+    pub com: Option<Body>
 }
 
 // tree building characters. TODO: implement tree-style printing
 // ├ └ ─ │
 use std::fmt;
-impl<'b> fmt::Display for Body<'b> {
+impl<'b> fmt::Display for Body {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.id)
     }
 }
 
-impl<'a> fmt::Display for Region<'a> {
+impl<'a> fmt::Display for Region {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.reg_vec.clone() {
 
@@ -125,7 +125,7 @@ impl<'a> fmt::Display for Region<'a> {
 }
 
 // Let's implement methods on REgion!
-impl<'a> Region<'a> {
+impl Region {
 
     // contains takes some body, and then compares each of the i
     // coordinates in its position vector to determine whether it's
@@ -465,7 +465,7 @@ impl<'a> Region<'a> {
 
         match self.reg_vec.clone() {
             None => {
-                match self.com.clone {
+                match self.com.clone() {
                     None => vec![],
                     Some(ref mut com) => vec![self.com]
                 }

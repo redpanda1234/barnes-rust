@@ -19,8 +19,8 @@ pub const MAX_LEN: f64 = 1_000.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
-pub struct TreeWrapper<'z, 'a> {
-    pub tree: Region<'a>
+pub struct TreeWrapper {
+    pub tree: Region
 }
 
 // TODO: make our organization here more intelligent. Should probably
@@ -166,7 +166,7 @@ pub mod generate {
     // a generic body generator that takes a generic random number
     // generator for obtaining thetas.
 
-    pub fn gb_from_mags<'a, T: IndependentSample<f64>>(
+    pub fn gb_from_mags<T: IndependentSample<f64>>(
         t_f: f64,
         p_mag: f64,
         v_mag: f64,
@@ -174,18 +174,18 @@ pub mod generate {
         t_generator: T,
         seeder: StdRng,
         id: usize
-    ) -> Body<'a> {
+    ) -> Body {
         let pos_vec = nd_vec_from_mag(p_mag, &t_generator, t_f, seeder);
         let normalized_vec = pos_vec.iter_mut().map(|n| *n * 1080.0 / MAX_LEN).collect::<Vec<f64>>();
         let mut id_str = String::from("m");
         id_str.push_str(id.to_string().as_str());
-        let mut pixel = &'a new_pixel(normalized_vec);
+        let mut pixel = new_pixel(normalized_vec);
         let body = Body {
             pos_vec: nd_vec_from_mag(p_mag, &t_generator, t_f, seeder),
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
             mass: m,
             id: id_str,
-            pixel: Some(&'a pixel)
+            pixel: Some(pixel)
         };
         // println!("{:?}", body);
         body
@@ -259,7 +259,7 @@ lazy_static! {
 
 
     //Stores a TreeWrapper that holds the global tree
-    pub static ref TREE_POINTER: Mutex<TreeWrapper<'z,'a>> = Mutex::new(
+    pub static ref TREE_POINTER: Mutex<TreeWrapper> = Mutex::new(
         TreeWrapper {
             tree: Region {
                 reg_vec: None,
