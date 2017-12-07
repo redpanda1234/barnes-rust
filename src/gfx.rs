@@ -11,13 +11,13 @@ use opengl_graphics::{ GlGraphics, OpenGL };
 
 use super::tree::*;
 
-pub struct Frame<'z, 'a> {
+pub struct Frame {
     gl: GlGraphics, // OpenGL backend for drawing
-    tree: Region<'a> // the tree we're gonna be drawing
+    tree: Region // the tree we're gonna be drawing
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Pixel {
-    gl: GlGraphics,
+    // gl: GlGraphics, // commented out temporarily as we search for a way to do this properly
     normalized_coords: Vec<f64>
 }
 
@@ -36,7 +36,7 @@ pub fn new_pixel(normalized_coords: Vec<f64>) -> Pixel {
 
 pub use data::{ MAX_LEN, DIMS };
 
-impl<'a> Region<'a> {
+impl Region {
 
     fn normalize_coords(self) -> Vec<f64> {
 
@@ -69,7 +69,7 @@ impl Pixel {
 
 }
 
-impl<'z> Frame<'z> {
+impl Frame {
 
     pub fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
