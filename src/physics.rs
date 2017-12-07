@@ -71,7 +71,7 @@ impl<'a> Body<'a> {
 
         //if the distance is 0, just return 0
         if(r == 0) {
-            return vec![0.0; vec_rel.length()];
+            return vec![0.0; DIMS];
         }
 
         rel.iter().map(|ri| ri * acc/r).collect::<Vec<f64>>()
@@ -86,7 +86,7 @@ impl<'a> Body<'a> {
 
         //if the distance is 0, just return 0
         if(r == 0) {
-            return vec![0.0; vec_rel.length()];
+            return vec![0.0; DIMS];
         }
 
         rel.iter().map(|ri| ri * pot/r).collect::<Vec<f64>>()
