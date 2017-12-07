@@ -51,7 +51,7 @@ pub mod generate {
     use data::rand::distributions::{IndependentSample};
     use data::*;
     use tree::*;
-    use gfx::{Pixel, Omg};
+    use gfx::{Pixel};
 
     use std::f64::consts::PI;
 
@@ -179,12 +179,13 @@ pub mod generate {
         let normalized_vec = pos_vec.iter_mut().map(|n| *n * 1080.0 / MAX_LEN).collect::<Vec<f64>>();
         let mut id_str = String::from("m");
         id_str.push_str(id.to_string().as_str());
+        let mut pixel = &'a new_pixel(normalized_vec);
         let body = Body {
             pos_vec: nd_vec_from_mag(p_mag, &t_generator, t_f, seeder),
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
             mass: m,
             id: id_str,
-            pixel: Some(&'a Omg::new_pixel(normalized_vec))
+            pixel: Some(&'a pixel)
         };
         // println!("{:?}", body);
         body
@@ -259,7 +260,7 @@ lazy_static! {
 
     //Stores a TreeWrapper that holds the global tree
     pub static ref TREE_POINTER: Mutex<TreeWrapper<'z,'a>> = Mutex::new(
-        TreeWrappe {
+        TreeWrapper {
             tree: Region {
                 reg_vec: None,
                 coord_vec: vec![0.0; DIMS],

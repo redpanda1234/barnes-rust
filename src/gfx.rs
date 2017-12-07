@@ -21,18 +21,18 @@ pub struct Pixel {
     normalized_coords: Vec<f64>
 }
 
-pub mod Omg {
-    use super::opengl_graphics::{ GlGraphics, OpenGL };
-    use super::Pixel;
-    pub fn new_pixel(normalized_coords: Vec<f64>) -> Pixel {
+// pub mod Omg {
+//     use super::opengl_graphics::{ GlGraphics, OpenGL };
+//     use super::Pixel;
+pub fn new_pixel(normalized_coords: Vec<f64>) -> Pixel {
 
-        Pixel {
-            gl: GlGraphics::new(OpenGL::V3_2),
-            normalized_coords: normalized_coords
-        }
-
+    Pixel {
+        gl: GlGraphics::new(OpenGL::V3_2),
+        normalized_coords: normalized_coords
     }
+
 }
+// }
 
 pub use data::{ MAX_LEN, DIMS };
 
