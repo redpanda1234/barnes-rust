@@ -19,7 +19,7 @@ pub const MAX_LEN: f64 = 1_000.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
-pub struct TreeWrapper<'z, 'a> {
+pub struct TreeWrapper<'a> {
     pub tree: Region<'a>
 }
 
@@ -258,7 +258,7 @@ lazy_static! {
 
 
     //Stores a TreeWrapper that holds the global tree
-    pub static ref TREE_POINTER: Mutex<TreeWrapper><'a> = Mutex::new(
+    pub static ref TREE_POINTER: Mutex<TreeWrapper<'a>> = Mutex::new(
         TreeWrapper {
             tree: Region {
                 reg_vec: None,

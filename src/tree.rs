@@ -470,7 +470,7 @@ impl<'a> Region<'a> {
                     Some(ref mut com) => vec![self.com]
                 }
             },
-            Some(ref reg_vec) {
+            Some(ref reg_vec) => {
                 let mut result = vec![];
                 for mut child in reg_vec {
                     result.append(child.list_masses());
