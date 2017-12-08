@@ -64,6 +64,7 @@ impl Body {
         // in the region_vec or add_queue.
 
         //Note: nodes are now guaranteed to have valid com when this is called
+        // println!("{}", self.sq_node_dist_to(&node));
         (2.0*node.half_length / self.sq_node_dist_to(&node)) <= THETA
     }
 
@@ -119,7 +120,7 @@ impl Body {
                         acc,
                     Some(ref com) => {
                         let total_acc = self.update_accel(acc.clone(), com);
-                        // println!("acceleration component: {:#?}", total_acc[0]);
+                        println!("acceleration component: {:#?}", total_acc[0]);
                         acc = acc.iter().zip(total_acc
                             .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                         acc
@@ -135,22 +136,23 @@ impl Body {
                         node.update_com();
                         self.get_total_acc(&mut node)
                     }
-                    Some(_) => {
+                    Some(ref com) => {
                         if self.is_far(node) {
-                            match node.com {
-                                None => acc,
-                                Some(ref com) => {
-                                    let total_acc = self.update_accel(acc.clone(), com);
-                                    // println!("acceleration component: {:#?}", total_acc);
-                                    acc = acc.iter().zip(total_acc
-                                        .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
-                                    acc
-                                }
-                            }
+                            println!("{:#?}", node.com);
+
+                            let total_acc = self.update_accel(acc.clone(), com);
+                            println!("acceleration component: {:#?}", total_acc);
+                            acc = acc
+                                .iter()
+                                .zip( total_acc.iter() )
+                                .map(|(u,v)| u+v)
+                                .collect::<Vec<f64>>();
+                            acc
+
                         } else {
                             for mut child in reg_vec.iter_mut() {
                                 let total_acc = self.get_total_acc(&mut child);
-                                // println!("acceleration component: {:#?}", total_acc);
+                                println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             }
@@ -169,9 +171,12 @@ impl Body {
         // println!("updating vel");
         // println!("old velocity component: {:#?}", self.vel_vec[0]);
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
-        self.vel_vec = self.vel_vec.iter().zip(
-            self.clone().get_total_acc(&mut tree))
+        for child in tree.reg_vec.iter_mut() {
+            self.vel_vec = self.clone().vel_vec.iter_mut().zip(
+            self.clone().get_total_acc(&mut child[0]))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
+        }
+
         // println!("new velocity component: {:#?}", self.vel_vec[0]);
     }
 
@@ -304,9 +309,10 @@ impl Region {
                     num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
                 }
 
-                self.com = Some(Body {pos_vec: num,
-                                      vel_vec: vec![0.0; DIMS as usize],
-                                      mass: den
+                self.com = Some(Body {
+                    pos_vec: num,
+                    vel_vec: vec![0.0; DIMS],
+                    mass: den
                 }
                 );
             }
