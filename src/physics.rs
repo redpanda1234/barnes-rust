@@ -410,8 +410,7 @@ mod tests {
             let body = Body {
                 pos_vec: vec![x; dims],
                 vel_vec: vec![0.0; dims],
-                mass: 0.0,
-                id: String::from("m1")
+                mass: 0.0
             };
 
             let mut node = Region {
@@ -425,8 +424,7 @@ mod tests {
                     Body {
                         pos_vec: vec![0.0; dims],
                         vel_vec: vec![0.0; dims],
-                        mass: 0.0,
-                        id: String::from("m1")
+                        mass: 0.0
                     }
                 )
 
@@ -443,20 +441,18 @@ mod tests {
                 pos_vec: vec![1.0; dims],
                 vel_vec: vec![0.0; dims],
                 mass: 1.0,
-                id: String::from("m1")
             };
 
             let body2 = Body {
                 pos_vec: vec![0.0; dims],
                 vel_vec: vec![0.0; dims],
-                mass: 1.0,
-                id: String::from("m1")
+                mass: 1.0
             };
 
             assert_eq!(
                 body1.sq_magnitude(
                     &body1.get_classical_accel(&body2)).sqrt(),
-                ( 6.674 / (1_000_000_000_00.0 * (dims as f64)) )
+                ( G / (dims as f64))
             );
         }
     }
@@ -469,19 +465,17 @@ mod tests {
             let body1 = Body {
                 pos_vec: vec![1.0; dims],
                 vel_vec: vec![0.0; dims],
-                mass: 1.0,
-                id: String::from("m1")
+                mass: 1.0
             };
 
             let body2 = Body {
                 pos_vec: vec![0.0; dims],
                 vel_vec: vec![0.0; dims],
-                mass: 1.0,
-                id: String::from("m1")
+                mass: 1.0
             };
 
             let acc = vec![0.0; dims];
-            let entry = -1.0 * (6.674 / 1_000_000_000_00.0) / (dims as f64).sqrt() / (dims as f64);
+            let entry = -1.0 * (G) / (dims as f64).sqrt() / (dims as f64);
             assert_eq!(body1.update_accel(acc, &body2), vec![entry; dims]);
 
         }
