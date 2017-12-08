@@ -169,7 +169,7 @@ impl Body {
         // println!("old velocity component: {:#?}", self.vel_vec[0]);
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         for child in tree.reg_vec.iter_mut() {
-            println!("{:#?}", child);
+            // println!("{:#?}", child);
             self.vel_vec = self.clone().vel_vec.iter_mut().zip(
             self.clone().get_total_acc(&mut child[0]))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
@@ -303,8 +303,12 @@ impl Region {
                     }
                 }
                 //if we didn't add any masses, make sure we're not dividing by 0
-                if den == 0.0 {
+                if den != 0.0 {
+                    println!("fix divide by 0");
                     num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
+                    println!("new num is {:#?}", num);
+                } else {
+                    num = self.coord_vec.clone()
                 }
 
                 self.com = Some(Body {
