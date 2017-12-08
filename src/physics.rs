@@ -27,6 +27,12 @@ impl Body {
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
 
+    pub fn node_sq_dist_to(&self, node: &Region) -> f64 {
+        println!("woooo {:#?}, {:#?}", &node.coord_vec, self.pos_vec);
+        self.pos_vec.iter().zip(&node.coord_vec)
+            .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
+    }
+
     // vec_rel gets the displacement vector between the calling mass
     // and some other passed Body.
     pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
@@ -57,10 +63,10 @@ impl Body {
         // FIXME: make sure this doesn't allow infinite loops;
         // i.e. that node.com will only be none if there's stuff
         // in the region_vec or add_queue.
-
+        // println!("wheee {:#?}", self.node_sq_dist_to(&node));
         //Note: nodes are now guaranteed to have valid com when this is called
-        ( 2.0 * node.half_length /
-          self.squared_dist_to(&node.com.clone().unwrap()) )
+        // ( 2.0 * node.half_length / self.node_sq_dist_to(&node))
+        ( 2.0 * node.half_length / self.squared_dist_to(&node.com.clone().unwrap()))
             <= THETA
 
     }
@@ -134,12 +140,13 @@ impl Body {
                         self.get_total_acc(&mut node)
                     }
                     Some(_) => {
+                        node.update_com();
                         if self.is_far(node) {
                             match node.com {
                                 None => acc,
                                 Some(ref com) => {
                                     let total_acc = self.update_accel(acc.clone(), com);
-                                    // println!("acceleration component: {:#?}", total_acc);
+                                    println!("acceleration component: {:#?}", total_acc);
                                     acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                                     acc
@@ -148,7 +155,7 @@ impl Body {
                         } else {
                             for mut child in reg_vec.iter_mut() {
                                 let total_acc = self.get_total_acc(&mut child);
-                                // println!("acceleration component: {:#?}", total_acc);
+                                println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             }
@@ -510,7 +517,8 @@ mod analysis {
     Function to get the distribution of the radii of particles
     in the simulation.
     This assumes a force center at the origin.
-    It would be easy to modify to give the distances from some other point,
+    It would be easy to
+modify to give the distances from some other point,
     but this is probably unnecessary.
     */
     fn radial_distribution() {
