@@ -70,7 +70,7 @@ impl Body {
         let r = sq_mag.sqrt();
 
         //if the distance is 0, just return 0
-        if(r == 0) {
+        if(r == 0.0) {
             return vec![0.0; DIMS];
         }
 
@@ -85,7 +85,7 @@ impl Body {
         let pot = mass.mass * (6.674 / (1_000_000_000_00.0)) / r;
 
         //if the distance is 0, just return 0
-        if(r == 0) {
+        if(r == 0.0) {
             return vec![0.0; DIMS];
         }
 
@@ -163,7 +163,7 @@ impl Region {
     // Recursively update the accelerations and velocities of masses
     pub fn deep_update_vel(&mut self) {
         // println!("deep updating vel");
-        match self.reg_vec {
+        match self.reg_vec.clone() {
             //if we're at the leaf node, call update_vel if we have a mass
             None => {
                 match self.com {
@@ -515,7 +515,7 @@ mod analysis {
     fn radial_distribution() {
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         let masses = tree.list_masses();
-        let distances = masses.into_iter().map(|m| m.pos_vec.sq_magnitude());
+        let distances = masses.iter().map(|m| m.sq_magnitude(&m.pos_vec));
 
         //then we can print/graph the distance distributions
 
@@ -528,7 +528,7 @@ mod analysis {
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         let masses = tree.list_masses();
         let energies = masses.into_iter().map(|m|
-                            0.5*m.mass*m.vel_vec.sq_magnitude())
+                            0.5*m.mass * m.sq_magnitude(&m.vel_vec))
                             .collect::<Vec<f64>>();
 
         //we could do something with the energy distribution, but for now we'll
@@ -551,8 +551,8 @@ mod analysis {
         let masses = tree.list_masses();
 
         let potential_energies = masses.iter()
-                                    .zip(masses.clone().iter())
-                                    .map(|m1, m2| m1.get_classical_potential(m2));
+                                    .zip(masses.iter())
+                                    .map(|(m1, m2)| m1.get_classical_potential(m2));
     }
 
 }

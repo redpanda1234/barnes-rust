@@ -35,10 +35,10 @@ mod physics;
 mod gfx;
 
 // import all needed parts of the simulation into our current scope
-pub use gfx::*;
 pub use data::*;
 pub use tree::*;
 pub use physics::*;
+pub use gfx::*;
 
 
 static NUMSTEPS: usize = 1000;
@@ -85,7 +85,7 @@ fn main() {
     while let Some(e) = events.next(&mut window) {
 
         if let Some(r) = e.render_args() {
-            frame.render(&r);
+            frame.render(None, &r);
         }
 
         if let Some(u) = e.update_args() {

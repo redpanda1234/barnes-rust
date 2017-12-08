@@ -176,7 +176,7 @@ pub mod generate {
         id: usize
     ) -> Body {
         let pos_vec = nd_vec_from_mag(p_mag, &t_generator, t_f, seeder);
-        let normalized_vec = pos_vec.iter_mut().map(|n| *n * 1080.0 / MAX_LEN).collect::<Vec<f64>>();
+        let normalized_vec = pos_vec.iter().map(|n| *n * 1080.0 / MAX_LEN).collect::<Vec<f64>>();
         let mut id_str = String::from("m");
         id_str.push_str(id.to_string().as_str());
         let mut pixel = new_pixel(normalized_vec);
