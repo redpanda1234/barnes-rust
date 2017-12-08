@@ -4,7 +4,6 @@
 
 use super::data::*;
 use super::physics::*;
-use super::gfx::{ Pixel };
 
 // Static -> valid globally throughout the lifetime of the program
 // mut allows us to modify the value contained in the static.
@@ -30,9 +29,7 @@ use super::gfx::{ Pixel };
 pub struct Body {
     pub pos_vec: Vec<f64>,
     pub vel_vec: Vec<f64>,
-    pub mass: f64,
-    pub id: String,
-    pub pixel: Option<Pixel>
+    pub mass: f64
 }
 
 /*
@@ -92,37 +89,6 @@ pub struct Region {
     pub com: Option<Body>
 }
 
-// tree building characters. TODO: implement tree-style printing
-// ├ └ ─ │
-use std::fmt;
-impl<'b> fmt::Display for Body {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.id)
-    }
-}
-
-impl<'a> fmt::Display for Region {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.reg_vec.clone() {
-
-            None => {
-                match self.com.clone() {
-                    None => write!(f, "──o\n"),
-                    Some(com) => write!(f, "──{}\n", com)
-                }
-            },
-
-            Some(_) => {
-                write!(f,"──o\n    ");
-                for child in self.reg_vec.clone().unwrap().iter() {
-                    try!(write!(f, "├─{}", child))
-                }
-                Ok(())
-            },
-
-        }
-    }
-}
 
 // Let's implement methods on REgion!
 impl Region {
@@ -448,7 +414,7 @@ impl Region {
                         }
 
                     }
-                    // println!("{:#?}", reg_vec);
+                    println!("Deleted mass: {:#?}", mass.mass);
                 }
 
                 self.add_queue = None;
@@ -461,23 +427,22 @@ impl Region {
         self.add_queue = None;
     }
 
-    fn list_masses(&self) -> Vec<Body> {
+    pub fn list_masses(&self) -> Vec<Body> {
 
         match self.reg_vec.clone() {
             None => {
                 match self.com.clone() {
                     None => vec![],
-                    Some(ref mut com) => vec![self.com]
+                    Some(ref mut com) => vec![com.clone()]
                 }
             },
             Some(ref reg_vec) => {
-                let mut result = vec![];
+                let mut result = Vec::new();
                 for mut child in reg_vec {
-                    result.append(child.list_masses());
+                    result.append(&mut child.list_masses());
                 }
                 result
             }
         }
-
     }
 }

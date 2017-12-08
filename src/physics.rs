@@ -7,6 +7,9 @@ pub use super::tree::*;
 // Fetch global statics from the main function
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
+// let const G: f64 = (6.674 / (1_000_000_000_00.0));
+const G: f64 = 1.0;
+
 impl Body {
 
     // We need r^2 in Newton's law of gravity (TODO: apply small GR
@@ -21,6 +24,12 @@ impl Body {
 
     pub fn squared_dist_to(&self, mass: &Body) -> f64 {
         self.pos_vec.iter().zip(&mass.pos_vec)
+            .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
+    }
+
+    pub fn node_sq_dist_to(&self, node: &Region) -> f64 {
+        println!("woooo {:#?}, {:#?}", &node.coord_vec, self.pos_vec);
+        self.pos_vec.iter().zip(&node.coord_vec)
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
 
@@ -41,7 +50,7 @@ impl Body {
     // always need to find the displacement vector.
 
     pub fn sq_magnitude(&self, vec: &Vec<f64>) -> f64 {
-        vec.iter().fold(0.0,|sum,vi| sum + vi.powi(2))
+        vec.iter().fold(0.0, |sum, vi| sum + vi.powi(2))
     }
 
     // is_far calculates a distance metric between the calling mass
@@ -54,38 +63,41 @@ impl Body {
         // FIXME: make sure this doesn't allow infinite loops;
         // i.e. that node.com will only be none if there's stuff
         // in the region_vec or add_queue.
-
+        println!("wheee {:#?}", self.node_sq_dist_to(&node));
         //Note: nodes are now guaranteed to have valid com when this is called
-        ( 2.0 * node.half_length /
-          self.squared_dist_to(&node.com.clone().unwrap()) )
+        ( 2.0 * node.half_length / self.node_sq_dist_to(&node))
+        // ( 2.0 * node.half_length / self.squared_dist_to(&node.com.clone().unwrap()))
             <= THETA
-
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
         let rel = self.vec_rel(mass);
+        // println!("{:?}", rel);
         let sq_mag = self.sq_magnitude(&rel);
         // println!("{}, {:#?}", sq_mag, rel);
-        let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
+        let acc = mass.mass * G / sq_mag;
+        // println!("{:?}", acc);
         let r = sq_mag.sqrt();
 
         //if the distance is 0, just return 0
-        if(r == 0) {
+        if r == 0.0 {
+            // println!("{:?}", r);
             return vec![0.0; DIMS];
         }
 
-        rel.iter().map(|ri| ri * acc/r).collect::<Vec<f64>>()
+        rel.iter().map(|ri| (ri/r) * acc).collect::<Vec<f64>>()
     }
 
     pub fn get_classical_potential(&self, mass: &Body) -> Vec<f64> {
+        // use super::G;
         let rel = self.vec_rel(mass);
         let sq_mag = self.sq_magnitude(&rel);
         // println!("{}, {:#?}", sq_mag, rel);
         let r = sq_mag.sqrt();
-        let pot = mass.mass * (6.674 / (1_000_000_000_00.0)) / r;
+        let pot = mass.mass * G / r;
 
         //if the distance is 0, just return 0
-        if(r == 0) {
+        if(r == 0.0) {
             return vec![0.0; DIMS];
         }
 
@@ -98,33 +110,48 @@ impl Body {
     }
 
     pub fn get_total_acc(&mut self, mut node: &mut Region) -> Vec<f64> {
-        let mut acc = vec![0.0; node.reg_vec.iter().len()];
+        let mut acc = vec![0.0; DIMS];
         // check to see if we have child nodes
         // println!("updating acceleration");
+        // println!("{:#?}", node.reg_vec);
         match node.reg_vec.clone() {
             //if this is a leaf, find the acceleration between us and its com
             None => {
                 match node.com {
-                    None => acc,
-                    Some(ref com) => self.update_accel(acc, com)
+                    None => //{println!("node has no com"); acc},
+                        acc,
+                    Some(ref com) => {
+                        let total_acc = self.update_accel(acc.clone(), com);
+                        println!("acceleration component: {:#?}", total_acc);
+                        acc = acc.iter().zip(total_acc
+                            .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
+                        acc
+                    }
                 }
             }
             //if this node has children, find the acceleration from each of them
             Some(ref mut reg_vec) => {
+                // println!("has reg_vec");
                 match node.com {
                     None => {
+                        // println!("updating child com");
                         node.update_com();
                         self.get_total_acc(&mut node)
                     }
-                    Some(_) => {
+                    Some(ref com) => {
                         if self.is_far(node) {
-                            match node.com {
-                                None => acc,
-                                Some(ref com) => self.update_accel(acc, com)
-                            }
+                            println!("{:#?}, {:#?}", acc.clone(), com);
+                            let total_acc = self.update_accel(acc.clone(), com);
+                            // println!("acceleration component: {:#?}", total_acc);
+                            acc = acc.iter().zip(total_acc
+                                                 .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
+                            acc
                         } else {
                             for mut child in reg_vec.iter_mut() {
-                                acc = self.get_total_acc(&mut child);
+                                let total_acc = self.get_total_acc(&mut child);
+                                println!("acceleration component: {:#?}", total_acc);
+                                acc = acc.iter().zip(total_acc
+                                        .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             }
                             acc
                         }
@@ -139,11 +166,16 @@ impl Body {
         //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
         //TODO: tree should be a reference so we don't have to copy it every time
         // println!("updating vel");
+        // println!("old velocity component: {:#?}", self.vel_vec[0]);
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
-        self.vel_vec = self.vel_vec.clone().iter_mut().zip(
-            self.get_total_acc(&mut tree))
+        for child in tree.reg_vec.iter_mut() {
+            println!("{:#?}", child);
+            self.vel_vec = self.clone().vel_vec.iter_mut().zip(
+            self.clone().get_total_acc(&mut child[0]))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
-        // println!("udpated acc");
+        }
+
+        // println!("new velocity component: {:#?}", self.vel_vec[0]);
     }
 
     //TODO: make update_pos use functional programming
@@ -163,15 +195,15 @@ impl Region {
     // Recursively update the accelerations and velocities of masses
     pub fn deep_update_vel(&mut self) {
         // println!("deep updating vel");
-        match self.reg_vec {
+        match self.reg_vec.clone() {
             //if we're at the leaf node, call update_vel if we have a mass
             None => {
-                match self.com {
+                match self.com.clone() {
                     None => (),
                     Some(ref mut com) => {
                         com.update_vel();
                         //TODO: find out if it's actually necessary to re-wrap this
-                        //self.com = Some(*com);
+                        self.com = Some(com.clone());
                     }
                 }
             },
@@ -271,16 +303,14 @@ impl Region {
                     }
                 }
                 //if we didn't add any masses, make sure we're not dividing by 0
-                if den != 0.0 {
+                if den == 0.0 {
                     num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
                 }
 
-                let node_id = String::from("o");
-                self.com = Some(Body {pos_vec: num,
-                                      vel_vec: vec![0.0; DIMS as usize],
-                                      mass: den,
-                                      id: node_id,
-                                      pixel: None
+                self.com = Some(Body {
+                    pos_vec: num,
+                    vel_vec: vec![0.0; DIMS],
+                    mass: den
                 }
                 );
             }
@@ -297,30 +327,26 @@ mod tests {
         let m1 = Body {
             pos_vec: vec![1.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0,
-            id: String::from("m1")
+            mass: 0.0
         };
 
         let m2 = Body {
             pos_vec: vec![0.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0,
-            id: String::from("m2")
+            mass: 0.0
         };
 
         let m3 = Body {
 
             pos_vec: vec![-3.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0,
-            id: String::from("m3")
+            mass: 0.0
         };
 
         let m4 = Body {
             pos_vec: vec![0.0, 4.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0,
-            id: String::from("m4")
+            mass: 0.0
         };
 
         assert_eq!(m1.squared_dist_to(&m2), 1.0);
@@ -332,29 +358,14 @@ mod tests {
         let m1 = Body {
             pos_vec: vec![1.0; DIMS],
             vel_vec: vec![0.0; DIMS],
-            mass: 0.0,
-            id: String::from("m1")
+            mass: 0.0
         };
 
         let m2 = Body {
             pos_vec: vec![0.0; DIMS],
             vel_vec: vec![0.0; DIMS],
-            mass: 0.0,
-            id: String::from("m1")
+            mass: 0.0
         };
-
-        // let m3 = Body {
-        //     pos_vec: vec![-3.0; DIMS],
-        //     vel_vec: vec![0.0; DIMS],
-        //     mass: 0.0
-        // };
-
-        // let m4 = Body {
-        //     pos_vec: vec![4.0].extend([0.0; DIMS-1].iter()),
-        //     vel_vec: vec![0.0; DIMS],
-        //     mass: 0.0
-        // };
-        // println!("m1 rel m2 {:?}", m1.vec_rel(&m2, DIMS));
 
         assert_eq!(m1.vec_rel(&m2), vec![-1.0; DIMS]);
         // assert_eq!(m3.vec_rel(&m4), vec![7.0].extend(vec![0.0; DIMS-1]));
@@ -365,29 +376,25 @@ mod tests {
         let m1 = Body {
             pos_vec: vec![1.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0,
-            id: String::from("m1")
+            mass: 0.0
         };
 
         let m2 = Body {
             pos_vec: vec![0.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0,
-            id: String::from("m1")
+            mass: 0.0
         };
 
         let m3 = Body {
             pos_vec: vec![-3.0, 0.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0,
-            id: String::from("m1")
+            mass: 0.0
         };
 
         let m4 = Body {
             pos_vec: vec![0.0, 4.0, 0.0],
             vel_vec: vec![0.0, 0.0, 0.0],
-            mass: 0.0,
-            id: String::from("m1")
+            mass: 0.0
         };
         // println!("m1 rel m2 {:?}", m1.vec_rel(&m2));
 
@@ -509,13 +516,14 @@ mod analysis {
     Function to get the distribution of the radii of particles
     in the simulation.
     This assumes a force center at the origin.
-    It would be easy to modify to give the distances from some other point,
+    It would be easy to
+modify to give the distances from some other point,
     but this is probably unnecessary.
     */
     fn radial_distribution() {
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let tree = TREE_POINTER.lock().unwrap().tree.clone();
         let masses = tree.list_masses();
-        let distances = masses.into_iter().map(|m| m.pos_vec.sq_magnitude());
+        let distances = masses.iter().map(|m| m.sq_magnitude(&m.pos_vec));
 
         //then we can print/graph the distance distributions
 
@@ -528,7 +536,7 @@ mod analysis {
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         let masses = tree.list_masses();
         let energies = masses.into_iter().map(|m|
-                            0.5*m.mass*m.vel_vec.sq_magnitude())
+                            0.5*m.mass * m.sq_magnitude(&m.vel_vec))
                             .collect::<Vec<f64>>();
 
         //we could do something with the energy distribution, but for now we'll
@@ -551,8 +559,8 @@ mod analysis {
         let masses = tree.list_masses();
 
         let potential_energies = masses.iter()
-                                    .zip(masses.clone().iter())
-                                    .map(|m1, m2| m1.get_classical_potential(m2));
+                                    .zip(masses.iter())
+                                    .map(|(m1, m2)| m1.get_classical_potential(m2));
     }
 
 }

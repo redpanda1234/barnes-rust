@@ -35,13 +35,10 @@ mod physics;
 mod gfx;
 
 // import all needed parts of the simulation into our current scope
-pub use gfx::*;
 pub use data::*;
 pub use tree::*;
 pub use physics::*;
-
-
-static NUMSTEPS: usize = 1000;
+pub use gfx::*;
 
 fn main() {
 
@@ -67,8 +64,7 @@ fn main() {
     // generation function the rng object we've just seeded. Seeding
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
-
-    let num_bodies = 1000;
+    let num_bodies = 100;
 
     generate::gt_all_ranges(num_bodies, seeder);
 
@@ -79,19 +75,22 @@ fn main() {
 
     println!("done generating");
 
-
     let mut events = Events::new(EventSettings::new());
 
     while let Some(e) = events.next(&mut window) {
 
         if let Some(r) = e.render_args() {
-            frame.render(&r);
+            // println!("calling render from main");
+            frame.render(None, &r);
+            // println!("called render from main");
         }
 
         if let Some(u) = e.update_args() {
             // let frame.tree = TREE_POINTER.lock().unwrap().tree.clone();
             // TREE_POINTER.lock().unwrap().tree = frame.tree;
+            // println!("calling update from main");
             frame.update(&u);
+            // println!("called update from main");
         }
 
     }
