@@ -68,7 +68,7 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    let num_bodies = 1000;
+    let num_bodies = 100;
 
     generate::gt_all_ranges(num_bodies, seeder);
 
@@ -85,6 +85,7 @@ fn main() {
     while let Some(e) = events.next(&mut window) {
 
         if let Some(r) = e.render_args() {
+            //println!("calling render from main");
             frame.render(None, &r);
         }
 

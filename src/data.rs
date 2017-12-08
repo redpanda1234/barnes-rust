@@ -200,7 +200,7 @@ pub mod generate {
         let p_mag_gen = Range::new(0.0, MAX_LEN);
 
         // TODO: let's make sure stuff isn't getting relativistic here
-        let v_mag_gen = Range::new(0.0, 50_000.0);
+        let v_mag_gen = Range::new(0.0, 5_000.0);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 

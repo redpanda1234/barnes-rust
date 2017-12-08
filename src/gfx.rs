@@ -64,6 +64,7 @@ impl Pixel {
         const BLACK: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
         const WHITE: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
+        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 
         let square = rectangle::square(0.0, 0.0, 1080.0);
     }
@@ -77,30 +78,33 @@ impl Frame {
 
         const BLACK: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
         const WHITE: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
-        const RED: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
+        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 
-        let square = rectangle::square(0.0, 0.0, 1080.0);
+        //let square = rectangle::square(0.0, 0.0, 1080.0);
 
         //main should pass render() a None option
         //if that happens, call render on the tree
         match reg_option {
             None => {
                 let tree = self.tree.clone();
+                self.gl.draw(args.viewport(), |c, gl| {
+                    // Clear the screen.
+                    clear(GREEN, gl);
+                });
                 self.render(Some(& tree), args)
             },
             Some (reg) => {
                 // Draw a box rotating around the middle of the screen.
                 match reg.clone().reg_vec {
-
                     None => {
+                        //println!("called render");
                         self.gl.draw(args.viewport(), |c, gl| {
-                            // Clear the screen.
-                            clear(BLACK, gl);
+                            //draw red squares 
                             let coords = reg.clone().normalize_coords();
-                            let square = rectangle::square(0.0, 0.0, 1.0 );
+                            let square = rectangle::square(0.0, 0.0, 5.0 );
                             let transform = c.transform.trans(coords[0], coords[1])
-                                            .rot_rad(0.0)
-                                            .trans(-25.0, -25.0);
+                                            .rot_rad(0.0);
                             rectangle(RED, square, transform, gl);
                         });
                     },
@@ -117,7 +121,7 @@ impl Frame {
 
     pub fn update(&mut self, args: &UpdateArgs) {
         self.tree.update();
-        self.tree.deep_update_vel();
+        //self.tree.deep_update_vel();
         self.tree.deep_update_pos();
     }
 }

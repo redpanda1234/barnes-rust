@@ -448,7 +448,7 @@ impl Region {
                         }
 
                     }
-                    // println!("{:#?}", reg_vec);
+                    println!("Deleted mass: {:#?}", mass.mass);
                 }
 
                 self.add_queue = None;
