@@ -17,7 +17,8 @@ pub struct Frame {
 }
 #[derive(Debug, Clone)]
 pub struct Pixel {
-    // gl: GlGraphics, // commented out temporarily as we search for a way to do this properly
+    // gl: GlGraphics, // commented out temporarily as we search for a
+    // way to do this properly
     normalized_coords: Vec<f64>
 }
 
