@@ -78,7 +78,7 @@ impl Body {
         let r = sq_mag.sqrt();
 
         //if the distance is 0, just return 0
-        if(r == 0.0) {
+        if r == 0.0 {
             // println!("{:?}", r);
             return vec![0.0; DIMS];
         }
@@ -523,7 +523,7 @@ mod analysis {
     but this is probably unnecessary.
     */
     fn radial_distribution() {
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let tree = TREE_POINTER.lock().unwrap().tree.clone();
         let masses = tree.list_masses();
         let distances = masses.iter().map(|m| m.sq_magnitude(&m.pos_vec));
 
