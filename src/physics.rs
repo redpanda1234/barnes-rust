@@ -63,10 +63,10 @@ impl Body {
         // FIXME: make sure this doesn't allow infinite loops;
         // i.e. that node.com will only be none if there's stuff
         // in the region_vec or add_queue.
-        // println!("wheee {:#?}", self.node_sq_dist_to(&node));
+        println!("wheee {:#?}", self.node_sq_dist_to(&node));
         //Note: nodes are now guaranteed to have valid com when this is called
-        // ( 2.0 * node.half_length / self.node_sq_dist_to(&node))
-        ( 2.0 * node.half_length / self.squared_dist_to(&node.com.clone().unwrap()))
+        ( 2.0 * node.half_length / self.node_sq_dist_to(&node.clone()))
+        // ( 2.0 * node.half_length / self.squared_dist_to(&node.com.clone().unwrap()))
             <= THETA
 
     }
@@ -139,19 +139,19 @@ impl Body {
                         node.update_com();
                         self.get_total_acc(&mut node)
                     }
-                    Some(_) => {
-                        node.update_com();
+                    Some(ref com) => {
                         if self.is_far(node) {
-                            match node.com {
-                                None => acc,
-                                Some(ref com) => {
+                            // match node.com {
+                            //     None => acc,
+                            //     Some(ref com) => {
+                                    println!("{:#?}, {:#?}", acc.clone(), com);
                                     let total_acc = self.update_accel(acc.clone(), com);
-                                    println!("acceleration component: {:#?}", total_acc);
+                                    // println!("acceleration component: {:#?}", total_acc);
                                     acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                                     acc
-                                }
-                            }
+                                // }
+                            // }
                         } else {
                             for mut child in reg_vec.iter_mut() {
                                 let total_acc = self.get_total_acc(&mut child);
