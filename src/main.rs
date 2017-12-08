@@ -40,9 +40,6 @@ pub use tree::*;
 pub use physics::*;
 pub use gfx::*;
 
-
-static NUMSTEPS: usize = 1000;
-
 fn main() {
 
     // Change this to OpenGL::V2_1 if not working.
@@ -73,7 +70,8 @@ fn main() {
     generate::gt_all_ranges(num_bodies, seeder);
 
     let mut frame = Frame {
-        gl: GlGraphics::new(opengl)
+        gl: GlGraphics::new(opengl),
+        tree: TREE_POINTER.lock().unwrap().tree.clone()
     };
 
     println!("done generating");

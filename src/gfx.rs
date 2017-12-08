@@ -14,7 +14,8 @@ use super::tree::*;
 use super::data::TREE_POINTER;
 
 pub struct Frame {
-    pub gl: GlGraphics // OpenGL backend for drawing
+    pub gl: GlGraphics, // OpenGL backend for drawing
+    pub tree: Region // the tree we're gonna be drawing
 }
 
 pub use data::{ MAX_LEN, DIMS };
@@ -86,10 +87,10 @@ impl Frame {
     }
 
     pub fn update(&mut self, args: &UpdateArgs) {
-        // self.tree.update();
-        TREE_POINTER.lock().unwrap().tree.update();
-        // self.tree.deep_update_vel().update();
-        TREE_POINTER.lock().unwrap().tree.deep_update_vel(); // = self.tree.clone();
-        TREE_POINTER.lock().unwrap().tree.deep_update_pos();
+        self.tree.update();
+        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        self.tree.deep_update_vel();
+        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        self.tree.deep_update_pos();
     }
 }

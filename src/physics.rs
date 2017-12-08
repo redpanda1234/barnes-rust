@@ -8,7 +8,7 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 500.0;
+const G: f64 = 1.0;
 
 impl Body {
 
@@ -24,6 +24,11 @@ impl Body {
 
     pub fn squared_dist_to(&self, mass: &Body) -> f64 {
         self.pos_vec.iter().zip(&mass.pos_vec)
+            .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
+    }
+
+    pub fn sq_node_dist_to(&self, node: &Region) -> f64 {
+        self.pos_vec.iter().zip(&node.coord_vec)
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
 
@@ -59,10 +64,7 @@ impl Body {
         // in the region_vec or add_queue.
 
         //Note: nodes are now guaranteed to have valid com when this is called
-        ( 2.0 * node.half_length /
-          self.squared_dist_to(&node.com.clone().unwrap()) )
-            <= THETA
-
+        (2.0*node.half_length / self.sq_node_dist_to(&node)) <= THETA
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
