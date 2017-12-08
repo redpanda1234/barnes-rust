@@ -55,9 +55,9 @@ fn main() {
         .build()
         .unwrap();
 
-    use data::rand::SeedableRng;
-    let seed: &[_] = &[1, 2, 3, 4];
-    let seeder = SeedableRng::from_seed(seed);
+    // use data::rand::SeedableRng;
+    // let seed: &[_] = &[1, 2, 3, 4];
+    // let seeder = SeedableRng::from_seed(seed);
 
     // generate the main tree. First argument gives the number of
     // masses we want to simulate, second argument passes the random
@@ -66,7 +66,7 @@ fn main() {
     // it gives us reproducible results.
     let num_bodies = 100;
 
-    generate::gt_all_ranges(num_bodies, seeder);
+    generate::gt_all_ranges(num_bodies);
 
     let mut frame = Frame {
         gl: GlGraphics::new(opengl),
