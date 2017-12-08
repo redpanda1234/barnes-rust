@@ -51,7 +51,6 @@ pub mod generate {
     use data::rand::distributions::{IndependentSample};
     use data::*;
     use tree::*;
-    use gfx::{Pixel};
 
     use std::f64::consts::PI;
 
@@ -172,20 +171,13 @@ pub mod generate {
         v_mag: f64,
         m: f64,
         t_generator: T,
-        seeder: StdRng,
-        id: usize
+        seeder: StdRng
     ) -> Body {
         let pos_vec = nd_vec_from_mag(p_mag, &t_generator, t_f, seeder);
-        let normalized_vec = pos_vec.iter().map(|n| *n * 1080.0 / MAX_LEN).collect::<Vec<f64>>();
-        let mut id_str = String::from("m");
-        id_str.push_str(id.to_string().as_str());
-        let mut pixel = new_pixel(normalized_vec);
         let body = Body {
             pos_vec: nd_vec_from_mag(p_mag, &t_generator, t_f, seeder),
             vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
-            mass: m,
-            id: id_str,
-            pixel: Some(pixel)
+            mass: m
         };
         // println!("{:?}", body);
         body
@@ -204,7 +196,7 @@ pub mod generate {
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
-        for id in 0..num_bodies {
+        for _ in 0..num_bodies {
 
             push_body_global(
                 gb_from_mags(
@@ -213,16 +205,15 @@ pub mod generate {
                     v_mag_gen.ind_sample(&mut seeder),
                     m_gen.ind_sample(&mut seeder),
                     t_gen,
-                    get_rng(seeder),
-                    id
+                    get_rng(seeder)
                 )
             )
         }
     }
 
     fn push_body_global(body: Body) {
-        let ref match_me = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
-        match *match_me {
+        let match_me = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
+        match match_me {
 
             None => {
                 let mut add_me  = Vec::new();

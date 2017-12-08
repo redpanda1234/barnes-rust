@@ -18,25 +18,6 @@ pub struct Frame {
     pub tree: Region // the tree we're gonna be drawing
 }
 
-#[derive(Debug, Clone)]
-pub struct Pixel {
-    //gl: GlGraphics,
-    normalized_coords: Vec<f64>
-}
-
-// pub mod Omg {
-//     use super::opengl_graphics::{ GlGraphics, OpenGL };
-//     use super::Pixel;
-pub fn new_pixel(normalized_coords: Vec<f64>) -> Pixel {
-
-    Pixel {
-        //gl: GlGraphics::new(OpenGL::V3_2),
-        normalized_coords: normalized_coords
-    }
-
-}
-// }
-
 pub use data::{ MAX_LEN, DIMS };
 
 impl Region {
@@ -48,8 +29,8 @@ impl Region {
             None => vec![0.0; DIMS],
             Some(mut com) => {
                 for i in 0..com.pos_vec.len() {
-                    com.pos_vec[i] *= 270.0 / MAX_LEN;
-                    com.pos_vec[i] += 270.0;
+                    com.pos_vec[i] *= 540.0 / MAX_LEN;
+                    com.pos_vec[i] += 540.0;
                 }
                 com.pos_vec
             }
@@ -60,20 +41,6 @@ impl Region {
 
 }
 
-impl Pixel {
-
-    pub fn render(&mut self, args: &RenderArgs) {
-        use graphics::*;
-
-        const BLACK: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
-        const WHITE: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
-        const RED: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-
-        let square = rectangle::square(0.0, 0.0, 1080.0);
-    }
-
-}
 
 impl Frame {
 
@@ -82,8 +49,6 @@ impl Frame {
 
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.5];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
-        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 
         //let square = rectangle::square(0.0, 0.0, 1080.0);
 
