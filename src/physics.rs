@@ -100,15 +100,17 @@ impl Body {
     pub fn get_total_acc(&mut self, mut node: &mut Region) -> Vec<f64> {
         let mut acc = vec![0.0; DIMS];
         // check to see if we have child nodes
-        //println!("updating acceleration");
+        // println!("updating acceleration");
+        // println!("{:#?}", node.reg_vec);
         match node.reg_vec.clone() {
             //if this is a leaf, find the acceleration between us and its com
             None => {
                 match node.com {
-                    None => acc,
+                    None => //{println!("node has no com"); acc},
+                        acc,
                     Some(ref com) => {
                         let total_acc = self.update_accel(acc.clone(), com);
-                        println!("acceleration component: {:#?}", total_acc[0]);
+                        // println!("acceleration component: {:#?}", total_acc[0]);
                         acc = acc.iter().zip(total_acc
                             .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                         acc
@@ -117,8 +119,10 @@ impl Body {
             }
             //if this node has children, find the acceleration from each of them
             Some(ref mut reg_vec) => {
+                // println!("has reg_vec");
                 match node.com {
                     None => {
+                        // println!("updating child com");
                         node.update_com();
                         self.get_total_acc(&mut node)
                     }
@@ -154,12 +158,12 @@ impl Body {
         //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
         //TODO: tree should be a reference so we don't have to copy it every time
         // println!("updating vel");
-        println!("old velocity component: {:#?}", self.vel_vec[0]);
+        // println!("old velocity component: {:#?}", self.vel_vec[0]);
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         self.vel_vec = self.vel_vec.iter().zip(
             self.clone().get_total_acc(&mut tree))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
-        println!("new velocity component: {:#?}", self.vel_vec[0]);
+        // println!("new velocity component: {:#?}", self.vel_vec[0]);
     }
 
     //TODO: make update_pos use functional programming
