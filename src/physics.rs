@@ -98,9 +98,9 @@ impl Body {
     }
 
     pub fn get_total_acc(&mut self, mut node: &mut Region) -> Vec<f64> {
-        let mut acc = vec![0.0; node.reg_vec.iter().len()];
+        let mut acc = vec![0.0; DIMS];
         // check to see if we have child nodes
-        // println!("updating acceleration");
+        //println!("updating acceleration");
         match node.reg_vec.clone() {
             //if this is a leaf, find the acceleration between us and its com
             None => {
@@ -120,11 +120,20 @@ impl Body {
                         if self.is_far(node) {
                             match node.com {
                                 None => acc,
-                                Some(ref com) => self.update_accel(acc, com)
+                                Some(ref com) => {
+                                    let total_acc = self.update_accel(acc.clone(), com);
+                                    println!("acceleration component: {:#?}", total_acc[0]);
+                                    acc = acc.iter().zip(total_acc
+                                        .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
+                                    acc
+                                }
                             }
                         } else {
                             for mut child in reg_vec.iter_mut() {
-                                acc = self.get_total_acc(&mut child);
+                                let totalAcc = self.get_total_acc(&mut child);
+                                println!("acceleration component: {:#?}", totalAcc[0]);
+                                acc = acc.iter().zip(totalAcc
+                                        .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             }
                             acc
                         }
@@ -139,11 +148,12 @@ impl Body {
         //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
         //TODO: tree should be a reference so we don't have to copy it every time
         // println!("updating vel");
+        println!("old velocity component: {:#?}", self.vel_vec[0]);
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
-        self.vel_vec = self.vel_vec.clone().iter_mut().zip(
-            self.get_total_acc(&mut tree))
+        self.vel_vec = self.vel_vec.iter().zip(
+            self.clone().get_total_acc(&mut tree))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
-        // println!("udpated acc");
+        println!("new velocity component: {:#?}", self.vel_vec[0]);
     }
 
     //TODO: make update_pos use functional programming
@@ -166,12 +176,12 @@ impl Region {
         match self.reg_vec.clone() {
             //if we're at the leaf node, call update_vel if we have a mass
             None => {
-                match self.com {
+                match self.com.clone() {
                     None => (),
                     Some(ref mut com) => {
                         com.update_vel();
                         //TODO: find out if it's actually necessary to re-wrap this
-                        //self.com = Some(*com);
+                        self.com = Some(com.clone());
                     }
                 }
             },

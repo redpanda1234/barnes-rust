@@ -121,7 +121,7 @@ impl Frame {
 
     pub fn update(&mut self, args: &UpdateArgs) {
         self.tree.update();
-        //self.tree.deep_update_vel();
+        self.tree.deep_update_vel();
         self.tree.deep_update_pos();
     }
 }
