@@ -73,8 +73,7 @@ fn main() {
     generate::gt_all_ranges(num_bodies, seeder);
 
     let mut frame = Frame {
-        gl: GlGraphics::new(opengl),
-        tree: TREE_POINTER.lock().unwrap().tree.clone()
+        gl: GlGraphics::new(opengl)
     };
 
     println!("done generating");

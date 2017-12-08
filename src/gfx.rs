@@ -14,8 +14,7 @@ use super::tree::*;
 use super::data::TREE_POINTER;
 
 pub struct Frame {
-    pub gl: GlGraphics, // OpenGL backend for drawing
-    pub tree: Region // the tree we're gonna be drawing
+    pub gl: GlGraphics // OpenGL backend for drawing
 }
 
 pub use data::{ MAX_LEN, DIMS };
@@ -47,23 +46,21 @@ impl Frame {
     pub fn render(&mut self, reg_option: Option<&Region>, args: &RenderArgs) {
         use graphics::*;
 
-        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.5];
+        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.25];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
-
-        //let square = rectangle::square(0.0, 0.0, 1080.0);
 
         //main should pass render() a None option
         //if that happens, call render on the tree
         match reg_option {
             None => {
-                let tree = self.tree.clone();
+                let tree = TREE_POINTER.lock().unwrap().tree.clone();
                 self.gl.draw(args.viewport(), |c, gl| {
                     // Clear the screen.
                     clear(BLACK, gl);
                 });
                 self.render(Some(& tree), args)
             },
-            Some (reg) => {
+            Some(reg) => {
                 // Draw a box rotating around the middle of the screen.
                 match reg.clone().reg_vec {
                     None => {
@@ -89,11 +86,10 @@ impl Frame {
     }
 
     pub fn update(&mut self, args: &UpdateArgs) {
-        self.tree.update();
-        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
-        // println!("{:#?}", self.tree);
-        self.tree.deep_update_vel();
-        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
-        self.tree.deep_update_pos();
+        // self.tree.update();
+        TREE_POINTER.lock().unwrap().tree.update();
+        // self.tree.deep_update_vel().update();
+        TREE_POINTER.lock().unwrap().tree.deep_update_vel(); // = self.tree.clone();
+        TREE_POINTER.lock().unwrap().tree.deep_update_pos();
     }
 }
