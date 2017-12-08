@@ -8,7 +8,7 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 50000.0;
+const G: f64 = 500.0;
 
 impl Body {
 
@@ -139,7 +139,7 @@ impl Body {
                                 None => acc,
                                 Some(ref com) => {
                                     let total_acc = self.update_accel(acc.clone(), com);
-                                    println!("acceleration component: {:#?}", total_acc);
+                                    // println!("acceleration component: {:#?}", total_acc);
                                     acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                                     acc
