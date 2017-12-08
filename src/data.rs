@@ -16,6 +16,7 @@ pub const DT: f64 = 0.001;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
+pub const MAX_VEL: f64 = 1_000.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
@@ -120,11 +121,52 @@ pub mod generate {
     // for an explanation on what this function is _supposed_ to be
     // doing
 
-    pub fn nd_vec_from_mag<T: IndependentSample<f64>>(
+    pub fn seeded_nd_vec_from_mag<T: IndependentSample<f64>>(
         mag: f64,
         t_generator: &T,
         final_theta: f64,
         mut rng: StdRng
+    ) -> Vec<f64> {
+
+        let mut vec = vec![0.0; DIMS];
+
+        // The final case is special, so we don't iterate all the way
+        // through DIMS.
+
+        // This'll hold the running product of sin values of each of
+        // the thetas defining our position
+
+        let mut product: f64 = 1.0;
+
+        for i in 0..(DIMS-2) {
+
+            let theta = t_generator.ind_sample(&mut rng);
+            vec[i] = mag*(theta.cos())*product;
+
+            // all future calculations will involve product of
+            // preceding theta.sin() values, so we increment it here
+
+            product *= theta.sin();
+
+        }
+
+        // The final theta value is special, as it ranges from 0 to
+        // 2pi. So we treat it the r coordinates whose definitions
+        // involve it in special cases outside of our loop. Note that
+        // the final r_vec entry involves just .sin()'s, no .cos()'s.
+
+        vec[DIMS-2] = mag * final_theta.cos() * product;
+        vec[DIMS-1] = mag * final_theta.sin() * product;
+
+        // return vec
+        vec
+    }
+
+    pub fn nd_vec_from_mag<T: IndependentSample<f64>>(
+        mag: f64,
+        t_generator: &T,
+        final_theta: f64,
+        mut rng: ThreadRng
     ) -> Vec<f64> {
 
         let mut vec = vec![0.0; DIMS];
@@ -171,27 +213,31 @@ pub mod generate {
         v_mag: f64,
         m: f64,
         t_generator: T,
-        seeder: StdRng
     ) -> Body {
-        let pos_vec = nd_vec_from_mag(p_mag, &t_generator, t_f, seeder);
+        let mut rng1 = rand::thread_rng();
+        let mut rng2 = rand::thread_rng();
+
+        let pos = nd_vec_from_mag(p_mag, &t_generator, t_f, rng1);
+        let vel = nd_vec_from_mag(v_mag, &t_generator, t_f, rng2);
+
+        println!("{:#?}, {:#?}", pos, vel);
+
         let body = Body {
-            pos_vec: nd_vec_from_mag(p_mag, &t_generator, t_f, seeder),
-            vel_vec: nd_vec_from_mag(v_mag, &t_generator, t_f, seeder),
+            pos_vec: pos,
+            vel_vec: vel,
             mass: m
         };
-        // println!("{:?}", body);
+
         body
     }
 
     // gt is for gen_tree
-    pub fn gt_all_ranges(num_bodies: usize, mut seeder: StdRng) {
+    pub fn seeded_gt_all_ranges(num_bodies: usize, mut seeder: StdRng) {
         use data::rand::distributions::*;
         // let mut seeder = get_seeder_rng();
 
         let m_gen = Range::new(0.0, MAX_MASS);
         let p_mag_gen = Range::new(0.0, MAX_LEN);
-
-        // TODO: let's make sure stuff isn't getting relativistic here
         let v_mag_gen = Range::new(0.0, 5_000.0);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
@@ -199,13 +245,61 @@ pub mod generate {
         for _ in 0..num_bodies {
 
             push_body_global(
-                gb_from_mags(
+                seeded_gb_from_mags(
                     t_f_gen.ind_sample(&mut seeder),
                     p_mag_gen.ind_sample(&mut seeder),
                     v_mag_gen.ind_sample(&mut seeder),
                     m_gen.ind_sample(&mut seeder),
                     t_gen,
                     get_rng(seeder)
+                )
+            )
+        }
+    }
+
+    pub fn seeded_gb_from_mags<T: IndependentSample<f64>>(
+        t_f: f64,
+        p_mag: f64,
+        v_mag: f64,
+        m: f64,
+        t_generator: T,
+        seeder: StdRng
+    ) -> Body {
+        let pos = seeded_nd_vec_from_mag(p_mag, &t_generator, t_f, get_rng(seeder));
+        let vel = seeded_nd_vec_from_mag(v_mag, &t_generator, t_f, seeder);
+        println!("{:#?}, {:#?}", pos, vel);
+        // let pos_vec = nd_vec_from_mag(p_mag, &t_generator, t_f, seeder);
+        let body = Body {
+            pos_vec: pos,
+            vel_vec: vel,
+            mass: m
+        };
+        // println!("{:?}", body);
+        body
+    }
+
+    // gt is for gen_tree
+    pub fn gt_all_ranges(num_bodies: usize) {
+        use data::rand::distributions::*;
+        // let mut seeder = get_seeder_rng();
+
+        let m_gen = Range::new(0.0, MAX_MASS);
+        let p_mag_gen = Range::new(0.0, MAX_LEN);
+        let v_mag_gen = Range::new(0.0, MAX_VEL);
+        let t_gen = Range::new(0.0, PI);
+        let t_f_gen = &Range::new(0.0, 2.0*PI);
+
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..num_bodies {
+
+            push_body_global(
+                gb_from_mags(
+                    t_f_gen.ind_sample(&mut rng),
+                    p_mag_gen.ind_sample(&mut rng),
+                    v_mag_gen.ind_sample(&mut rng),
+                    m_gen.ind_sample(&mut rng),
+                    t_gen
                 )
             )
         }

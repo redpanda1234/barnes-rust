@@ -8,7 +8,7 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 1.0;
+const G: f64 = 100.0;
 
 impl Body {
 
@@ -28,7 +28,7 @@ impl Body {
     }
 
     pub fn node_sq_dist_to(&self, node: &Region) -> f64 {
-        println!("woooo {:#?}, {:#?}", &node.coord_vec, self.pos_vec);
+        // println!("woooo {:#?}, {:#?}", &node.coord_vec, self.pos_vec);
         self.pos_vec.iter().zip(&node.coord_vec)
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
@@ -63,7 +63,7 @@ impl Body {
         // FIXME: make sure this doesn't allow infinite loops;
         // i.e. that node.com will only be none if there's stuff
         // in the region_vec or add_queue.
-        println!("wheee {:#?}", self.node_sq_dist_to(&node));
+        // println!("wheee {:#?}", self.node_sq_dist_to(&node));
         //Note: nodes are now guaranteed to have valid com when this is called
         ( 2.0 * node.half_length / self.node_sq_dist_to(&node))
         // ( 2.0 * node.half_length / self.squared_dist_to(&node.com.clone().unwrap()))
@@ -122,7 +122,7 @@ impl Body {
                         acc,
                     Some(ref com) => {
                         let total_acc = self.update_accel(acc.clone(), com);
-                        println!("acceleration component: {:#?}", total_acc);
+                        // println!("acceleration component: {:#?}", total_acc);
                         acc = acc.iter().zip(total_acc
                             .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                         acc
@@ -140,7 +140,7 @@ impl Body {
                     }
                     Some(ref com) => {
                         if self.is_far(node) {
-                            println!("{:#?}, {:#?}", acc.clone(), com);
+                            // println!("{:#?}, {:#?}", acc.clone(), com);
                             let total_acc = self.update_accel(acc.clone(), com);
                             // println!("acceleration component: {:#?}", total_acc);
                             acc = acc.iter().zip(total_acc
@@ -149,7 +149,7 @@ impl Body {
                         } else {
                             for mut child in reg_vec.iter_mut() {
                                 let total_acc = self.get_total_acc(&mut child);
-                                println!("acceleration component: {:#?}", total_acc);
+                                // println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             }
@@ -304,9 +304,9 @@ impl Region {
                 }
                 //if we didn't add any masses, make sure we're not dividing by 0
                 if den != 0.0 {
-                    println!("fix divide by 0");
+                    // println!("fix divide by 0");
                     num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
-                    println!("new num is {:#?}", num);
+                    // println!("new num is {:#?}", num);
                 } else {
                     num = self.coord_vec.clone()
                 }
