@@ -162,74 +162,9 @@ pub mod generate {
         vec
     }
 
-    pub fn nd_vec_from_mag<T: IndependentSample<f64>>(
-        mag: f64,
-        t_generator: &T,
-        final_theta: f64,
-        mut rng: ThreadRng
-    ) -> Vec<f64> {
-
-        let mut vec = vec![0.0; DIMS];
-
-        // The final case is special, so we don't iterate all the way
-        // through DIMS.
-
-        // This'll hold the running product of sin values of each of
-        // the thetas defining our position
-
-        let mut product: f64 = 1.0;
-
-        for i in 0..(DIMS-2) {
-
-            let theta = t_generator.ind_sample(&mut rng);
-            vec[i] = mag*(theta.cos())*product;
-
-            // all future calculations will involve product of
-            // preceding theta.sin() values, so we increment it here
-
-            product *= theta.sin();
-
-        }
-
-        // The final theta value is special, as it ranges from 0 to
-        // 2pi. So we treat it the r coordinates whose definitions
-        // involve it in special cases outside of our loop. Note that
-        // the final r_vec entry involves just .sin()'s, no .cos()'s.
-
-        vec[DIMS-2] = mag * final_theta.cos() * product;
-        vec[DIMS-1] = mag * final_theta.sin() * product;
-
-        // return vec
-        vec
-    }
-
     // gb is for gen_body
     // a generic body generator that takes a generic random number
     // generator for obtaining thetas.
-
-    pub fn gb_from_mags<T: IndependentSample<f64>>(
-        t_f: f64,
-        p_mag: f64,
-        v_mag: f64,
-        m: f64,
-        t_generator: T,
-    ) -> Body {
-        let mut rng1 = rand::thread_rng();
-        let mut rng2 = rand::thread_rng();
-
-        let pos = nd_vec_from_mag(p_mag, &t_generator, t_f, rng1);
-        let vel = nd_vec_from_mag(v_mag, &t_generator, t_f, rng2);
-
-        println!("{:#?}, {:#?}", pos, vel);
-
-        let body = Body {
-            pos_vec: pos,
-            vel_vec: vel,
-            mass: m
-        };
-
-        body
-    }
 
     // gt is for gen_tree
     pub fn seeded_gt_all_ranges(num_bodies: usize, mut seeder: StdRng) {
@@ -278,6 +213,72 @@ pub mod generate {
         body
     }
 
+
+    pub fn nd_vec_from_mag<T: IndependentSample<f64>>(
+        mag: f64,
+        t_generator: &T,
+        final_theta: f64,
+        mut rng: StdRng
+    ) -> Vec<f64> {
+
+        let mut vec = vec![0.0; DIMS];
+
+        // The final case is special, so we don't iterate all the way
+        // through DIMS.
+
+        // This'll hold the running product of sin values of each of
+        // the thetas defining our position
+
+        let mut product: f64 = 1.0;
+
+        for i in 0..(DIMS-2) {
+            let theta = t_generator.ind_sample(&mut rng);
+            vec[i] = mag*(theta.cos())*product;
+
+            // all future calculations will involve product of
+            // preceding theta.sin() values, so we increment it here
+
+            product *= theta.sin();
+
+        }
+
+        // The final theta value is special, as it ranges from 0 to
+        // 2pi. So we treat it the r coordinates whose definitions
+        // involve it in special cases outside of our loop. Note that
+        // the final r_vec entry involves just .sin()'s, no .cos()'s.
+
+        vec[DIMS-2] = mag * final_theta.cos() * product;
+        vec[DIMS-1] = mag * final_theta.sin() * product;
+
+        // return vec
+        vec
+    }
+
+    pub fn gb_from_mags<T: IndependentSample<f64>>(
+        t_f1: f64,
+        t_f2: f64,
+        p_mag: f64,
+        v_mag: f64,
+        m: f64,
+        t_generator: T,
+    ) -> Body {
+        let mut rng1 = rand::StdRng::new().unwrap();
+        let mut rng2 = rand::StdRng::new().unwrap();
+
+        let pos = nd_vec_from_mag(p_mag, &t_generator, t_f1, rng1);
+        let vel = nd_vec_from_mag(v_mag, &t_generator, t_f2, rng2);
+
+        println!("{:#?}, {:#?} \n\n", pos, vel);
+
+        let body = Body {
+            pos_vec: pos,
+            vel_vec: vel,
+            mass: m
+        };
+
+        body
+    }
+
     // gt is for gen_tree
     pub fn gt_all_ranges(num_bodies: usize) {
         use data::rand::distributions::*;
@@ -289,12 +290,13 @@ pub mod generate {
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::StdRng::new().unwrap();
 
         for _ in 0..num_bodies {
 
             push_body_global(
                 gb_from_mags(
+                    t_f_gen.ind_sample(&mut rng),
                     t_f_gen.ind_sample(&mut rng),
                     p_mag_gen.ind_sample(&mut rng),
                     v_mag_gen.ind_sample(&mut rng),
