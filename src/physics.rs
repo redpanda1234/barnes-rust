@@ -106,7 +106,13 @@ impl Body {
             None => {
                 match node.com {
                     None => acc,
-                    Some(ref com) => self.update_accel(acc, com)
+                    Some(ref com) => {
+                        let total_acc = self.update_accel(acc.clone(), com);
+                        println!("acceleration component: {:#?}", total_acc[0]);
+                        acc = acc.iter().zip(total_acc
+                            .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
+                        acc
+                    }
                 }
             }
             //if this node has children, find the acceleration from each of them
