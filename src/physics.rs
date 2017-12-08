@@ -7,6 +7,9 @@ pub use super::tree::*;
 // Fetch global statics from the main function
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
+// let const G: f64 = (6.674 / (1_000_000_000_00.0));
+const G: f64 = 50000.0;
+
 impl Body {
 
     // We need r^2 in Newton's law of gravity (TODO: apply small GR
@@ -41,7 +44,7 @@ impl Body {
     // always need to find the displacement vector.
 
     pub fn sq_magnitude(&self, vec: &Vec<f64>) -> f64 {
-        vec.iter().fold(0.0,|sum,vi| sum + vi.powi(2))
+        vec.iter().fold(0.0, |sum, vi| sum + vi.powi(2))
     }
 
     // is_far calculates a distance metric between the calling mass
@@ -64,25 +67,29 @@ impl Body {
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
         let rel = self.vec_rel(mass);
+        // println!("{:?}", rel);
         let sq_mag = self.sq_magnitude(&rel);
         // println!("{}, {:#?}", sq_mag, rel);
-        let acc = mass.mass * (6.674 / (1_000_000_000_00.0)) / sq_mag;
+        let acc = mass.mass * G / sq_mag;
+        // println!("{:?}", acc);
         let r = sq_mag.sqrt();
 
         //if the distance is 0, just return 0
         if(r == 0.0) {
+            // println!("{:?}", r);
             return vec![0.0; DIMS];
         }
 
-        rel.iter().map(|ri| ri * acc/r).collect::<Vec<f64>>()
+        rel.iter().map(|ri| (ri/r) * acc).collect::<Vec<f64>>()
     }
 
     pub fn get_classical_potential(&self, mass: &Body) -> Vec<f64> {
+        // use super::G;
         let rel = self.vec_rel(mass);
         let sq_mag = self.sq_magnitude(&rel);
         // println!("{}, {:#?}", sq_mag, rel);
         let r = sq_mag.sqrt();
-        let pot = mass.mass * (6.674 / (1_000_000_000_00.0)) / r;
+        let pot = mass.mass * G / r;
 
         //if the distance is 0, just return 0
         if(r == 0.0) {
@@ -132,7 +139,7 @@ impl Body {
                                 None => acc,
                                 Some(ref com) => {
                                     let total_acc = self.update_accel(acc.clone(), com);
-                                    println!("acceleration component: {:#?}", total_acc[0]);
+                                    println!("acceleration component: {:#?}", total_acc);
                                     acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                                     acc
@@ -140,9 +147,9 @@ impl Body {
                             }
                         } else {
                             for mut child in reg_vec.iter_mut() {
-                                let totalAcc = self.get_total_acc(&mut child);
-                                println!("acceleration component: {:#?}", totalAcc[0]);
-                                acc = acc.iter().zip(totalAcc
+                                let total_acc = self.get_total_acc(&mut child);
+                                // println!("acceleration component: {:#?}", total_acc);
+                                acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             }
                             acc
@@ -291,7 +298,7 @@ impl Region {
                     }
                 }
                 //if we didn't add any masses, make sure we're not dividing by 0
-                if den != 0.0 {
+                if den == 0.0 {
                     num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
                 }
 
