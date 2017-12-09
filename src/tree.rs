@@ -96,7 +96,7 @@ impl Region {
     // coordinates in its position vector to determine whether it's
     // contained in the calling region or not.
 
-    fn contains(&self, point: &Body) -> bool {
+    pub fn contains(&self, point: &Body) -> bool {
 
         // Iterate through all pairs of the i components of our
         // position coordinate
@@ -357,6 +357,10 @@ impl Region {
         }
     }
 
+    //remove masses from the add_queue
+    //and place them in the child nodes
+    //FIXME: not properly removing masses that aren't in the
+    //simulation anymore
     pub fn push_masses_to_children(&mut self) {
         // println!("pushing masses to children");
         // FIXME: do this actually properly.
@@ -413,7 +417,6 @@ impl Region {
                         }
 
                     }
-                    println!("Deleted mass: {:#?}", mass.mass);
                 }
 
                 self.add_queue = None;
@@ -424,6 +427,32 @@ impl Region {
 
         //empty the add queue
         self.add_queue = None;
+    }
+
+    // push a body to this region's add_queue
+    pub fn push_body_global(body: Body) {
+        let ref tree = &TREE_POINTER.lock().unwrap().tree;
+        let mut add_queue = tree.add_queue.clone();
+
+        //if the added mass is outside of the tree region, don't add it
+        if(!tree.contains(&body)) {
+            println!("\n\nDeleted mass: {:#?}\n\n", body);
+            return;
+        }
+
+        //if the add queue doesn't already exist, create it
+        match add_queue {
+            None => {
+                let mut queue = Vec::new();
+                queue.push(body);
+                add_queue = Some(queue);
+            },
+            Some(mut queue) => {
+                queue.push(body);
+                add_queue = Some(queue);
+            }
+        };
+        TREE_POINTER.lock().unwrap().tree.add_queue = add_queue;
     }
 
     pub fn list_masses(&self) -> Vec<Body> {
