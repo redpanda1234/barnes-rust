@@ -8,7 +8,7 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = -1000.0;
+const G: f64 = 10000.0;
 
 impl Body {
 
@@ -229,6 +229,7 @@ impl Region {
                     None => (),
                     Some(ref mut com) => {
                         com.update_pos();
+                        self.update_com();
                         //TODO: find out if it's actually necessary to re-wrap this
                         self.com = Some(com.clone());
                     }
@@ -248,7 +249,7 @@ impl Region {
     }
 
     pub fn update_com(&mut self) {
-        // println!("called update_com");
+        //println!("called update_com");
 
         // we check whether we have child regions to determine whether
         // or not we're in a leaf node. If we are, we should just
@@ -284,9 +285,13 @@ impl Region {
                         // check to see if this region still contains com
                         // if it doesn't, remove com and push it to the global tree
                         if self.contains(&com) {
-                            self.com = Some(com);
+                            //println!("contains com");
+
+                            //I don't think this should be necessary...
+                            //self.com = Some(com);
                         } else {
                             self.com = None;
+                            //println!("body has moved outside of region");
                             Region::push_body_global(com);
                         }
                     },
