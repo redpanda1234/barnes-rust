@@ -8,7 +8,7 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 100.0;
+const G: f64 = -1000.0;
 
 impl Body {
 
@@ -280,7 +280,7 @@ impl Region {
                             None => (),
                             Some(_) => panic!("cannot update com with masses waiting to be queued!"),
                         };
-                        
+
                         // check to see if this region still contains com
                         // if it doesn't, remove com and push it to the global tree
                         if self.contains(&com) {
