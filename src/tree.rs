@@ -78,14 +78,19 @@ pub struct Body {
 // + reimplement contains method by constructing indices using our
 //   binary string construction method on the global multiplier array.
  */
+use std::sync::{Mutex, Arc};
+use std::thread;
+
+// use std::rc::Rc;
+// use std::cell::RefCell;
 
 #[derive(Clone, Debug)]
 pub struct Region {
-    pub reg_vec: Option<Vec<Region>>,
+    pub reg_vec: Option<Vec<Arc<Mutex<Region>>>>,
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
-    pub add_queue: Option<Vec<Body>>,
-    pub com: Option<Body>
+    pub add_queue: Option<Vec<Arc<Mutex<Body>>>>,
+    pub com: Option<Arc<Mutex<Body>>>
 }
 
 
@@ -107,7 +112,7 @@ impl Region {
             // be directly on the boundary... I think this is handeled
             // because we'll pop a mass as soon as it passes for one
             // of the regions, but let's double-check.
-            // println!("qi = {:#?}, pi = {:#?}, half_length = {:#?}", qi, pi, self.half_length);
+
             if (qi-pi).abs() > self.half_length {
                 // println!("shit, return false");
                 return false
@@ -119,18 +124,14 @@ impl Region {
     // update does two jobs at once. It recursively pushes masses from
     // add queues
     pub fn update(&mut self) -> i32 {
-        // println!("called update");
-
-        // println!("updating {:?}", self);
-        // println!("helooooo");
 
         // First check whether the calling region has any child
         // regions. This will determine how we handle our updating.
         // Currently, we check whether
 
-        match self.reg_vec.clone() {
+        match &self.reg_vec {
 
-            None => {
+            &None => {
 
                 // if we don't have a defined region vector, then that
                 // means that either we're a leaf node, or we're doing
@@ -147,9 +148,9 @@ impl Region {
                 // will be useful in multithreading), else we
                 // recurse down into the tree.
 
-                match self.add_queue.clone() {
+                match &self.add_queue {
 
-                    None => {
+                    &None => {
                         // println!("nothing to add");
                         match self.com {
                             None => 0,
@@ -160,21 +161,19 @@ impl Region {
                     // if our add_queue is nonempty, then we need
                     // to handle ingesting of the masses.
 
-                    Some(mut queue) => {
-                        // println!("adding something");
+                    &Some(mut queue) => {
 
-                        match self.com.clone() {
+                        match &self.com {
 
-                            None => {
-                                self.recurse(true)
-                            },
+                            &None => self.recurse(true),
 
                             // If we have a current com, we push
                             // it into the queue (because we're
                             // still at a leaf node), and then
                             // subdivide accordingly, returning
                             // the number of submasses contained.
-                            Some(mut com) => {
+
+                            &Some(mut com) => {
                                 queue.push(com);
                                 self.com = None;
                                 self.add_queue = Some(queue);
@@ -190,7 +189,7 @@ impl Region {
             // Perhaps we should make each of the entries in the
             // vector options on Regions?
 
-            Some(mut reg_vec) => {
+            &Some(mut reg_vec) => {
 
                 // Invalidate com, because it's gonna be invalid no
                 // matter what if we aren't at a leaf node.

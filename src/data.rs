@@ -2,6 +2,9 @@ pub extern crate rand;
 
 use super::*;
 
+use std::sync::{Mutex, Arc};
+use std::thread;
+
 // TODO: use this everywhere we check dimensions
 pub const DIMS: usize = 2;
 pub const THETA: f64 = 0.5;
@@ -309,23 +312,17 @@ pub mod generate {
 
     // push a body to the global tree's add queue
     pub fn push_body_global(body: Body) {
-        let match_me = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
-        match match_me {
+        match &TREE_POINTER.lock().unwrap().tree.add_queue {
 
-            None => {
-                let mut add_me  = Vec::new();
-                add_me.push(body);
-
-                TREE_POINTER.lock().unwrap().tree.add_queue = Some(add_me);
-                println!("Tree pointer was None, is now {:#?}",
-                TREE_POINTER.lock().unwrap().tree.add_queue);
+            &None => {
+                TREE_POINTER.lock().unwrap().tree.add_queue =
+                    Some( vec![ Arc::new( Mutex::new( body ) ) ] );
             },
 
-            Some(_) => {
-                let mut queue =
-                    TREE_POINTER.lock().unwrap().tree.add_queue.clone().unwrap();
-                queue.push(body);
-                TREE_POINTER.lock().unwrap().tree.add_queue = Some(queue);
+            &Some(mut_queue) => {
+                TREE_POINTER.lock().unwrap().tree.add_queue.unwrap().push(
+                    Arc::new( Mutex::new( body ) )
+                );
             }
         }
     }
@@ -344,19 +341,19 @@ lazy_static! {
     // allow us to handle the add_queue and reg_vec separately, which
     // will improve computation times.
 
-
-
-    //Stores a TreeWrapper that holds the global tree
-    pub static ref TREE_POINTER: Mutex<TreeWrapper> = Mutex::new(
-        TreeWrapper {
-            tree: Region {
-                reg_vec: None,
-                coord_vec: vec![0.0; DIMS],
-                half_length: MAX_LEN,
-                add_queue: Some(Vec::new()),
-                com: None
+    // Stores a TreeWrapper that holds the global tree
+    pub static ref TREE_POINTER: Arc<Mutex<TreeWrapper>> = Arc::new(
+        Mutex::new(
+            TreeWrapper {
+                tree: Region {
+                    reg_vec: None,
+                    coord_vec: vec![0.0; DIMS],
+                    half_length: MAX_LEN,
+                    add_queue: Some(Vec::new()),
+                    com: None
+                }
             }
-        }
+        )
     );
 
     /*

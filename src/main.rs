@@ -67,7 +67,7 @@ fn main() {
 
     let num_bodies = 200;
 
-    generate::gt_all_ranges(num_bodies);
+    let root = generate::gt_all_ranges(num_bodies);
 
     let mut frame = Frame {
         gl: GlGraphics::new(opengl),
