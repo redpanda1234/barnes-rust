@@ -24,7 +24,6 @@ use super::physics::*;
 // value assigned to it.
 
 
-// todo: temporarily implement an ID
 #[derive(Clone, Debug)]
 pub struct Body {
     pub pos_vec: Vec<f64>,
