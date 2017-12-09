@@ -64,7 +64,7 @@ fn main() {
     // generation function the rng object we've just seeded. Seeding
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
-    let num_bodies = 100;
+    let num_bodies = 200;
 
     generate::gt_all_ranges(num_bodies);
 
@@ -94,9 +94,9 @@ fn main() {
         if let Some(u) = e.update_args() {
             // let frame.tree = TREE_POINTER.lock().unwrap().tree.clone();
             // TREE_POINTER.lock().unwrap().tree = frame.tree;
-            // println!("calling update from main");
+            println!("calling update from main");
             frame.update(&u);
-            // println!("called update from main");
+            println!("called update from main");
         }
 
     }

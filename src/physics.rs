@@ -8,7 +8,7 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 100000.0;
+const G: f64 = 10000.0;
 
 impl Body {
 
@@ -122,7 +122,7 @@ impl Body {
                         acc,
                     Some(ref com) => {
                         let total_acc = self.update_accel(acc.clone(), com);
-                        println!("acceleration component: {:#?}", total_acc);
+                        // println!("acceleration component: {:#?}", total_acc);
                         acc = acc.iter().zip(total_acc
                             .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                         acc
@@ -142,14 +142,14 @@ impl Body {
                         if self.is_far(node) {
                             // println!("{:#?}, {:#?}", acc.clone(), com);
                             let total_acc = self.update_accel(acc.clone(), com);
-                            println!("acceleration component: {:#?}", total_acc);
+                            // println!("acceleration component: {:#?}", total_acc);
                             acc = acc.iter().zip(total_acc
                                                  .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             acc
                         } else {
                             for mut child in reg_vec.iter_mut() {
                                 let total_acc = self.get_total_acc(&mut child);
-                                println!("acceleration component: {:#?}", total_acc);
+                                // println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             }
