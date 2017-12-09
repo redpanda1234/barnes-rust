@@ -152,7 +152,7 @@ impl Region {
 
                     None => {
                         // println!("nothing to add");
-                        match self.com.clone() {
+                        match self.com {
                             None => 0,
                             Some(_) => 1
                         }
@@ -175,7 +175,6 @@ impl Region {
                             // still at a leaf node), and then
                             // subdivide accordingly, returning
                             // the number of submasses contained.
-
                             Some(mut com) => {
                                 queue.push(com);
                                 self.com = None;
@@ -200,31 +199,46 @@ impl Region {
                 self.com = None;
 
                 //
-                match self.add_queue.clone() {
+                match self.add_queue {
 
                     // If the add_queue is None, we only want to look
                     // at the child regions.
 
                     None => {
-                        // println!("updating children");
+                        //println!("updating children");
                         let mut return_me = 0;
-                        // TODO: before and after check here.
+
+                        // add the regions to a temporary array so we can
+                        // make sure they end up back in self
+                        let mut temp = Vec::new();
+                        
                         for reg in reg_vec.iter_mut() {
                             return_me += reg.update();
-                        };
-
+                            temp.push(reg.clone());
+                        }
+                        self.reg_vec = Some(temp);
+                        //println!("update results: {:#?}", return_me);
+                        if return_me == 0 {
+                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
+                            self.reg_vec = None;
+                        }
                         self.reg_vec = Some(reg_vec);
                         return_me
                     },
 
+                    // I think this case should never be called
+                    // because the way we inject masses should mean they
+                    // always go into leaf nodes
+                    // right????
                     Some(_) => {
                         // for some reason, this case is never
                         // reached. (or is it?)
-                        // println!("injecting bodies into child regions");
+                        println!("injecting bodies into child regions");
                         // recurse on false because we don't need to
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
                         if result == 0 {
+                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
                             self.reg_vec = None
                         }
                         result
@@ -342,7 +356,12 @@ impl Region {
             let mut remove = 0;
 
             match self.reg_vec.clone() {
-                None => 1,
+                None => {
+                    match self.com {
+                        None => 0,
+                        Some(_) => 1
+                    }
+                },
                 Some(mut reg_vec) => {
 
                     for region in reg_vec.iter_mut() {
@@ -352,6 +371,7 @@ impl Region {
                     // println!("child regions are {:#?}", reg_vec);
                     self.reg_vec = Some(reg_vec);
 
+                    //println!("returning {:#?} from recurse false", remove);
                     return remove;
                 }
             }

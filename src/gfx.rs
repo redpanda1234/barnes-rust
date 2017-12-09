@@ -38,6 +38,18 @@ impl Region {
 
     }
 
+    fn normalize_region_coords(&mut self) -> Vec<f64> {
+
+        
+        for i in 0..self.coord_vec.len() {
+            self.coord_vec[i] *= 270.0 / MAX_LEN;
+            self.coord_vec[i] += 400.0;
+        }
+        self.coord_vec.clone()
+
+
+    }
+
 }
 
 
@@ -48,6 +60,8 @@ impl Frame {
 
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.25];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
+        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.1];
 
         //main should pass render() a None option
         //if that happens, call render on the tree
@@ -76,6 +90,16 @@ impl Frame {
                     },
 
                     Some(child_vec) => {
+                        /*
+                        self.gl.draw(args.viewport(), |c, gl| {
+                            //draw red squares
+                            let coords = reg.clone().normalize_region_coords();
+                            let square = rectangle::square(0.0, 0.0, reg.half_length);
+                            let transform = c.transform.trans(coords[0], coords[1])
+                                            .rot_rad(0.0);
+                            rectangle(GREEN, square, transform, gl);
+                        });
+                        */
                         for child in child_vec.iter() {
                             self.render(Some(& *child), args);
                         }
