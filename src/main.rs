@@ -83,7 +83,7 @@ fn main() {
         // trying to render or update anything
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         tree.update();
-        TREE_POINTER.lock().unwrap().tree = tree.clone();
+        TREE_POINTER.lock().unwrap().tree = tree;
 
         if let Some(r) = e.render_args() {
             // println!("calling render from main");

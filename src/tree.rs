@@ -211,7 +211,7 @@ impl Region {
                         // add the regions to a temporary array so we can
                         // make sure they end up back in self
                         let mut temp = Vec::new();
-                        
+
                         for reg in reg_vec.iter_mut() {
                             return_me += reg.update();
                             temp.push(reg.clone());
@@ -452,7 +452,7 @@ impl Region {
 
     // push a body to this region's add_queue
     pub fn push_body_global(body: Body) {
-        let ref tree = &TREE_POINTER.lock().unwrap().tree;
+        let ref tree = &TREE_POINTER.lock().unwrap().tree.clone();
         let mut add_queue = tree.add_queue.clone();
 
         //if the added mass is outside of the tree region, don't add it
