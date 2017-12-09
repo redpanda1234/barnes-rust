@@ -79,6 +79,12 @@ fn main() {
 
     while let Some(e) = events.next(&mut window) {
 
+        // make sure the tree is set up correctly before
+        // trying to render or update anything
+        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        tree.update();
+        TREE_POINTER.lock().unwrap().tree = tree.clone();
+
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
             frame.render(None, &r);

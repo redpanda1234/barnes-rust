@@ -280,7 +280,15 @@ impl Region {
                             None => (),
                             Some(_) => panic!("cannot update com with masses waiting to be queued!"),
                         };
-                        self.com = Some(com);
+                        
+                        // check to see if this region still contains com
+                        // if it doesn't, remove com and push it to the global tree
+                        if self.contains(&com) {
+                            self.com = Some(com);
+                        } else {
+                            self.com = None;
+                            Region::push_body_global(com);
+                        }
                     },
                 }
             },
