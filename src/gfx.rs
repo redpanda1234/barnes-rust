@@ -75,6 +75,7 @@ impl Frame {
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.01];
 
 
         //main should pass render() a None option
@@ -96,6 +97,8 @@ impl Frame {
                     rectangle(RED, square, transform, gl);
                 });
 
+                //todo: replace this with drawing a red square at the master tree's com
+                //println!("none option passed to render; mass: {:#?}", tree.com.mass);
                 self.render(Some(& tree), args)
 
             },
@@ -123,16 +126,8 @@ impl Frame {
 
                                 let coords = reg.normalize_region_coords();
 
-                                let square = rectangle::square(
-                                    0.0,
-                                    0.0,
-                                    2.0 * reg.half_length
-                                );
-
-                                let transform =
-                                    c.transform
-                                    .trans(coords[0], coords[1])
-                                    .rot_rad(0.0);
+                                let square = rectangle::square(reg.half_length, reg.half_length,  reg.half_length);
+                                let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                                 rectangle(GREEN, square, transform, gl);
                             }
                         });
@@ -140,6 +135,14 @@ impl Frame {
 
                     Some(child_vec) => {
 
+                        self.gl.draw(args.viewport(), |c, gl| {
+                            //draw red squares
+                            let coords = reg.clone().normalize_region_coords();
+                            let square = rectangle::square(reg.half_length, reg.half_length,  reg.half_length);
+                            let transform = c.transform.trans(coords[0], coords[1])
+                                            .rot_rad(0.0);
+                            rectangle(BLUE, square, transform, gl);
+                        });
                         for child in child_vec.iter() {
                             self.render(
                                 Some(& *child.lock().unwrap()),
@@ -155,8 +158,8 @@ impl Frame {
     pub fn update(&mut self, args: &UpdateArgs) {
         self.tree.deep_update_vel();
         self.tree.deep_update_pos();
-        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        //TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.update();
-        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        //TREE_POINTER.lock().unwrap().tree = self.tree.clone();
     }
 }

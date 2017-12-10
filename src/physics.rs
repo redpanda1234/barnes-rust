@@ -9,6 +9,7 @@ pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
 const G: f64 = 1000000.0;
+const G: f64 = 10000000.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {
@@ -150,7 +151,7 @@ impl Body {
                     Some(ref com_arc) => {
                         let com = com_arc.try_lock().unwrap().clone();
                         let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
-                        println!("acceleration component: {:#?}", total_acc); // this is never called on singularities
+                        //println!("acceleration component: {:#?}", total_acc); // this is never called on singularities
                         acc = acc.iter()
                             .zip(total_acc.iter())
                             .map(|(u,v)| u+v)
@@ -176,7 +177,7 @@ impl Body {
                         if self.is_far(Arc::clone(&node_arc)) {
                             // println!("{:#?}, {:#?}", acc.clone(), com);
                             let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
-                            println!("acceleration component: {:#?}", total_acc);
+                            //println!("acceleration component: {:#?}", total_acc);
                             // this is always 0 when stuff doesn't move, for some reason
                             acc = acc
                                 .iter()
