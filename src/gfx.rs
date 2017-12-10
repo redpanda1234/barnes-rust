@@ -74,9 +74,8 @@ impl Frame {
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
+        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.5];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.01];
-
 
         //main should pass render() a None option
         //if that happens, call render on the tree

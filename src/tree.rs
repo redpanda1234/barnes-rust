@@ -152,9 +152,9 @@ impl Region {
 
                     None => {
                         // println!("nothing to add");
-                        match self.com.clone() {
-                            None => 0,
-                            Some(_) => 1
+                        match &self.com {
+                            &None => 0,
+                            &Some(_) => 1
                         }
                     },
 
@@ -197,12 +197,12 @@ impl Region {
                 self.com = None;
 
                 //
-                match self.add_queue.clone() {
+                match &self.add_queue {
 
                     // If the add_queue is None, we only want to look
                     // at the child regions.
 
-                    None => {
+                    &None => {
                         //println!("updating children");
                         let mut return_me = 0;
                         for reg_arc in reg_vec.iter() {
@@ -221,7 +221,7 @@ impl Region {
                     // because the way we inject masses should mean they
                     // always go into leaf nodes
                     // right????
-                    Some(_) => {
+                    &Some(_) => {
                         // for some reason, this case is never
                         // reached. (or is it?)
                         println!("injecting bodies into child regions");
