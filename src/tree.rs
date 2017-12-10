@@ -350,33 +350,28 @@ impl Region {
 
                 //if this region is very small and we don't want to subdivide it
                 //further, combine all the masses here into one
-                 if self.half_length < data::MIN_LEN {
+                 if self.half_length < MIN_LEN {
                     let mut pos = vec![0.0; DIMS as usize];
                     let mut vel = vec![0.0; DIMS as usize];
                     let mut den = 0.0;
 
-                    for mass in self.add_queue.iter() {
-                        let mut match_me = &mass.try_lock().unwrap().com;
-                        // println!("{:#?}", match_me);
-                        match match_me {
-                            &None => continue,
-                            &Some(ref com_arc) => {
-                                // drop(match_me);
-                                let mut com = com_arc.try_lock().unwrap();
-                                den += com.mass.clone();
-                                //TODO: we shouldn't have to be cloning pos_vec
-                                pos =pos
-                                    .iter()
-                                    .zip(com.pos_vec.clone())
-                                    .map(|(pi, pv)| pi + pv * com.mass)
-                                    .collect::<Vec<f64>>();
-                                vel =vel
-                                    .iter()
-                                    .zip(com.vel_vec.clone())
-                                    .map(|(pi, pv)| pi + pv * com.mass)
-                                    .collect::<Vec<f64>>();
-                            },
-                        }
+                    for mass in self.add_queue.clone().unwrap() {
+                        // drop(match_me);
+                        let mut com = mass.try_lock().unwrap();
+                        den += com.mass.clone();
+                        //TODO: we shouldn't have to be cloning pos_vec
+                        pos =pos
+                            .iter()
+                            .zip(com.pos_vec.clone())
+                            .map(|(pi, pv)| pi + pv * com.mass)
+                            .collect::<Vec<f64>>();
+                        vel =vel
+                            .iter()
+                            .zip(com.vel_vec.clone())
+                            .map(|(pi, pv)| pi + pv * com.mass)
+                            .collect::<Vec<f64>>();
+                            
+                        
                     }
                     //if we didn't add any masses, make sure we're not dividing by 0
                     if den != 0.0 {
@@ -390,9 +385,11 @@ impl Region {
                             .collect::<Vec<f64>>();
                     }
                     self.add_queue = None;
-                    self.com = Arc::new(Mutex::new(Body {
-
-                    }));
+                    self.com = Some(Arc::new(Mutex::new(Body {
+                        pos_vec: pos,
+                        vel_vec: vel,
+                        mass: den
+                    })));
                     return 1;
                 } else {
                     self.split();
