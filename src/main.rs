@@ -65,7 +65,7 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    let num_bodies = 20;
+    let num_bodies = 200;
 
 
     let root = generate::gt_all_ranges(num_bodies);
@@ -103,11 +103,7 @@ fn main() {
             // TREE_POINTER.lock().unwrap().tree = frame.tree;
             // println!("calling update from main");
             frame.update(&u);
-<<<<<<< HEAD
             // println!("called update from main");
-=======
-            //println!("called update from main");
->>>>>>> cdc08376379c8e6d14f1b6448bbae374d55f722c
         }
 
     }
