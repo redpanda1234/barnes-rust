@@ -55,7 +55,6 @@ impl Region {
             coord_vec[i] *= screen_scale / MAX_LEN;
             coord_vec[i] += screen_offset;
             coord_vec[i] -= self.half_length * (screen_scale / MAX_LEN);
-
         }
 
         coord_vec
@@ -133,14 +132,14 @@ impl Frame {
                     },
 
                     Some(child_vec) => {
-
-                        self.gl.draw(args.viewport(), |c, gl| {
-                            //draw red squares
-                            let coords = reg.clone().normalize_region_coords();
-                            let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale) / MAX_LEN);
-                            let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
-                            rectangle(BLUE, square, transform, gl);
-                        });
+                        //
+                        // self.gl.draw(args.viewport(), |c, gl| {
+                        //     //draw red squares
+                        //     let coords = reg.clone().normalize_region_coords();
+                        //     let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale) / MAX_LEN);
+                        //     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+                        //     rectangle(BLUE, square, transform, gl);
+                        // });
                         for child in child_vec.iter() {
                             self.render(
                                 Some(& *child.lock().unwrap()),
