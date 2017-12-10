@@ -8,7 +8,7 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 10000.0;
+const G: f64 = 1000000.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {
@@ -187,7 +187,7 @@ impl Body {
                         } else {
                             for mut child in match_me.unwrap().iter() {
                                 let total_acc = self.get_total_acc(Arc::clone(child));
-                                println!("acceleration component: {:#?}", total_acc);
+                                // println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             }

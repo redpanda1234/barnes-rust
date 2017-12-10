@@ -8,7 +8,7 @@ use std::thread;
 // TODO: use this everywhere we check dimensions
 pub const DIMS: usize = 2;
 pub const THETA: f64 = 0.5;
-pub const DT: f64 = 0.01;
+pub const DT: f64 = 10.0;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;

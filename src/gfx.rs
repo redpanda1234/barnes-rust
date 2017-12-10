@@ -54,6 +54,7 @@ impl Region {
         for i in 0..DIMS {
             coord_vec[i] *= screen_scale / MAX_LEN;
             coord_vec[i] += screen_offset;
+            coord_vec[i] -= self.half_length;
 
         }
 
@@ -79,59 +80,71 @@ impl Frame {
         //main should pass render() a None option
         //if that happens, call render on the tree
         match reg_option {
+
             None => {
                 let tree = TREE_POINTER.lock().unwrap().tree.clone();
+
                 self.gl.draw(args.viewport(), |c, gl| {
                     // Clear the screen.
                     clear(BLACK, gl);
                 });
+
                 self.gl.draw(args.viewport(), |c, gl| {
                     let coords = [500.0, 500.0];
                     let square = rectangle::square(0.0, 0.0, 2.0);
                     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                     rectangle(RED, square, transform, gl);
                 });
+
                 self.render(Some(& tree), args)
+
             },
             Some(reg) => {
-                // Draw a box rotating around the middle of the screen.
+
                 match reg.clone().reg_vec {
+
                     None => {
                         self.gl.draw(args.viewport(), |c, gl| {
-
-                        });
-                        //println!("called render");
-                        self.gl.draw(args.viewport(), |c, gl| {
                             let coords = reg.clone().normalize_coords();
+
                             if coords[0] == -1.0 {
+
                                 return
+
                             } else {
                                 let square = rectangle::square(0.0, 0.0, 1.0);
-                                let transform = c.transform.trans(coords[0], coords[1])
+
+                                let transform =
+                                    c.transform
+                                    .trans(coords[0], coords[1])
                                     .rot_rad(0.0);
+
                                 rectangle(WHITE, square, transform, gl);
 
                                 let coords = reg.normalize_region_coords();
-                                let square = rectangle::square(0.0, 0.0, 2.0 * reg.half_length);
-                                let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+
+                                let square = rectangle::square(
+                                    0.0,
+                                    0.0,
+                                    2.0 * reg.half_length
+                                );
+
+                                let transform =
+                                    c.transform
+                                    .trans(coords[0], coords[1])
+                                    .rot_rad(0.0);
                                 rectangle(GREEN, square, transform, gl);
                             }
                         });
                     },
 
                     Some(child_vec) => {
-                        /*
-                        self.gl.draw(args.viewport(), |c, gl| {
-                            //draw red squares
-                            let coords = reg.clone().normalize_region_coords();
-                            let square = rectangle::square(0.0, 0.0, reg.half_length);
-                            let transform = c.transform.trans(coords[0], coords[1])
-                                            .rot_rad(0.0);
-                            rectangle(GREEN, square, transform, gl);
-                        });
-                        */
+
                         for child in child_vec.iter() {
-                            self.render(Some(& *child.lock().unwrap()), args);
+                            self.render(
+                                Some(& *child.lock().unwrap()),
+                                args
+                            );
                         }
                     }
                 }
