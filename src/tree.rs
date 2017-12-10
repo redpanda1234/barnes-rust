@@ -102,6 +102,7 @@ impl Region {
 
 
     pub fn contains(&self, body_arc: Arc<Mutex<Body>>) -> bool {
+        //println!("called contains");
         let body = &body_arc.lock().unwrap();
         // Iterate through all pairs of the i components of our
         // position coordinate
@@ -210,7 +211,7 @@ impl Region {
                             return_me += reg.update();
                         }
                         if return_me == 0 {
-                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
+                            //println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
                             self.reg_vec = None;
                         }
                         self.reg_vec = Some(reg_vec);
@@ -229,7 +230,7 @@ impl Region {
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
                         if result == 0 {
-                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
+                            //println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
                             self.reg_vec = None
                         }
                         result
@@ -450,10 +451,12 @@ impl Region {
         let mut add_queue = tree.add_queue.clone();
 
         //if the added mass is outside of the tree region, don't add it
-        if(!tree.contains(Arc::clone(&body_arc))) {
+        if !tree.contains(Arc::clone(&body_arc)) {
             println!("\n\nDeleted mass\n\n");
             return;
         }
+
+        println!("\n\nDidn't Delete Mass\n\n");
 
         //if the add queue doesn't already exist, create it
         match add_queue {
@@ -467,7 +470,9 @@ impl Region {
                 add_queue = Some(queue);
             }
         };
+        println!("our add_queue: {:#?}", add_queue.clone());
         TREE_POINTER.lock().unwrap().tree.add_queue = add_queue;
+        println!("TREE add_queue: {:#?}", TREE_POINTER.lock().unwrap().tree.add_queue.clone());
     }
 
     pub fn list_masses(&self) -> Vec<Body> {

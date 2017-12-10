@@ -22,7 +22,7 @@ pub struct Frame {
 pub use data::{ MAX_LEN, DIMS };
 
 pub const screen_scale: f64 = 270.0;
-pub const screen_offset: f64 = 500.0;
+pub const screen_offset: f64 = 300.0;
 
 impl Region {
 
@@ -155,6 +155,9 @@ impl Frame {
     pub fn update(&mut self, args: &UpdateArgs) {
         self.tree.deep_update_vel();
         self.tree.deep_update_pos();
+        println!("in gfx update, TREE add queue: {:#?}", TREE_POINTER.lock().unwrap().tree.add_queue.clone());
+        self.tree.add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
+        println!("in gfx update, our add queue: {:#?}", self.tree.add_queue.clone().unwrap());
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.update();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
