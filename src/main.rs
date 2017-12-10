@@ -86,9 +86,11 @@ fn main() {
 
         // make sure the tree is set up correctly before
         // trying to render or update anything
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
-        tree.update();
-        TREE_POINTER.lock().unwrap().tree = tree;
+        // but actually let's not do this because what
+        // really matters now is frame.tree
+        //let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        //tree.update();
+        //TREE_POINTER.lock().unwrap().tree = tree;
 
         if let Some(r) = e.render_args() {
             // println!("calling render from main");

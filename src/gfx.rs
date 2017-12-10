@@ -133,13 +133,13 @@ impl Frame {
 
                     Some(child_vec) => {
                         //
-                        // self.gl.draw(args.viewport(), |c, gl| {
-                        //     //draw red squares
-                        //     let coords = reg.clone().normalize_region_coords();
-                        //     let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale) / MAX_LEN);
-                        //     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
-                        //     rectangle(BLUE, square, transform, gl);
-                        // });
+                        self.gl.draw(args.viewport(), |c, gl| {
+                            //draw red squares
+                            let coords = reg.clone().normalize_region_coords();
+                            let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale) / MAX_LEN);
+                            let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+                            rectangle(BLUE, square, transform, gl);
+                        });
                         for child in child_vec.iter() {
                             self.render(
                                 Some(& *child.lock().unwrap()),
@@ -154,12 +154,15 @@ impl Frame {
 
     pub fn update(&mut self, args: &UpdateArgs) {
         // self.tree = TREE_POINTER.lock().unwrap().tree.clone();
+        self.tree.update();
+        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.deep_update_vel();
         self.tree.deep_update_pos();
         // self.tree.add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
-        // println!("{:#?}", TREE_POINTER.lock().unwrap().tree.add_queue.clone());
+        let add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
+        //println!("gfx update: TREE add queue: {:#?}", add_queue);
+        self.tree.add_queue = add_queue;
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
-        self.tree.update();
-        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        //println!("gfx update: TREE add queue 2: {:#?}", TREE_POINTER.lock().unwrap().tree.add_queue.clone());
     }
 }

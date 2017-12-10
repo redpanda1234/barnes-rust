@@ -102,7 +102,7 @@ impl Region {
 
 
     pub fn contains(&self, body_arc: Arc<Mutex<Body>>) -> bool {
-        println!("called contains");
+        //println!("called contains");
         let body = &body_arc.lock().unwrap();
         // Iterate through all pairs of the i components of our
         // position coordinate
@@ -331,6 +331,7 @@ impl Region {
         // println!("\n\n\nrecursing with {} on self: \n{:#?}", split, self);
         // we call recurse(true) only when we need to split the
         // region, so first call split then recurse on false.
+        //println!("called recurse");
 
         if split {
 
@@ -452,10 +453,10 @@ impl Region {
         let mut add_queue = tree.add_queue.clone();
 
         //if the added mass is outside of the tree region, don't add it
-        println!("about to call contains");
+        // println!("about to call contains");
         if(!tree.contains(Arc::clone(&body_arc))) {
             // panic!("wwaaaa");
-            // println!("\n\nDeleted mass\n\n");
+            println!("\n\nDeleted mass: {:#?}\n\n", body_arc);
             return;
         } else {
             // panic!("panci");
@@ -474,6 +475,7 @@ impl Region {
                     TREE_POINTER.lock().unwrap().tree.add_queue = Some(queue);
                 }
             };
+            //println!("TREE add queue: {:#?}", TREE_POINTER.lock().unwrap().tree.add_queue.clone());
 
         }
     }
