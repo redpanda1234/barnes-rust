@@ -303,7 +303,7 @@ impl Region {
                     }
                 }
                 //if we didn't add any masses, make sure we're not dividing by 0
-                if den == 0.0 {
+                if den != 0.0 {
                     num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
                 }
 
