@@ -23,6 +23,7 @@ use super::physics::*;
 // one will have a float vector to describe position, then some mass
 // value assigned to it.
 
+use std::sync::{Arc, Mutex};
 
 // todo: temporarily implement an ID
 #[derive(Clone, Debug)]
@@ -82,11 +83,11 @@ pub struct Body {
 
 #[derive(Clone, Debug)]
 pub struct Region {
-    pub reg_vec: Option<Vec<Region>>,
+    pub reg_vec: Option<Vec<Arc<Mutex<Region>>>>,
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
-    pub add_queue: Option<Vec<Body>>,
-    pub com: Option<Body>
+    pub add_queue: Option<Vec<Arc<Mutex<Body>>>>,
+    pub com: Option<Arc<Mutex<Body>>>
 }
 
 
@@ -97,12 +98,12 @@ impl Region {
     // coordinates in its position vector to determine whether it's
     // contained in the calling region or not.
 
-    fn contains(&self, point: &Body) -> bool {
-
+    fn contains(&self, body_arc: Arc<Mutex<Body>>) -> bool {
+        let body = &body_arc.lock().unwrap();
         // Iterate through all pairs of the i components of our
         // position coordinate
 
-        for (qi, pi) in self.coord_vec.iter().zip(&point.pos_vec) {
+        for (qi, pi) in self.coord_vec.iter().zip(&body.pos_vec) {
 
             // TODO: make sure nothing funny happens if it happens to
             // be directly on the boundary... I think this is handeled
@@ -120,10 +121,6 @@ impl Region {
     // update does two jobs at once. It recursively pushes masses from
     // add queues
     pub fn update(&mut self) -> i32 {
-        // println!("called update");
-
-        // println!("updating {:?}", self);
-        // println!("helooooo");
 
         // First check whether the calling region has any child
         // regions. This will determine how we handle our updating.
@@ -209,7 +206,8 @@ impl Region {
                         // println!("updating children");
                         let mut return_me = 0;
                         // TODO: before and after check here.
-                        for reg in reg_vec.iter_mut() {
+                        for reg_arc in reg_vec.iter_mut() {
+                            let reg = reg_arc.lock().unwrap();
                             return_me += reg.update();
                         };
 
@@ -286,16 +284,20 @@ impl Region {
                     // it into the calling region's region vector
 
                     reg_vec.push(
-                        Region {
-                            reg_vec: None,
-                            // vec is currently a mutable reference,
-                            // so we call .to_vec() on it to extrac
-                            // the underlying vec.
-                            coord_vec: vec.to_vec(),
-                            add_queue: None,
-                            com: None,
-                            half_length: quarter_length,
-                        }
+                        Arc::new(
+                            Mutex::new(
+                                Region {
+                                    reg_vec: None,
+                                    // vec is currently a mutable reference,
+                                    // so we call .to_vec() on it to extrac
+                                    // the underlying vec.
+                                    coord_vec: vec.to_vec(),
+                                    add_queue: None,
+                                    com: None,
+                                    half_length: quarter_length,
+                                }
+                            )
+                        )
                     )
                 }
 
@@ -345,7 +347,8 @@ impl Region {
                 None => 1,
                 Some(mut reg_vec) => {
 
-                    for region in reg_vec.iter_mut() {
+                    for reg_arc in reg_vec.iter_mut() {
+                        let region = reg_arc.lock().unwrap();
                         // println!("updating child regions");
                         remove += region.update();
                     }
@@ -395,10 +398,12 @@ impl Region {
                     // println!("this mass is \n{:#?}", mass.clone());
                     // println!("the queue is {:#?}", queue.clone());
                     // println!("the current region vector is {:#?}", reg_vec);
-                    let mass = queue.pop().unwrap();
 
-                    'inner: for region in reg_vec.iter_mut() {
-                        if region.contains(&mass) {
+                    let m_arc = queue.pop().unwrap();
+
+                    'inner: for reg_arc in reg_vec.iter_mut() {
+                        let region = reg_arc.lock().unwrap();
+                        if region.contains(m_arc) {
                             // define reg_queue here for the Some arm
                             // of our match
                             let mut reg_queue = region.add_queue.clone();
@@ -408,22 +413,15 @@ impl Region {
                                 Some(_) => {reg_queue},
                             }.unwrap();
 
-                            reg_queue.push(mass);
+                            reg_queue.push(m_arc);
                             region.add_queue = Some(reg_queue);
                             continue 'outer
                         }
-
                     }
-                    println!("Deleted mass: {:#?}", mass.mass);
                 }
-
-                self.add_queue = None;
-                // println!("\n\n\n\n about to write add_queue \n{:#?}\n\n\n\n", reg_vec);
                 self.reg_vec = Some(reg_vec);
             }
         }
-
-        //empty the add queue
         self.add_queue = None;
     }
 
@@ -433,12 +431,13 @@ impl Region {
             None => {
                 match self.com.clone() {
                     None => vec![],
-                    Some(ref mut com) => vec![com.clone()]
+                    Some(ref mut com) => vec![com.lock().unwrap().clone()]
                 }
             },
             Some(ref reg_vec) => {
                 let mut result = Vec::new();
-                for mut child in reg_vec {
+                for mut child_arc in reg_vec {
+                    let child = child_arc.lock().unwrap();
                     result.append(&mut child.list_masses());
                 }
                 result

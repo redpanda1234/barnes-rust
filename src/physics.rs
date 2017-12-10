@@ -10,6 +10,8 @@ pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
 const G: f64 = 100.0;
 
+use std::sync::{Arc, Mutex};
+
 impl Body {
 
     // We need r^2 in Newton's law of gravity (TODO: apply small GR
@@ -57,7 +59,7 @@ impl Body {
     // (which really should only ever be the com of a leaf node in the
     // tree) and a passed region.
 
-    pub fn is_far(&self, node: &Region) -> bool {
+    pub fn is_far(&self, node_arc: Arc<Mutex<Region>>) -> bool {
         // this makes me think we should store full-length instead of
         // half-length FIXME
         // FIXME: make sure this doesn't allow infinite loops;
@@ -65,6 +67,7 @@ impl Body {
         // in the region_vec or add_queue.
         // println!("wheee {:#?}", self.node_sq_dist_to(&node));
         //Note: nodes are now guaranteed to have valid com when this is called
+        let node = node_arc.lock().unwrap();
         ( 2.0 * node.half_length / self.node_sq_dist_to(&node))
         // ( 2.0 * node.half_length / self.squared_dist_to(&node.com.clone().unwrap()))
             <= THETA
@@ -88,9 +91,10 @@ impl Body {
         rel.iter().map(|ri| (ri/r) * acc).collect::<Vec<f64>>()
     }
 
-    pub fn get_classical_potential(&self, mass: &Body) -> Vec<f64> {
+    pub fn get_classical_potential(&self, mass_arc: Arc<Mutex<Body>>) -> Vec<f64> {
         // use super::G;
-        let rel = self.vec_rel(mass);
+        let mass = mass_arc.lock().unwrap();
+        let rel = self.vec_rel(&mass);
         let sq_mag = self.sq_magnitude(&rel);
         // println!("{}, {:#?}", sq_mag, rel);
         let r = sq_mag.sqrt();
@@ -104,24 +108,22 @@ impl Body {
         rel.iter().map(|ri| ri * pot/r).collect::<Vec<f64>>()
     }
 
-    pub fn update_accel(&self, acc: Vec<f64>, mass: &Body) -> Vec<f64> {
-        acc.iter().zip(self.get_classical_accel(mass))
+    pub fn update_accel(&self, acc: Vec<f64>, mass_arc: Arc<Mutex<Body>>) -> Vec<f64> {
+        let mass = mass_arc.lock().unwrap();
+        acc.iter().zip(self.get_classical_accel(&mass))
             .map(|(acc_self, acc_other)| acc_self + acc_other).collect::<Vec<f64>>()
     }
 
-    pub fn get_total_acc(&mut self, mut node: &mut Region) -> Vec<f64> {
+    pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
         let mut acc = vec![0.0; DIMS];
-        // check to see if we have child nodes
-        // println!("updating acceleration");
-        // println!("{:#?}", node.reg_vec);
-        match node.reg_vec.clone() {
+        match node_arc.lock().unwrap().reg_vec {
             //if this is a leaf, find the acceleration between us and its com
             None => {
-                match node.com {
+                match node_arc.lock().unwrap().com {
                     None => //{println!("node has no com"); acc},
                         acc,
-                    Some(ref com) => {
-                        let total_acc = self.update_accel(acc.clone(), com);
+                    Some(com_arc) => {
+                        let total_acc = self.update_accel(acc.clone(), com_arc);
                         // println!("acceleration component: {:#?}", total_acc);
                         acc = acc.iter().zip(total_acc
                             .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
@@ -132,14 +134,14 @@ impl Body {
             //if this node has children, find the acceleration from each of them
             Some(ref mut reg_vec) => {
                 // println!("has reg_vec");
-                match node.com {
+                match node_arc.lock().unwrap().com {
                     None => {
                         // println!("updating child com");
-                        node.update_com();
-                        self.get_total_acc(&mut node)
+                        node_arc.lock().unwrap().update_com();
+                        self.get_total_acc(node_arc)
                     }
-                    Some(ref com) => {
-                        if self.is_far(node) {
+                    Some(com) => {
+                        if self.is_far(node_arc) {
                             // println!("{:#?}, {:#?}", acc.clone(), com);
                             let total_acc = self.update_accel(acc.clone(), com);
                             // println!("acceleration component: {:#?}", total_acc);
