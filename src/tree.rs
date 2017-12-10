@@ -23,8 +23,6 @@ use super::physics::*;
 // one will have a float vector to describe position, then some mass
 // value assigned to it.
 
-use std::sync::{Arc, Mutex};
-
 #[derive(Clone, Debug)]
 pub struct Body {
     pub pos_vec: Vec<f64>,
@@ -131,9 +129,9 @@ impl Region {
         // regions. This will determine how we handle our updating.
         // Currently, we check whether
 
-        match &self.reg_vec {
+        match self.reg_vec.clone() {
 
-            &None => {
+            None => {
 
                 // if we don't have a defined region vector, then that
                 // means that either we're a leaf node, or we're doing
@@ -150,11 +148,11 @@ impl Region {
                 // will be useful in multithreading), else we
                 // recurse down into the tree.
 
-                match &self.add_queue {
+                match self.add_queue.clone() {
 
-                    &None => {
+                    None => {
                         // println!("nothing to add");
-                        match self.com {
+                        match self.com.clone() {
                             None => 0,
                             Some(_) => 1
                         }
@@ -163,11 +161,11 @@ impl Region {
                     // if our add_queue is nonempty, then we need
                     // to handle ingesting of the masses.
 
-                    &Some(mut queue) => {
+                    Some(mut queue) => {
 
-                        match &self.com {
+                        match self.com.clone() {
 
-                            &None => self.recurse(true),
+                            None => self.recurse(true),
 
                             // If we have a current com, we push
                             // it into the queue (because we're
@@ -175,7 +173,7 @@ impl Region {
                             // subdivide accordingly, returning
                             // the number of submasses contained.
 
-                            &Some(mut com) => {
+                            Some(mut com) => {
                                 queue.push(com);
                                 self.com = None;
                                 self.add_queue = Some(queue);
@@ -191,7 +189,7 @@ impl Region {
             // Perhaps we should make each of the entries in the
             // vector options on Regions?
 
-            &Some(mut reg_vec) => {
+            Some(mut reg_vec) => {
 
                 // Invalidate com, because it's gonna be invalid no
                 // matter what if we aren't at a leaf node.
@@ -199,7 +197,7 @@ impl Region {
                 self.com = None;
 
                 //
-                match self.add_queue {
+                match self.add_queue.clone() {
 
                     // If the add_queue is None, we only want to look
                     // at the child regions.
@@ -207,15 +205,10 @@ impl Region {
                     None => {
                         //println!("updating children");
                         let mut return_me = 0;
-
-                        // TODO: before and after check here.
                         for reg_arc in reg_vec.iter() {
                             let mut reg = reg_arc.lock().unwrap();
                             return_me += reg.update();
-                            temp.push(reg.clone());
                         }
-                        self.reg_vec = Some(temp);
-                        //println!("update results: {:#?}", return_me);
                         if return_me == 0 {
                             println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
                             self.reg_vec = None;
@@ -450,13 +443,13 @@ impl Region {
     }
 
     // push a body to this region's add_queue
-    pub fn push_body_global(body: Body) {
+    pub fn push_body_global(body_arc: Arc<Mutex<Body>>) {
         let ref tree = &TREE_POINTER.lock().unwrap().tree.clone();
         let mut add_queue = tree.add_queue.clone();
 
         //if the added mass is outside of the tree region, don't add it
-        if(!tree.contains(&body)) {
-            println!("\n\nDeleted mass: {:#?}\n\n", body);
+        if(!tree.contains(Arc::clone(&body_arc))) {
+            println!("\n\nDeleted mass\n\n");
             return;
         }
 
@@ -464,11 +457,11 @@ impl Region {
         match add_queue {
             None => {
                 let mut queue = Vec::new();
-                queue.push(body);
+                queue.push(body_arc);
                 add_queue = Some(queue);
             },
             Some(mut queue) => {
-                queue.push(body);
+                queue.push(body_arc);
                 add_queue = Some(queue);
             }
         };

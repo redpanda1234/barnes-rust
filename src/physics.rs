@@ -301,7 +301,7 @@ impl Region {
 
                         // check to see if this region still contains com
                         // if it doesn't, remove com and push it to the global tree
-                        if self.contains(&com) {
+                        if self.contains(Arc::clone(&com)) {
                             //println!("contains com");
 
                             //I don't think this should be necessary...

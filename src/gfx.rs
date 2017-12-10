@@ -156,8 +156,8 @@ impl Frame {
 
     pub fn update(&mut self, args: &UpdateArgs) {
         self.tree.deep_update_vel();
-        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.deep_update_pos();
+        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.update();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
     }
