@@ -153,8 +153,11 @@ impl Frame {
     }
 
     pub fn update(&mut self, args: &UpdateArgs) {
+        // self.tree = TREE_POINTER.lock().unwrap().tree.clone();
         self.tree.deep_update_vel();
         self.tree.deep_update_pos();
+        // self.tree.add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
+        // println!("{:#?}", TREE_POINTER.lock().unwrap().tree.add_queue.clone());
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.update();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();

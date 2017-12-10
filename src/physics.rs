@@ -8,7 +8,7 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 1000000.0;
+const G: f64 = 100.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {
@@ -24,7 +24,7 @@ impl Body {
     // position and the passed mass's position to return r^2.
 
     pub fn squared_dist_to(&self, mass: &Body) -> f64 {
-        println!("called squared_dist_to");
+        // println!("called squared_dist_to");
         self.pos_vec
             .iter()
             .zip(&mass.pos_vec)
@@ -32,7 +32,7 @@ impl Body {
     }
 
     pub fn node_sq_dist_to(&self, node: &Region) -> f64 {
-        println!("called node_sq_dist_to");
+        // println!("called node_sq_dist_to");
         // println!("woooo {:#?}, {:#?}", &node.coord_vec, self.pos_vec);
         self.pos_vec
             .iter()
@@ -43,7 +43,7 @@ impl Body {
     // vec_rel gets the displacement vector between the calling mass
     // and some other passed Body.
     pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
-        println!("called vec_rel");
+        // println!("called vec_rel");
         self.pos_vec.iter()
             .zip(&mass.pos_vec)
             .map(|(pi, mi)| mi - pi)
@@ -67,7 +67,7 @@ impl Body {
     // tree) and a passed region.
 
     pub fn is_far(&self, node_arc: Arc<Mutex<Region>>) -> bool {
-        println!("called is_far");
+        // println!("called is_far");
         // this makes me think we should store full-length instead of
         // half-length FIXME
         // FIXME: make sure this doesn't allow infinite loops;
@@ -82,7 +82,7 @@ impl Body {
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
-        println!("called get_classical_accel");
+        // println!("called get_classical_accel");
         let rel = self.vec_rel(mass);
         // println!("{:?}", rel);
         let sq_mag = self.sq_magnitude(&rel);
@@ -121,7 +121,7 @@ impl Body {
     }
 
     pub fn update_accel(&self, acc: Vec<f64>, mass_arc: Arc<Mutex<Body>>) -> Vec<f64> {
-        println!("called update_accel");
+        // println!("called update_accel");
         let mass = mass_arc.try_lock().unwrap();
         acc.iter()
             .zip(self.get_classical_accel(&mass))
@@ -130,7 +130,7 @@ impl Body {
     }
 
     pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
-        println!("called get_total_acc");
+        // println!("called get_total_acc");
         let mut acc = vec![0.0; DIMS];
         let mut match_me =
             node_arc
@@ -140,17 +140,17 @@ impl Body {
         match match_me {
             //if this is a leaf, find the acceleration between us and its com
             None => {
-                println!("matched None on first arm of get_totall_acc");
+                // println!("matched None on first arm of get_totall_acc");
                 // drop(match_me);
                 // println!("try_locked node_arc and entered the match btry_lock. Matched on None");
                 match node_arc.try_lock().unwrap().com {
                     None => {
-                        println!("matched None on subarm of None");
+                        // println!("matched None on subarm of None");
                         // println!("matched on None");
                         acc
                     },
                     Some(ref com_arc) => {
-                        println!("matched some on subarm of None");
+                        // println!("matched some on subarm of None");
                         let com = com_arc.try_lock().unwrap().clone();
                         let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
                         //println!("acceleration component: {:#?}", total_acc); // this is never called on singularities
@@ -165,23 +165,23 @@ impl Body {
             }
             //if this node has children, find the acceleration from each of them
             Some(_) => {
-                println!("matched Some on first arm of get_totall_acc");
+                // println!("matched Some on first arm of get_totall_acc");
                 // println!("try_locked node_arc and entered the match btry_lock. Matched on Some");
                 // println!("has reg_vec");
                 let match_me_too = node_arc.try_lock().unwrap().com.clone();
                 match match_me_too {
 
                     None => {
-                        println!("matched None on subarm of Some");
+                        // println!("matched None on subarm of Some");
                         // drop(reg_vec);
                         node_arc.try_lock().unwrap().update_com();
                         self.get_total_acc(Arc::clone(&node_arc))
                     }
 
                     Some(ref com_arc) => {
-                        println!("matched Some on subarm of Some");
+                        // println!("matched Some on subarm of Some");
                         if self.is_far(Arc::clone(&node_arc)) {
-                            println!("was far");
+                            // println!("was far");
                             // println!("{:#?}, {:#?}", acc.clone(), com);
                             let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
                             //println!("acceleration component: {:#?}", total_acc);
@@ -193,7 +193,7 @@ impl Body {
 
                             acc
                         } else {
-                            println!("wasn't far");
+                            // println!("wasn't far");
                             for mut child in match_me.unwrap().iter() {
                                 let total_acc = self.get_total_acc(Arc::clone(child));
                                 // println!("acceleration component: {:#?}", total_acc);
@@ -209,7 +209,7 @@ impl Body {
     }
 
     pub fn update_vel(&mut self) {
-        println!("called update_vel");
+        // println!("called update_vel");
         //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
         //TODO: tree should be a reference so we don't have to copy it every time
         // println!("updating vel");
@@ -232,7 +232,7 @@ impl Body {
 
     //TODO: make update_pos use functional programming
     pub fn update_pos(&mut self) {
-        println!("called update_pos");
+        // println!("called update_pos");
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
             *pi += vi*DT;
         }
@@ -246,50 +246,59 @@ impl Region {
 
     // Recursively update the accelerations and velocities of masses
     pub fn deep_update_vel(&mut self) {
-        println!("called deep_update_vel");
+        // println!("called deep_update_vel");
         match self.reg_vec.clone() {
             //if we're at the leaf node, call update_vel if we have a mass
             None => {
-                println!("matched None in first arm of update_vel");
+                // println!("matched None in first arm of update_vel");
                 match self.com.clone() {
-                    None => {println!("matched None on subarm"); ()},
+                    None => {
+                        // println!("matched None on subarm");
+                        ()
+                    },
                     Some(com_arc) => {
-                        println!("matched Some on subarm");
+                        // println!("matched Some on subarm");
                         let mut com_clone = com_arc.try_lock().unwrap().clone();
                         com_clone.update_vel();
                         self.com = Some(Arc::new(Mutex::new(com_clone)));
-                        drop(com_arc);
+                        // drop(com_arc);
                         //TODO: find out if it's actually necessary to re-wrap this
-
                     }
                 }
             },
             //if we have children, call recursively
             Some(ref mut reg_vec) => {
-                println!("matched Some in first arm of deep_update_vel");
-                let temp: Vec<Arc<Mutex<Region>>> = Vec::new();
+                // println!("matched Some in first arm of deep_update_vel");
+                let mut temp: Vec<Arc<Mutex<Region>>> = Vec::new();
                 for child in reg_vec {
                     let mut child_clone = child.try_lock().unwrap().clone();
                     child_clone.deep_update_vel();
-//                    drop(child);
+                    temp.push(Arc::new(Mutex::new(child_clone)));
+                    // drop(child);
                 }
+                self.reg_vec = Some(temp);
             }
         }
     }
 
     // Recursively update the postions of masses
     pub fn deep_update_pos(&mut self) {
-        println!("deep updating pos");
+        // println!("deep updating pos");
         match self.reg_vec.clone() {
             //if we're at the leaf node, call update_pos if we have a mass
             None => {
-                println!("matched None in first arm of deep_update_pos");
+                // println!("matched None in first arm of deep_update_pos");
                 match self.com.clone() {
-                    None => {println!("matched None in subarm"); ()},
+                    None => {
+                        // println!("matched None in subarm");
+                        ()
+                    },
                     Some(com) => {
-                        println!("matched Some in subarm");
-                        self.update_com();
+                        // println!("matched Some in subarm");
+                        // self.update_com();
                         com.try_lock().unwrap().update_pos();
+                        // self.com = Some(com);
+                        self.update_com();
                     }
                 }
             },
@@ -298,6 +307,7 @@ impl Region {
                 let mut temp = vec![];
                 for mut child in reg_vec {
                     child.try_lock().unwrap().deep_update_pos();
+                    // temp.push(Arc::clone(&child));
                     temp.push(child.clone());
                 }
                 self.reg_vec = Some(temp);
@@ -337,17 +347,18 @@ impl Region {
 
                         match self.add_queue {
                             None => (),
-                            Some(_) => panic!("cannot update com with masses waiting to be queued!"),
+                            Some(_) => panic!("cannot update com with masses waiting to be queued!")
                         };
 
                         // check to see if this region still contains com
                         // if it doesn't, remove com and push it to the global tree
-                        if self.contains(Arc::clone(&com_arc)) {
-                            println!("contains com");
-                        } else {
-                            self.com = None;
+                        if !self.contains(Arc::clone(&com_arc)) {
+                            println!("push to global");
                             Region::push_body_global(Arc::clone(&com_arc));
-                        }
+                            self.com = None;
+                        } // else {
+                            // println!("does contain");
+                        // }
                     },
                 }
             },
