@@ -2,10 +2,13 @@ pub extern crate rand;
 
 use super::*;
 
+use std::sync::{Mutex, Arc};
+use std::thread;
+
 // TODO: use this everywhere we check dimensions
 pub const DIMS: usize = 2;
 pub const THETA: f64 = 0.5;
-pub const DT: f64 = 0.001;
+pub const DT: f64 = 0.02;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
@@ -16,7 +19,8 @@ pub const DT: f64 = 0.001;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
-pub const MAX_VEL: f64 = 1_000.0;
+pub const MIN_LEN: f64 = 1.0;
+pub const MAX_VEL: f64 = 1_00.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
@@ -55,49 +59,6 @@ pub mod generate {
 
     use std::f64::consts::PI;
 
-    // Returns the initial RNG-boi we'll be using to generate our
-    // other RNG instances
-    // fn get_seeder_rng() -> StdRng {
-    //     let seed: &[_] = &[1, 2, 3, 4];
-    //     SeedableRng::from_seed(seed)
-    // }
-
-    // When testing, we'll want to run the same simulations
-    // repeatedly, to make sure we're actually modifying how the
-    // system behaves. get_rng is used to ensure that we'll be
-    // seeding all random elements of the simulation with the same
-    // pseudorandom conditions each time.
-
-    // maybe this isn't necessary, but I wanted each of the random
-    // generators to be using different rng iterators from each other?
-    // FIXME: determine wtf to do. Probably need this method for when
-    // we multithread and can't  have multiple threads calling the
-    // same rng object at the same time.
-
-    // seed should be generated with get_seeder_rng(). Currently not
-    // sure how to make this work, FIXME
-
-    fn get_rng(mut rng: StdRng) -> StdRng {
-        let seed = format!("{:0b}", rng.gen::<usize>());
-        let mut vec = Vec::new();
-        for si in seed.chars() {
-            vec.push(si.to_digit(10).unwrap() as usize);
-        }
-
-        // println!("{:?}", vec);
-
-        // seeds for SeedableRng are references to arrays
-        let array: &[_] = &[
-            vec.pop().unwrap(),
-            vec.pop().unwrap(),
-            vec.pop().unwrap(),
-            vec.pop().unwrap(),
-            vec.pop().unwrap()
-        ];
-
-        SeedableRng::from_seed(array)
-    }
-
     // Using a pseudo-randomly-generated scalar value for the
     // magnitude of our output vector, this function uses n-d
     // spherical coordinates to transform back into a r_vec in the
@@ -120,99 +81,6 @@ pub mod generate {
     //
     // for an explanation on what this function is _supposed_ to be
     // doing
-
-    pub fn seeded_nd_vec_from_mag<T: IndependentSample<f64>>(
-        mag: f64,
-        t_generator: &T,
-        final_theta: f64,
-        mut rng: StdRng
-    ) -> Vec<f64> {
-
-        let mut vec = vec![0.0; DIMS];
-
-        // The final case is special, so we don't iterate all the way
-        // through DIMS.
-
-        // This'll hold the running product of sin values of each of
-        // the thetas defining our position
-
-        let mut product: f64 = 1.0;
-
-        for i in 0..(DIMS-2) {
-
-            let theta = t_generator.ind_sample(&mut rng);
-            vec[i] = mag*(theta.cos())*product;
-
-            // all future calculations will involve product of
-            // preceding theta.sin() values, so we increment it here
-
-            product *= theta.sin();
-
-        }
-
-        // The final theta value is special, as it ranges from 0 to
-        // 2pi. So we treat it the r coordinates whose definitions
-        // involve it in special cases outside of our loop. Note that
-        // the final r_vec entry involves just .sin()'s, no .cos()'s.
-
-        vec[DIMS-2] = mag * final_theta.cos() * product;
-        vec[DIMS-1] = mag * final_theta.sin() * product;
-
-        // return vec
-        vec
-    }
-
-    // gb is for gen_body
-    // a generic body generator that takes a generic random number
-    // generator for obtaining thetas.
-
-    // gt is for gen_tree
-    pub fn seeded_gt_all_ranges(num_bodies: usize, mut seeder: StdRng) {
-        use data::rand::distributions::*;
-        // let mut seeder = get_seeder_rng();
-
-        let m_gen = Range::new(0.0, MAX_MASS);
-        let p_mag_gen = Range::new(0.0, MAX_LEN);
-        let v_mag_gen = Range::new(0.0, 5_000.0);
-        let t_gen = Range::new(0.0, PI);
-        let t_f_gen = &Range::new(0.0, 2.0*PI);
-
-        for _ in 0..num_bodies {
-
-            push_body_global(
-                seeded_gb_from_mags(
-                    t_f_gen.ind_sample(&mut seeder),
-                    p_mag_gen.ind_sample(&mut seeder),
-                    v_mag_gen.ind_sample(&mut seeder),
-                    m_gen.ind_sample(&mut seeder),
-                    t_gen,
-                    get_rng(seeder)
-                )
-            )
-        }
-    }
-
-    pub fn seeded_gb_from_mags<T: IndependentSample<f64>>(
-        t_f: f64,
-        p_mag: f64,
-        v_mag: f64,
-        m: f64,
-        t_generator: T,
-        seeder: StdRng
-    ) -> Body {
-        let pos = seeded_nd_vec_from_mag(p_mag, &t_generator, t_f, get_rng(seeder));
-        let vel = seeded_nd_vec_from_mag(v_mag, &t_generator, t_f, seeder);
-        println!("{:#?}, {:#?}", pos, vel);
-        // let pos_vec = nd_vec_from_mag(p_mag, &t_generator, t_f, seeder);
-        let body = Body {
-            pos_vec: pos,
-            vel_vec: vel,
-            mass: m
-        };
-        // println!("{:?}", body);
-        body
-    }
-
 
     pub fn nd_vec_from_mag<T: IndependentSample<f64>>(
         mag: f64,
@@ -247,8 +115,8 @@ pub mod generate {
         // involve it in special cases outside of our loop. Note that
         // the final r_vec entry involves just .sin()'s, no .cos()'s.
 
-        vec[DIMS-2] = mag * final_theta.cos() * product;
-        vec[DIMS-1] = mag * final_theta.sin() * product;
+        vec[DIMS-2] = mag * -1.0*final_theta.cos() * product;
+        vec[DIMS-1] = mag * 1.0*final_theta.sin() * product;
 
         // return vec
         vec
@@ -261,22 +129,20 @@ pub mod generate {
         v_mag: f64,
         m: f64,
         t_generator: T,
-    ) -> Body {
+    ) -> Arc<Mutex<Body>> {
         let mut rng1 = rand::StdRng::new().unwrap();
         let mut rng2 = rand::StdRng::new().unwrap();
 
         let pos = nd_vec_from_mag(p_mag, &t_generator, t_f1, rng1);
         let vel = nd_vec_from_mag(v_mag, &t_generator, t_f2, rng2);
 
-        println!("{:#?}, {:#?} \n\n", pos, vel);
-
         let body = Body {
             pos_vec: pos,
             vel_vec: vel,
-            mass: m
+            mass: 1.0//m
         };
 
-        body
+        Arc::new(Mutex::new(body))
     }
 
     // gt is for gen_tree
@@ -285,8 +151,8 @@ pub mod generate {
         // let mut seeder = get_seeder_rng();
 
         let m_gen = Range::new(0.0, MAX_MASS);
-        let p_mag_gen = Range::new(0.0, MAX_LEN);
-        let v_mag_gen = Range::new(0.0, MAX_VEL);
+        let p_mag_gen = Range::new(0.2*MAX_LEN, 0.4*MAX_LEN);
+        let v_mag_gen = Range::new(0.2*MAX_VEL, 0.4*MAX_VEL);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
@@ -294,7 +160,7 @@ pub mod generate {
 
         for _ in 0..num_bodies {
 
-            push_body_global(
+            Region::push_body_global(
                 gb_from_mags(
                     t_f_gen.ind_sample(&mut rng),
                     t_f_gen.ind_sample(&mut rng),
@@ -305,29 +171,36 @@ pub mod generate {
                 )
             )
         }
-    }
 
-    fn push_body_global(body: Body) {
-        let match_me = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
-        match match_me {
-
-            None => {
-                let mut add_me  = Vec::new();
-                add_me.push(body);
-
-                TREE_POINTER.lock().unwrap().tree.add_queue = Some(add_me);
-                println!("Tree pointer was None, is now {:#?}",
-                TREE_POINTER.lock().unwrap().tree.add_queue);
-            },
-
-            Some(_) => {
-                let mut queue =
-                    TREE_POINTER.lock().unwrap().tree.add_queue.clone().unwrap();
-                queue.push(body);
-                TREE_POINTER.lock().unwrap().tree.add_queue = Some(queue);
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+            Body {
+                pos_vec: vec![10.0; DIMS],
+                vel_vec: vec![0.0; DIMS],
+                mass: 100000.0//m
             }
-        }
+        )));
     }
+
+    // fn push_body_global(body_arc: Arc<Mutex<Body>>) {
+    //     let match_me = TREE_POINTER.try_lock().unwrap().tree.add_queue.clone();
+    //     match match_me {
+
+    //         None => {
+    //             let mut add_me  = Vec::new();
+    //             add_me.push(body_arc);
+
+    //             TREE_POINTER.try_lock().unwrap().tree.add_queue = Some(add_me);
+    //         },
+
+    //         Some(_) => {
+    //             let mut queue =
+    //                 TREE_POINTER.try_lock().unwrap().tree.add_queue.clone().unwrap();
+    //             queue.push(body_arc);
+    //             TREE_POINTER.try_lock().unwrap().tree.add_queue = Some(queue);
+    //         }
+    //     }
+    // }
 }
 
 lazy_static! {
@@ -339,24 +212,26 @@ lazy_static! {
     // scheme this might be ideal.
 
     // TOFIX: redefine TREE_POINTER such that we can access the global
-    // region_vector without locking the Region itself. This will
+    // region_vector without try_locking the Region itself. This will
     // allow us to handle the add_queue and reg_vec separately, which
     // will improve computation times.
 
 
-
     //Stores a TreeWrapper that holds the global tree
-    pub static ref TREE_POINTER: Mutex<TreeWrapper> = Mutex::new(
-        TreeWrapper {
-            tree: Region {
-                reg_vec: None,
-                coord_vec: vec![0.0; DIMS],
-                half_length: MAX_LEN,
-                add_queue: Some(Vec::new()),
-                com: None
-            }
-        }
-    );
+    pub static ref TREE_POINTER: Arc<Mutex<TreeWrapper>> =
+        Arc::new(
+            Mutex::new(
+                TreeWrapper {
+                    tree: Region {
+                        reg_vec: None,
+                        coord_vec: vec![0.0; DIMS],
+                        half_length: MAX_LEN,
+                        add_queue: Some(Vec::new()),
+                        com: None
+                    }
+                }
+            )
+        );
 
     /*
     // MULTIPLIERS is a static array that we'll use later to quickly

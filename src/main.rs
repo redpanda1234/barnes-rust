@@ -40,7 +40,12 @@ pub use tree::*;
 pub use physics::*;
 pub use gfx::*;
 
+use std::fs::File;
+use std::io::prelude::*;
+
 fn main() {
+    let mut file = File::create("output.txt").unwrap();
+
 
     // Change this to OpenGL::V2_1 if not working.
     let opengl = OpenGL::V3_2;
@@ -64,24 +69,42 @@ fn main() {
     // generation function the rng object we've just seeded. Seeding
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
-    let num_bodies = 100;
 
-    generate::gt_all_ranges(num_bodies);
+    let num_bodies = 20;
+
+
+    let root = generate::gt_all_ranges(num_bodies);
 
     let mut frame = Frame {
         gl: GlGraphics::new(opengl),
         tree: TREE_POINTER.lock().unwrap().tree.clone()
     };
 
-    println!("done generating");
+    // println!("done generating");
+    // for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
+    //     println!("splitting multiplier: {:#?}", vec);
+    // }
 
     let mut events = Events::new(EventSettings::new());
 
+    let mut counter = 0;
+
     while let Some(e) = events.next(&mut window) {
+
+        // make sure the tree is set up correctly before
+        // trying to render or update anything
+        // but actually let's not do this because what
+        // really matters now is frame.tree
+        //let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        //tree.update();
+        //TREE_POINTER.lock().unwrap().tree = tree;
 
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
             frame.render(None, &r);
+            println!("trying to print");
+            let mut output = frame.print_masses(None);
+            file.write_fmt(format_args!("{}", output));
             // println!("called render from main");
         }
 
