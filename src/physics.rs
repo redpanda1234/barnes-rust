@@ -9,7 +9,7 @@ pub use super::data::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 10.0;
+const G: f64 = 5.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {

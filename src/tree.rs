@@ -456,8 +456,7 @@ impl Region {
                 // should only be one thing, else we'd have split in
                 // the self.recurse() call)
                 self.com = queue.pop();
-                // never triggered because handeled in recurse. FIXME
-                panic!("aaaa! why isn't this case ever triggered???");
+                // never triggered because handeled in recurse
                 // println!("None case com is \n{:#?}", self.com);
                 assert_eq!(queue.len(), 0);
             },

@@ -21,8 +21,8 @@ pub struct Frame {
 
 pub use data::{ MAX_LEN, DIMS };
 
-pub const screen_scale: f64 = 270.0;
-pub const screen_offset: f64 = 300.0;
+pub const screen_scale: f64 = 350.0;
+pub const screen_offset: f64 = 400.0;
 
 impl Region {
 
@@ -90,7 +90,7 @@ impl Frame {
 
                 self.gl.draw(args.viewport(), |c, gl| {
                     let coords = [screen_offset, screen_offset];
-                    let square = rectangle::square(0.0, 0.0, 2.0);
+                    let square = rectangle::square(0.0, 0.0, 4.0);
                     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                     rectangle(RED, square, transform, gl);
                 });
@@ -122,24 +122,28 @@ impl Frame {
 
                                 rectangle(WHITE, square, transform, gl);
 
-                                let coords = reg.normalize_region_coords();
+                                // Optional drawing of green squares representing regions with children
 
-                                let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale / MAX_LEN));
-                                let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
-                                rectangle(GREEN, square, transform, gl);
+                                // let coords = reg.normalize_region_coords();
+
+                                // let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale / MAX_LEN));
+                                // let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+                                // rectangle(GREEN, square, transform, gl);
                             }
                         });
                     },
 
                     Some(child_vec) => {
                         //
-                        self.gl.draw(args.viewport(), |c, gl| {
-                            //draw red squares
-                            let coords = reg.clone().normalize_region_coords();
-                            let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale) / MAX_LEN);
-                            let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
-                            rectangle(BLUE, square, transform, gl);
-                        });
+                        // Optional drawing of blue squares representing current regions
+                        //
+                        // self.gl.draw(args.viewport(), |c, gl| {
+                        //     //draw red squares
+                        //     let coords = reg.clone().normalize_region_coords();
+                        //     let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale) / MAX_LEN);
+                        //     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+                        //     rectangle(BLUE, square, transform, gl);
+                        // });
                         for child in child_vec.iter() {
                             self.render(
                                 Some(& *child.lock().unwrap()),
