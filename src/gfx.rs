@@ -19,7 +19,7 @@ pub struct Frame {
     pub tree: Region // the tree we're gonna be drawing
 }
 
-pub use data::{ MAX_LEN, DIMS };
+pub use data::{ MIN_LEN, MAX_LEN, DIMS };
 
 pub const screen_scale: f64 = 350.0;
 pub const screen_offset: f64 = 400.0;
@@ -113,7 +113,7 @@ impl Frame {
                                 return
 
                             } else {
-                                let square = rectangle::square(0.0, 0.0, 1.0);
+                                let square = rectangle::square(0.0, 0.0, MIN_LEN);
 
                                 let transform =
                                     c.transform
