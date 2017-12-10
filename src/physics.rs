@@ -353,7 +353,7 @@ impl Region {
                         // check to see if this region still contains com
                         // if it doesn't, remove com and push it to the global tree
                         if !self.contains(Arc::clone(&com_arc)) {
-                            println!("push to global");
+                            // println!("push to global");
                             Region::push_body_global(Arc::clone(&com_arc));
                             self.com = None;
                         } // else {

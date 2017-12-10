@@ -88,12 +88,12 @@ impl Frame {
                     clear(BLACK, gl);
                 });
 
-                self.gl.draw(args.viewport(), |c, gl| {
-                    let coords = [500.0, 500.0];
-                    let square = rectangle::square(0.0, 0.0, 2.0);
-                    let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
-                    rectangle(RED, square, transform, gl);
-                });
+                // self.gl.draw(args.viewport(), |c, gl| {
+                //     let coords = [screen_offset, screen_offset];
+                //     let square = rectangle::square(0.0, 0.0, 2.0);
+                //     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+                //     rectangle(RED, square, transform, gl);
+                // });
 
                 //todo: replace this with drawing a red square at the master tree's com
                 //println!("none option passed to render; mass: {:#?}", tree.com.mass);
@@ -133,13 +133,13 @@ impl Frame {
 
                     Some(child_vec) => {
                         //
-                        self.gl.draw(args.viewport(), |c, gl| {
-                            //draw red squares
-                            let coords = reg.clone().normalize_region_coords();
-                            let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale) / MAX_LEN);
-                            let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
-                            rectangle(BLUE, square, transform, gl);
-                        });
+                        // self.gl.draw(args.viewport(), |c, gl| {
+                        //     //draw red squares
+                        //     let coords = reg.clone().normalize_region_coords();
+                        //     let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale) / MAX_LEN);
+                        //     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+                        //     rectangle(BLUE, square, transform, gl);
+                        // });
                         for child in child_vec.iter() {
                             self.render(
                                 Some(& *child.lock().unwrap()),
@@ -158,11 +158,7 @@ impl Frame {
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.deep_update_vel();
         self.tree.deep_update_pos();
-        // self.tree.add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
-        let add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
-        //println!("gfx update: TREE add queue: {:#?}", add_queue);
-        self.tree.add_queue = add_queue;
+        self.tree.add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
-        //println!("gfx update: TREE add queue 2: {:#?}", TREE_POINTER.lock().unwrap().tree.add_queue.clone());
     }
 }

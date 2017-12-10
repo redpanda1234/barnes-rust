@@ -65,7 +65,7 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    let num_bodies = 100;
+    let num_bodies = 500;
 
 
     let root = generate::gt_all_ranges(num_bodies);
@@ -75,10 +75,10 @@ fn main() {
         tree: TREE_POINTER.lock().unwrap().tree.clone()
     };
 
-    println!("done generating");
-    for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
-        println!("splitting multiplier: {:#?}", vec);
-    }
+    // println!("done generating");
+    // for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
+    //     println!("splitting multiplier: {:#?}", vec);
+    // }
 
     let mut events = Events::new(EventSettings::new());
 
@@ -101,9 +101,9 @@ fn main() {
         if let Some(u) = e.update_args() {
             // let frame.tree = TREE_POINTER.lock().unwrap().tree.clone();
             // TREE_POINTER.lock().unwrap().tree = frame.tree;
-            println!("calling update from main");
+            // println!("calling update from main");
             frame.update(&u);
-            println!("called update from main");
+            // println!("called update from main");
         }
 
     }

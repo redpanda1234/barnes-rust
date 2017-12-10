@@ -226,7 +226,7 @@ impl Region {
                         // println!("whee!");
                         // for some reason, this case is never
                         // reached. (or is it?)
-                        println!("injecting bodies into child regions");
+                        // println!("injecting bodies into child regions");
                         // recurse on false because we don't need to
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
@@ -456,7 +456,7 @@ impl Region {
         // println!("about to call contains");
         if(!tree.contains(Arc::clone(&body_arc))) {
             // panic!("wwaaaa");
-            println!("\n\nDeleted mass: {:#?}\n\n", body_arc);
+            // println!("\n\nDeleted mass: {:#?}\n\n", body_arc);
             return;
         } else {
             // panic!("panci");
