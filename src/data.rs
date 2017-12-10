@@ -19,7 +19,7 @@ pub const DT: f64 = 0.01;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
-pub const MIN_LEN: f64 = 10;
+pub const MIN_LEN: f64 = 10.0;
 pub const MAX_VEL: f64 = 10.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;

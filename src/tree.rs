@@ -350,15 +350,15 @@ impl Region {
 
                 //if this region is very small and we don't want to subdivide it
                 //further, combine all the masses here into one
-                 if self.half_length < data::MIN_LEN {
+                 if self.half_length < MIN_LEN {
                     let mut pos = vec![0.0; DIMS as usize];
                     let mut vel = vec![0.0; DIMS as usize];
                     let mut den = 0.0;
 
                     for mass in self.add_queue.iter() {
-                        let mut match_me = &mass.try_lock().unwrap().com;
+                        let mut match_me = mass.try_lock().unwrap().com;
                         // println!("{:#?}", match_me);
-                        match match_me {
+                        match &match_me {
                             &None => continue,
                             &Some(ref com_arc) => {
                                 // drop(match_me);
