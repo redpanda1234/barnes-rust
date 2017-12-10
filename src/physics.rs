@@ -417,7 +417,7 @@ mod tests {
                 mass: 0.0
             };
 
-            let mut node = Region {
+            let node = Arc::new(Mutex::new(Region {
 
                 reg_vec: None,
                 coord_vec: vec![0.0; dims],
@@ -425,15 +425,16 @@ mod tests {
                 add_queue: None,
                 com:
                 Some(
+                    Arc::new(Mutex::new(
                     Body {
                         pos_vec: vec![0.0; dims],
                         vel_vec: vec![0.0; dims],
                         mass: 0.0
-                    }
+                    }))
                 )
 
-            };
-            assert!(body.is_far(&mut node));
+            }));
+            assert!(body.is_far(node));
         }
     }
 
@@ -472,15 +473,15 @@ mod tests {
                 mass: 1.0
             };
 
-            let body2 = Body {
+            let body2 = Arc::new(Mutex::new(Body {
                 pos_vec: vec![0.0; dims],
                 vel_vec: vec![0.0; dims],
                 mass: 1.0
-            };
+            }));
 
             let acc = vec![0.0; dims];
             let entry = -1.0 * (G) / (dims as f64).sqrt() / (dims as f64);
-            assert_eq!(body1.update_accel(acc, &body2), vec![entry; dims]);
+            assert_eq!(body1.update_accel(acc, body2), vec![entry; dims]);
 
         }
     }
