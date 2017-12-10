@@ -173,21 +173,21 @@ pub mod generate {
     }
 
     fn push_body_global(body_arc: Arc<Mutex<Body>>) {
-        let match_me = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
+        let match_me = TREE_POINTER.try_lock().unwrap().tree.add_queue.clone();
         match match_me {
 
             None => {
                 let mut add_me  = Vec::new();
                 add_me.push(body_arc);
 
-                TREE_POINTER.lock().unwrap().tree.add_queue = Some(add_me);
+                TREE_POINTER.try_lock().unwrap().tree.add_queue = Some(add_me);
             },
 
             Some(_) => {
                 let mut queue =
-                    TREE_POINTER.lock().unwrap().tree.add_queue.clone().unwrap();
+                    TREE_POINTER.try_lock().unwrap().tree.add_queue.clone().unwrap();
                 queue.push(body_arc);
-                TREE_POINTER.lock().unwrap().tree.add_queue = Some(queue);
+                TREE_POINTER.try_lock().unwrap().tree.add_queue = Some(queue);
             }
         }
     }
@@ -202,7 +202,7 @@ lazy_static! {
     // scheme this might be ideal.
 
     // TOFIX: redefine TREE_POINTER such that we can access the global
-    // region_vector without locking the Region itself. This will
+    // region_vector without try_locking the Region itself. This will
     // allow us to handle the add_queue and reg_vec separately, which
     // will improve computation times.
 

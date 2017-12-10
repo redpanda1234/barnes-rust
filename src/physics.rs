@@ -71,7 +71,7 @@ impl Body {
         // in the region_vec or add_queue.
         // println!("wheee {:#?}", self.node_sq_dist_to(&node));
         //Note: nodes are now guaranteed to have valid com when this is called
-        let node = node_arc.lock().unwrap();
+        let node = node_arc.try_lock().unwrap();
         ( 2.0 * node.half_length / self.node_sq_dist_to(&node))
         // ( 2.0 * node.half_length / self.squared_dist_to(&node.com.clone().unwrap()))
             <= THETA
@@ -114,7 +114,7 @@ impl Body {
 
     pub fn update_accel(&self, acc: Vec<f64>, mass_arc: Arc<Mutex<Body>>) -> Vec<f64> {
         println!("called update_accel");
-        let mass = mass_arc.lock().unwrap();
+        let mass = mass_arc.try_lock().unwrap();
         acc.iter().zip(self.get_classical_accel(&mass))
             .map(|(acc_self, acc_other)| acc_self + acc_other).collect::<Vec<f64>>()
     }
@@ -126,11 +126,13 @@ impl Body {
         match match_me {
             //if this is a leaf, find the acceleration between us and its com
             None => {
-                println!("locked node_arc and entered the match block. Matched on None");
+                drop(match_me);
+                println!("try_locked node_arc and entered the match btry_lock. Matched on None");
                 match node_arc.try_lock().unwrap().com {
                     None => {println!("matched on None"); acc},
                     Some(ref com_arc) => {
-                        let total_acc = self.update_accel(acc.clone(), Arc::clone(&com_arc));
+                        let com = com_arc.try_lock().unwrap().clone();
+                        let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
                         // println!("acceleration component: {:#?}", total_acc);
                         acc = acc.iter().zip(total_acc
                             .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
@@ -139,13 +141,15 @@ impl Body {
                 }
             }
             //if this node has children, find the acceleration from each of them
-            Some(ref mut reg_vec) => {
-                println!("locked node_arc and entered the match block. Matched on Some");
+            Some(_) => {
+
+                println!("try_locked node_arc and entered the match btry_lock. Matched on Some");
                 // println!("has reg_vec");
-                match node_arc.lock().unwrap().com {
+                let match_me_too = node_arc.try_lock().unwrap().com.clone();
+                match match_me_too {
                     None => {
-                        // println!("updating child com");
-                        node_arc.lock().unwrap().update_com();
+                        // drop(reg_vec);
+                        node_arc.try_lock().unwrap().update_com();
                         self.get_total_acc(Arc::clone(&node_arc))
                     }
                     Some(ref com_arc) => {
@@ -157,7 +161,7 @@ impl Body {
                                                  .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             acc
                         } else {
-                            for mut child in reg_vec.iter() {
+                            for mut child in match_me.unwrap().iter() {
                                 let total_acc = self.get_total_acc(Arc::clone(child));
                                 // println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
@@ -177,10 +181,11 @@ impl Body {
         //TODO: tree should be a reference so we don't have to copy it every time
         // println!("updating vel");
         // println!("old velocity component: {:#?}", self.vel_vec[0]);
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
         for child in tree.reg_vec.iter_mut() {
+            let child = Arc::new(Mutex::new(child[0].try_lock().unwrap().clone()));
             self.vel_vec = self.clone().vel_vec.iter_mut().zip(
-            self.clone().get_total_acc(Arc::clone(&child[0])))
+            self.clone().get_total_acc(child))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
         }
 
@@ -210,7 +215,8 @@ impl Region {
                 match self.com.clone() {
                     None => (),
                     Some(com_arc) => {
-                        com_arc.lock().unwrap().update_vel();
+                        let mut com = com_arc.try_lock().unwrap();
+                        com.update_vel();
                         //TODO: find out if it's actually necessary to re-wrap this
 
                     }
@@ -220,8 +226,9 @@ impl Region {
             Some(ref mut reg_vec) => {
                 let mut temp = vec![];
                 for mut child in reg_vec {
-                    child.lock().unwrap().deep_update_vel();
-                    temp.push(child.clone());
+                    let mut child = child.try_lock().unwrap().clone();
+                    child.deep_update_vel();
+                    temp.push(Arc::new(Mutex::new(child.clone())));
                 }
                 self.reg_vec = Some(temp);
             }
@@ -237,7 +244,7 @@ impl Region {
                 match self.com.clone() {
                     None => (),
                     Some(com) => {
-                        com.lock().unwrap().update_pos();
+                        com.try_lock().unwrap().update_pos();
 
                     }
                 }
@@ -246,7 +253,7 @@ impl Region {
             Some(ref mut reg_vec) => {
                 let mut temp = vec![];
                 for mut child in reg_vec {
-                    child.lock().unwrap().deep_update_pos();
+                    child.try_lock().unwrap().deep_update_pos();
                     temp.push(child.clone());
                 }
                 self.reg_vec = Some(temp);
@@ -299,10 +306,10 @@ impl Region {
                 let mut den = 0.0;
 
                 for child in reg_vec.iter_mut() {
-                    match child.lock().unwrap().com {
+                    match child.try_lock().unwrap().com.clone() {
                         None => continue,
                         Some(ref com_arc) => {
-                            let mut com = com_arc.lock().unwrap();
+                            let mut com = com_arc.try_lock().unwrap();
                             den += com.mass;
                             //TODO: we shouldn't have to be cloning pos_vec
                             num = num.iter().zip(com.pos_vec.clone()).map(|(pi, pv)| pi + pv * com.mass)
@@ -529,7 +536,7 @@ modify to give the distances from some other point,
     but this is probably unnecessary.
     */
     fn radial_distribution() {
-        let tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let tree = TREE_POINTER.try_lock().unwrap().tree.clone();
         let masses = tree.list_masses();
         let distances = masses.iter().map(|m| m.sq_magnitude(&m.pos_vec));
 
@@ -541,7 +548,7 @@ modify to give the distances from some other point,
     Finds the total (nonrelativistic) kinetic energy of particles.
     */
     fn kinetic_energy() {
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
         let masses = tree.list_masses();
         let energies = masses.into_iter().map(|m|
                             0.5*m.mass * m.sq_magnitude(&m.vel_vec))
@@ -563,7 +570,7 @@ modify to give the distances from some other point,
         calculation and more consistent results
     */
     fn potential_energy() {
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
         let masses = tree.list_masses();
 
         let potential_energies = masses.iter()
