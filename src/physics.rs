@@ -25,11 +25,13 @@ impl Body {
     // position and the passed mass's position to return r^2.
 
     pub fn squared_dist_to(&self, mass: &Body) -> f64 {
+        println!("called squared_dist_to");
         self.pos_vec.iter().zip(&mass.pos_vec)
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
 
     pub fn node_sq_dist_to(&self, node: &Region) -> f64 {
+        println!("called node_sq_dist_to");
         // println!("woooo {:#?}, {:#?}", &node.coord_vec, self.pos_vec);
         self.pos_vec.iter().zip(&node.coord_vec)
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
@@ -38,6 +40,7 @@ impl Body {
     // vec_rel gets the displacement vector between the calling mass
     // and some other passed Body.
     pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
+        println!("called vec_rel");
         self.pos_vec.iter().zip(&mass.pos_vec)
             .map(|(pi, mi)| mi - pi)
             .collect::<Vec<f64>>()
@@ -60,6 +63,7 @@ impl Body {
     // tree) and a passed region.
 
     pub fn is_far(&self, node_arc: Arc<Mutex<Region>>) -> bool {
+        println!("called is_far");
         // this makes me think we should store full-length instead of
         // half-length FIXME
         // FIXME: make sure this doesn't allow infinite loops;
@@ -74,6 +78,7 @@ impl Body {
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
+        println!("called get_classical_accel");
         let rel = self.vec_rel(mass);
         // println!("{:?}", rel);
         let sq_mag = self.sq_magnitude(&rel);
@@ -108,19 +113,22 @@ impl Body {
     }
 
     pub fn update_accel(&self, acc: Vec<f64>, mass_arc: Arc<Mutex<Body>>) -> Vec<f64> {
+        println!("called update_accel");
         let mass = mass_arc.lock().unwrap();
         acc.iter().zip(self.get_classical_accel(&mass))
             .map(|(acc_self, acc_other)| acc_self + acc_other).collect::<Vec<f64>>()
     }
 
     pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
+        println!("called get_total_acc");
         let mut acc = vec![0.0; DIMS];
-        match node_arc.lock().unwrap().reg_vec {
+        let mut match_me = node_arc.try_lock().unwrap().reg_vec.clone();
+        match match_me {
             //if this is a leaf, find the acceleration between us and its com
             None => {
-                match node_arc.lock().unwrap().com {
-                    None => //{println!("node has no com"); acc},
-                        acc,
+                println!("locked node_arc and entered the match block. Matched on None");
+                match node_arc.try_lock().unwrap().com {
+                    None => {println!("matched on None"); acc},
                     Some(ref com_arc) => {
                         let total_acc = self.update_accel(acc.clone(), Arc::clone(&com_arc));
                         // println!("acceleration component: {:#?}", total_acc);
@@ -132,6 +140,7 @@ impl Body {
             }
             //if this node has children, find the acceleration from each of them
             Some(ref mut reg_vec) => {
+                println!("locked node_arc and entered the match block. Matched on Some");
                 // println!("has reg_vec");
                 match node_arc.lock().unwrap().com {
                     None => {
@@ -194,7 +203,7 @@ impl Region {
 
     // Recursively update the accelerations and velocities of masses
     pub fn deep_update_vel(&mut self) {
-        // println!("deep updating vel");
+        println!("called deep_update_vel");
         match self.reg_vec.clone() {
             //if we're at the leaf node, call update_vel if we have a mass
             None => {

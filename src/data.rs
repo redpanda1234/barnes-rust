@@ -209,17 +209,20 @@ lazy_static! {
 
 
     //Stores a TreeWrapper that holds the global tree
-    pub static ref TREE_POINTER: Mutex<TreeWrapper> = Mutex::new(
-        TreeWrapper {
-            tree: Region {
-                reg_vec: None,
-                coord_vec: vec![0.0; DIMS],
-                half_length: MAX_LEN,
-                add_queue: Some(Vec::new()),
-                com: None
-            }
-        }
-    );
+    pub static ref TREE_POINTER: Arc<Mutex<TreeWrapper>> =
+        Arc::new(
+            Mutex::new(
+                TreeWrapper {
+                    tree: Region {
+                        reg_vec: None,
+                        coord_vec: vec![0.0; DIMS],
+                        half_length: MAX_LEN,
+                        add_queue: Some(Vec::new()),
+                        com: None
+                    }
+                }
+            )
+        );
 
     /*
     // MULTIPLIERS is a static array that we'll use later to quickly

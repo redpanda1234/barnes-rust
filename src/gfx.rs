@@ -12,6 +12,8 @@ use opengl_graphics::{ GlGraphics, OpenGL };
 use super::tree::*;
 use super::data::TREE_POINTER;
 
+use std::sync::{Arc, Mutex};
+
 pub struct Frame {
     pub gl: GlGraphics, // OpenGL backend for drawing
     pub tree: Region // the tree we're gonna be drawing
