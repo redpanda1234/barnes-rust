@@ -91,9 +91,8 @@ impl Body {
         rel.iter().map(|ri| (ri/r) * acc).collect::<Vec<f64>>()
     }
 
-    pub fn get_classical_potential(&self, mass_arc: Arc<Mutex<Body>>) -> Vec<f64> {
+    pub fn get_classical_potential(&self, mass: &Body) -> Vec<f64> {
         // use super::G;
-        let mass = mass_arc.lock().unwrap();
         let rel = self.vec_rel(&mass);
         let sq_mag = self.sq_magnitude(&rel);
         // println!("{}, {:#?}", sq_mag, rel);
@@ -149,8 +148,8 @@ impl Body {
                                                  .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             acc
                         } else {
-                            for mut child in reg_vec.iter_mut() {
-                                let total_acc = self.get_total_acc(&mut child);
+                            for mut child in reg_vec.iter() {
+                                let total_acc = self.get_total_acc(*child);
                                 // println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
@@ -171,9 +170,8 @@ impl Body {
         // println!("old velocity component: {:#?}", self.vel_vec[0]);
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         for child in tree.reg_vec.iter_mut() {
-            // println!("{:#?}", child);
             self.vel_vec = self.clone().vel_vec.iter_mut().zip(
-            self.clone().get_total_acc(&mut child[0]))
+            self.clone().get_total_acc(child[0]))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
         }
 
@@ -202,10 +200,10 @@ impl Region {
             None => {
                 match self.com.clone() {
                     None => (),
-                    Some(ref mut com) => {
-                        com.update_vel();
+                    Some(com_arc) => {
+                        com_arc.lock().unwrap().update_vel();
                         //TODO: find out if it's actually necessary to re-wrap this
-                        self.com = Some(com.clone());
+
                     }
                 }
             },
@@ -213,7 +211,7 @@ impl Region {
             Some(ref mut reg_vec) => {
                 let mut temp = vec![];
                 for mut child in reg_vec {
-                    child.deep_update_vel();
+                    child.lock().unwrap().deep_update_vel();
                     temp.push(child.clone());
                 }
                 self.reg_vec = Some(temp);
@@ -229,10 +227,9 @@ impl Region {
             None => {
                 match self.com.clone() {
                     None => (),
-                    Some(ref mut com) => {
-                        com.update_pos();
-                        //TODO: find out if it's actually necessary to re-wrap this
-                        self.com = Some(com.clone());
+                    Some(com) => {
+                        com.lock().unwrap().update_pos();
+
                     }
                 }
             },
@@ -240,7 +237,7 @@ impl Region {
             Some(ref mut reg_vec) => {
                 let mut temp = vec![];
                 for mut child in reg_vec {
-                    child.deep_update_pos();
+                    child.lock().unwrap().deep_update_pos();
                     temp.push(child.clone());
                 }
                 self.reg_vec = Some(temp);
@@ -293,10 +290,10 @@ impl Region {
                 let mut den = 0.0;
 
                 for child in reg_vec.iter_mut() {
-                    match child.com {
+                    match child.lock().unwrap().com {
                         None => continue,
-                        Some(ref com) => {
-                            let mut com = com.clone();
+                        Some(com_arc) => {
+                            let mut com = com_arc.lock().unwrap();
                             den += com.mass;
                             //TODO: we shouldn't have to be cloning pos_vec
                             num = num.iter().zip(com.pos_vec.clone()).map(|(pi, pv)| pi + pv * com.mass)
@@ -313,11 +310,12 @@ impl Region {
                     num = self.coord_vec.clone()
                 }
 
-                self.com = Some(Body {
+                self.com = Some(
+                    Arc::new(Mutex::new(Body {
                     pos_vec: num,
                     vel_vec: vec![0.0; DIMS],
                     mass: den
-                }
+                }))
                 );
             }
         }

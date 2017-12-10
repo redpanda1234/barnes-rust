@@ -26,12 +26,13 @@ impl Region {
         match self.com.clone() {
 
             None => vec![0.0; DIMS],
-            Some(mut com) => {
-                for i in 0..com.pos_vec.len() {
-                    com.pos_vec[i] *= 270.0 / MAX_LEN;
-                    com.pos_vec[i] += 400.0;
+            Some(com) => {
+                let pos_vec = com.lock().unwrap().pos_vec.clone();
+                for i in 0..DIMS {
+                    pos_vec[i] *= 270.0 / MAX_LEN;
+                    pos_vec[i] += 400.0;
                 }
-                com.pos_vec
+                pos_vec
             }
 
         }
@@ -77,7 +78,7 @@ impl Frame {
 
                     Some(child_vec) => {
                         for child in child_vec.iter() {
-                            self.render(Some(& *child), args);
+                            self.render(Some(& *child.lock().unwrap()), args);
                         }
                     }
                 }
