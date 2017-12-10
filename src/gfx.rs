@@ -125,7 +125,7 @@ impl Frame {
 
                                 let coords = reg.normalize_region_coords();
 
-                                let square = rectangle::square(reg.half_length, reg.half_length,  reg.half_length);
+                                let square = rectangle::square( -1.0 * reg.half_length, -1.0 * reg.half_length, 2.0*reg.half_length);
                                 let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                                 rectangle(GREEN, square, transform, gl);
                             }
@@ -137,9 +137,8 @@ impl Frame {
                         self.gl.draw(args.viewport(), |c, gl| {
                             //draw red squares
                             let coords = reg.clone().normalize_region_coords();
-                            let square = rectangle::square(reg.half_length, reg.half_length,  reg.half_length);
-                            let transform = c.transform.trans(coords[0], coords[1])
-                                            .rot_rad(0.0);
+                            let square = rectangle::square( -1.0 * reg.half_length, -1.0 * reg.half_length, 2.0*reg.half_length);
+                            let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                             rectangle(BLUE, square, transform, gl);
                         });
                         for child in child_vec.iter() {
@@ -157,8 +156,8 @@ impl Frame {
     pub fn update(&mut self, args: &UpdateArgs) {
         self.tree.deep_update_vel();
         self.tree.deep_update_pos();
-        //TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.update();
-        //TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
     }
 }
