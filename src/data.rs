@@ -8,7 +8,7 @@ use std::thread;
 // TODO: use this everywhere we check dimensions
 pub const DIMS: usize = 2;
 pub const THETA: f64 = 0.5;
-pub const DT: f64 = 0.5;
+pub const DT: f64 = 0.1;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
@@ -159,7 +159,7 @@ pub mod generate {
 
         for _ in 0..num_bodies {
 
-            push_body_global(
+            Region::push_body_global(
                 gb_from_mags(
                     t_f_gen.ind_sample(&mut rng),
                     t_f_gen.ind_sample(&mut rng),
@@ -172,25 +172,25 @@ pub mod generate {
         }
     }
 
-    fn push_body_global(body_arc: Arc<Mutex<Body>>) {
-        let match_me = TREE_POINTER.try_lock().unwrap().tree.add_queue.clone();
-        match match_me {
+    // fn push_body_global(body_arc: Arc<Mutex<Body>>) {
+    //     let match_me = TREE_POINTER.try_lock().unwrap().tree.add_queue.clone();
+    //     match match_me {
 
-            None => {
-                let mut add_me  = Vec::new();
-                add_me.push(body_arc);
+    //         None => {
+    //             let mut add_me  = Vec::new();
+    //             add_me.push(body_arc);
 
-                TREE_POINTER.try_lock().unwrap().tree.add_queue = Some(add_me);
-            },
+    //             TREE_POINTER.try_lock().unwrap().tree.add_queue = Some(add_me);
+    //         },
 
-            Some(_) => {
-                let mut queue =
-                    TREE_POINTER.try_lock().unwrap().tree.add_queue.clone().unwrap();
-                queue.push(body_arc);
-                TREE_POINTER.try_lock().unwrap().tree.add_queue = Some(queue);
-            }
-        }
-    }
+    //         Some(_) => {
+    //             let mut queue =
+    //                 TREE_POINTER.try_lock().unwrap().tree.add_queue.clone().unwrap();
+    //             queue.push(body_arc);
+    //             TREE_POINTER.try_lock().unwrap().tree.add_queue = Some(queue);
+    //         }
+    //     }
+    // }
 }
 
 lazy_static! {
