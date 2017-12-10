@@ -23,8 +23,6 @@ use super::physics::*;
 // one will have a float vector to describe position, then some mass
 // value assigned to it.
 
-
-// todo: temporarily implement an ID
 #[derive(Clone, Debug)]
 pub struct Body {
     pub pos_vec: Vec<f64>,
@@ -79,14 +77,19 @@ pub struct Body {
 // + reimplement contains method by constructing indices using our
 //   binary string construction method on the global multiplier array.
  */
+use std::sync::{Mutex, Arc};
+use std::thread;
+
+// use std::rc::Rc;
+// use std::cell::RefCell;
 
 #[derive(Clone, Debug)]
 pub struct Region {
-    pub reg_vec: Option<Vec<Region>>,
+    pub reg_vec: Option<Vec<Arc<Mutex<Region>>>>,
     pub coord_vec: Vec<f64>,
     pub half_length: f64,
-    pub add_queue: Option<Vec<Body>>,
-    pub com: Option<Body>
+    pub add_queue: Option<Vec<Arc<Mutex<Body>>>>,
+    pub com: Option<Arc<Mutex<Body>>>
 }
 
 
@@ -97,18 +100,19 @@ impl Region {
     // coordinates in its position vector to determine whether it's
     // contained in the calling region or not.
 
-    fn contains(&self, point: &Body) -> bool {
 
+    pub fn contains(&self, body_arc: Arc<Mutex<Body>>) -> bool {
+        let body = &body_arc.lock().unwrap();
         // Iterate through all pairs of the i components of our
         // position coordinate
 
-        for (qi, pi) in self.coord_vec.iter().zip(&point.pos_vec) {
+        for (qi, pi) in self.coord_vec.iter().zip(&body.pos_vec) {
 
             // TODO: make sure nothing funny happens if it happens to
             // be directly on the boundary... I think this is handeled
             // because we'll pop a mass as soon as it passes for one
             // of the regions, but let's double-check.
-            // println!("qi = {:#?}, pi = {:#?}, half_length = {:#?}", qi, pi, self.half_length);
+
             if (qi-pi).abs() > self.half_length {
                 // println!("shit, return false");
                 return false
@@ -120,10 +124,6 @@ impl Region {
     // update does two jobs at once. It recursively pushes masses from
     // add queues
     pub fn update(&mut self) -> i32 {
-        // println!("called update");
-
-        // println!("updating {:?}", self);
-        // println!("helooooo");
 
         // First check whether the calling region has any child
         // regions. This will determine how we handle our updating.
@@ -152,9 +152,9 @@ impl Region {
 
                     None => {
                         // println!("nothing to add");
-                        match self.com.clone() {
-                            None => 0,
-                            Some(_) => 1
+                        match &self.com {
+                            &None => 0,
+                            &Some(_) => 1
                         }
                     },
 
@@ -162,13 +162,10 @@ impl Region {
                     // to handle ingesting of the masses.
 
                     Some(mut queue) => {
-                        // println!("adding something");
 
                         match self.com.clone() {
 
-                            None => {
-                                self.recurse(true)
-                            },
+                            None => self.recurse(true),
 
                             // If we have a current com, we push
                             // it into the queue (because we're
@@ -200,31 +197,39 @@ impl Region {
                 self.com = None;
 
                 //
-                match self.add_queue.clone() {
+                match &self.add_queue {
 
                     // If the add_queue is None, we only want to look
                     // at the child regions.
 
-                    None => {
-                        // println!("updating children");
+                    &None => {
+                        //println!("updating children");
                         let mut return_me = 0;
-                        // TODO: before and after check here.
-                        for reg in reg_vec.iter_mut() {
+                        for reg_arc in reg_vec.iter() {
+                            let mut reg = reg_arc.lock().unwrap();
                             return_me += reg.update();
-                        };
-
+                        }
+                        if return_me == 0 {
+                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
+                            self.reg_vec = None;
+                        }
                         self.reg_vec = Some(reg_vec);
                         return_me
                     },
 
-                    Some(_) => {
+                    // I think this case should never be called
+                    // because the way we inject masses should mean they
+                    // always go into leaf nodes
+                    // right????
+                    &Some(_) => {
                         // for some reason, this case is never
                         // reached. (or is it?)
-                        // println!("injecting bodies into child regions");
+                        println!("injecting bodies into child regions");
                         // recurse on false because we don't need to
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
                         if result == 0 {
+                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
                             self.reg_vec = None
                         }
                         result
@@ -286,16 +291,20 @@ impl Region {
                     // it into the calling region's region vector
 
                     reg_vec.push(
-                        Region {
-                            reg_vec: None,
-                            // vec is currently a mutable reference,
-                            // so we call .to_vec() on it to extrac
-                            // the underlying vec.
-                            coord_vec: vec.to_vec(),
-                            add_queue: None,
-                            com: None,
-                            half_length: quarter_length,
-                        }
+                        Arc::new(
+                            Mutex::new(
+                                Region {
+                                    reg_vec: None,
+                                    // vec is currently a mutable reference,
+                                    // so we call .to_vec() on it to extrac
+                                    // the underlying vec.
+                                    coord_vec: vec.to_vec(),
+                                    add_queue: None,
+                                    com: None,
+                                    half_length: quarter_length,
+                                }
+                            )
+                        )
                     )
                 }
 
@@ -342,22 +351,35 @@ impl Region {
             let mut remove = 0;
 
             match self.reg_vec.clone() {
-                None => 1,
+
+                None => {
+                    match self.com {
+                        None => 0,
+                        Some(_) => 1
+                    }
+                },
+
                 Some(mut reg_vec) => {
 
-                    for region in reg_vec.iter_mut() {
+                    for reg_arc in reg_vec.iter() {
+                        let mut region = reg_arc.lock().unwrap();
                         // println!("updating child regions");
                         remove += region.update();
                     }
                     // println!("child regions are {:#?}", reg_vec);
                     self.reg_vec = Some(reg_vec);
 
+                    //println!("returning {:#?} from recurse false", remove);
                     return remove;
                 }
             }
         }
     }
 
+    //remove masses from the add_queue
+    //and place them in the child nodes
+    //FIXME: not properly removing masses that aren't in the
+    //simulation anymore
     pub fn push_masses_to_children(&mut self) {
         // println!("pushing masses to children");
         // FIXME: do this actually properly.
@@ -395,10 +417,12 @@ impl Region {
                     // println!("this mass is \n{:#?}", mass.clone());
                     // println!("the queue is {:#?}", queue.clone());
                     // println!("the current region vector is {:#?}", reg_vec);
-                    let mass = queue.pop().unwrap();
 
-                    'inner: for region in reg_vec.iter_mut() {
-                        if region.contains(&mass) {
+                    let m_arc = queue.pop().unwrap();
+
+                    'inner: for reg_arc in reg_vec.iter() {
+                        let mut region = reg_arc.lock().unwrap();
+                        if region.contains(Arc::clone(&m_arc)) {
                             // define reg_queue here for the Some arm
                             // of our match
                             let mut reg_queue = region.add_queue.clone();
@@ -408,23 +432,42 @@ impl Region {
                                 Some(_) => {reg_queue},
                             }.unwrap();
 
-                            reg_queue.push(mass);
+                            reg_queue.push(m_arc);
                             region.add_queue = Some(reg_queue);
                             continue 'outer
                         }
-
                     }
-                    println!("Deleted mass: {:#?}", mass.mass);
                 }
-
-                self.add_queue = None;
-                // println!("\n\n\n\n about to write add_queue \n{:#?}\n\n\n\n", reg_vec);
                 self.reg_vec = Some(reg_vec);
             }
         }
-
-        //empty the add queue
         self.add_queue = None;
+    }
+
+    // push a body to this region's add_queue
+    pub fn push_body_global(body_arc: Arc<Mutex<Body>>) {
+        let ref tree = &TREE_POINTER.lock().unwrap().tree.clone();
+        let mut add_queue = tree.add_queue.clone();
+
+        //if the added mass is outside of the tree region, don't add it
+        if(!tree.contains(Arc::clone(&body_arc))) {
+            println!("\n\nDeleted mass\n\n");
+            return;
+        }
+
+        //if the add queue doesn't already exist, create it
+        match add_queue {
+            None => {
+                let mut queue = Vec::new();
+                queue.push(body_arc);
+                add_queue = Some(queue);
+            },
+            Some(mut queue) => {
+                queue.push(body_arc);
+                add_queue = Some(queue);
+            }
+        };
+        TREE_POINTER.lock().unwrap().tree.add_queue = add_queue;
     }
 
     pub fn list_masses(&self) -> Vec<Body> {
@@ -433,12 +476,13 @@ impl Region {
             None => {
                 match self.com.clone() {
                     None => vec![],
-                    Some(ref mut com) => vec![com.clone()]
+                    Some(ref mut com) => vec![com.lock().unwrap().clone()]
                 }
             },
             Some(ref reg_vec) => {
                 let mut result = Vec::new();
-                for mut child in reg_vec {
+                for mut child_arc in reg_vec {
+                    let child = child_arc.lock().unwrap();
                     result.append(&mut child.list_masses());
                 }
                 result

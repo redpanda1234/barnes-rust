@@ -64,9 +64,11 @@ fn main() {
     // generation function the rng object we've just seeded. Seeding
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
+
     let num_bodies = 100;
 
-    generate::gt_all_ranges(num_bodies);
+
+    let root = generate::gt_all_ranges(num_bodies);
 
     let mut frame = Frame {
         gl: GlGraphics::new(opengl),
@@ -74,10 +76,19 @@ fn main() {
     };
 
     println!("done generating");
+    for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
+        println!("splitting multiplier: {:#?}", vec);
+    }
 
     let mut events = Events::new(EventSettings::new());
 
     while let Some(e) = events.next(&mut window) {
+
+        // make sure the tree is set up correctly before
+        // trying to render or update anything
+        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        tree.update();
+        TREE_POINTER.lock().unwrap().tree = tree;
 
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
@@ -88,9 +99,9 @@ fn main() {
         if let Some(u) = e.update_args() {
             // let frame.tree = TREE_POINTER.lock().unwrap().tree.clone();
             // TREE_POINTER.lock().unwrap().tree = frame.tree;
-            // println!("calling update from main");
+            println!("calling update from main");
             frame.update(&u);
-            // println!("called update from main");
+            println!("called update from main");
         }
 
     }

@@ -8,7 +8,8 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 100.0;
+const G: f64 = 1000000.0;
+use std::sync::{Arc, Mutex};
 
 impl Body {
 
@@ -23,20 +24,28 @@ impl Body {
     // position and the passed mass's position to return r^2.
 
     pub fn squared_dist_to(&self, mass: &Body) -> f64 {
-        self.pos_vec.iter().zip(&mass.pos_vec)
+        println!("called squared_dist_to");
+        self.pos_vec
+            .iter()
+            .zip(&mass.pos_vec)
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
 
     pub fn node_sq_dist_to(&self, node: &Region) -> f64 {
+        println!("called node_sq_dist_to");
         // println!("woooo {:#?}, {:#?}", &node.coord_vec, self.pos_vec);
-        self.pos_vec.iter().zip(&node.coord_vec)
+        self.pos_vec
+            .iter()
+            .zip(&node.coord_vec)
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
 
     // vec_rel gets the displacement vector between the calling mass
     // and some other passed Body.
     pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
-        self.pos_vec.iter().zip(&mass.pos_vec)
+        println!("called vec_rel");
+        self.pos_vec.iter()
+            .zip(&mass.pos_vec)
             .map(|(pi, mi)| mi - pi)
             .collect::<Vec<f64>>()
     }
@@ -57,7 +66,8 @@ impl Body {
     // (which really should only ever be the com of a leaf node in the
     // tree) and a passed region.
 
-    pub fn is_far(&self, node: &Region) -> bool {
+    pub fn is_far(&self, node_arc: Arc<Mutex<Region>>) -> bool {
+        println!("called is_far");
         // this makes me think we should store full-length instead of
         // half-length FIXME
         // FIXME: make sure this doesn't allow infinite loops;
@@ -65,12 +75,14 @@ impl Body {
         // in the region_vec or add_queue.
         // println!("wheee {:#?}", self.node_sq_dist_to(&node));
         //Note: nodes are now guaranteed to have valid com when this is called
+        let node = node_arc.try_lock().unwrap();
         ( 2.0 * node.half_length / self.node_sq_dist_to(&node))
         // ( 2.0 * node.half_length / self.squared_dist_to(&node.com.clone().unwrap()))
             <= THETA
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
+        println!("called get_classical_accel");
         let rel = self.vec_rel(mass);
         // println!("{:?}", rel);
         let sq_mag = self.sq_magnitude(&rel);
@@ -85,12 +97,14 @@ impl Body {
             return vec![0.0; DIMS];
         }
 
-        rel.iter().map(|ri| (ri/r) * acc).collect::<Vec<f64>>()
+        rel.iter()
+            .map(|ri| (ri/r) * acc)
+            .collect::<Vec<f64>>()
     }
 
     pub fn get_classical_potential(&self, mass: &Body) -> Vec<f64> {
         // use super::G;
-        let rel = self.vec_rel(mass);
+        let rel = self.vec_rel(&mass);
         let sq_mag = self.sq_magnitude(&rel);
         // println!("{}, {:#?}", sq_mag, rel);
         let r = sq_mag.sqrt();
@@ -101,54 +115,87 @@ impl Body {
             return vec![0.0; DIMS];
         }
 
-        rel.iter().map(|ri| ri * pot/r).collect::<Vec<f64>>()
+        rel.iter()
+            .map(|ri| ri * pot/r)
+            .collect::<Vec<f64>>()
     }
 
-    pub fn update_accel(&self, acc: Vec<f64>, mass: &Body) -> Vec<f64> {
-        acc.iter().zip(self.get_classical_accel(mass))
-            .map(|(acc_self, acc_other)| acc_self + acc_other).collect::<Vec<f64>>()
+    pub fn update_accel(&self, acc: Vec<f64>, mass_arc: Arc<Mutex<Body>>) -> Vec<f64> {
+        println!("called update_accel");
+        let mass = mass_arc.try_lock().unwrap();
+        acc.iter()
+            .zip(self.get_classical_accel(&mass))
+            .map(|(acc_self, acc_other)| acc_self + acc_other)
+            .collect::<Vec<f64>>()
     }
 
-    pub fn get_total_acc(&mut self, mut node: &mut Region) -> Vec<f64> {
+    pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
+        println!("called get_total_acc");
         let mut acc = vec![0.0; DIMS];
-        // check to see if we have child nodes
-        // println!("updating acceleration");
-        // println!("{:#?}", node.reg_vec);
-        match node.reg_vec.clone() {
+        let mut match_me =
+            node_arc
+            .try_lock()
+            .unwrap()
+            .reg_vec.clone();
+        match match_me {
             //if this is a leaf, find the acceleration between us and its com
             None => {
-                match node.com {
-                    None => //{println!("node has no com"); acc},
-                        acc,
-                    Some(ref com) => {
-                        let total_acc = self.update_accel(acc.clone(), com);
-                        // println!("acceleration component: {:#?}", total_acc);
-                        acc = acc.iter().zip(total_acc
-                            .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
+                println!("matched None on first arm of get_totall_acc");
+                // drop(match_me);
+                // println!("try_locked node_arc and entered the match btry_lock. Matched on None");
+                match node_arc.try_lock().unwrap().com {
+                    None => {
+                        println!("matched None on subarm of None");
+                        // println!("matched on None");
+                        acc
+                    },
+                    Some(ref com_arc) => {
+                        println!("matched some on subarm of None");
+                        let com = com_arc.try_lock().unwrap().clone();
+                        let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
+                        //println!("acceleration component: {:#?}", total_acc); // this is never called on singularities
+                        acc = acc.iter()
+                            .zip(total_acc.iter())
+                            .map(|(u,v)| u+v)
+                            .collect::<Vec<f64>>();
+
                         acc
                     }
                 }
             }
             //if this node has children, find the acceleration from each of them
-            Some(ref mut reg_vec) => {
+            Some(_) => {
+                println!("matched Some on first arm of get_totall_acc");
+                // println!("try_locked node_arc and entered the match btry_lock. Matched on Some");
                 // println!("has reg_vec");
-                match node.com {
+                let match_me_too = node_arc.try_lock().unwrap().com.clone();
+                match match_me_too {
+
                     None => {
-                        // println!("updating child com");
-                        node.update_com();
-                        self.get_total_acc(&mut node)
+                        println!("matched None on subarm of Some");
+                        // drop(reg_vec);
+                        node_arc.try_lock().unwrap().update_com();
+                        self.get_total_acc(Arc::clone(&node_arc))
                     }
-                    Some(ref com) => {
-                        if self.is_far(node) {
+
+                    Some(ref com_arc) => {
+                        println!("matched Some on subarm of Some");
+                        if self.is_far(Arc::clone(&node_arc)) {
+                            println!("was far");
                             // println!("{:#?}, {:#?}", acc.clone(), com);
-                            let total_acc = self.update_accel(acc.clone(), com);
-                            // println!("acceleration component: {:#?}", total_acc);
-                            acc = acc.iter().zip(total_acc
-                                                 .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
+                            let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
+                            //println!("acceleration component: {:#?}", total_acc);
+                            // this is always 0 when stuff doesn't move, for some reason
+                            acc = acc
+                                .iter()
+                                .zip(total_acc.iter())
+                                .map(|(u,v)| u+v).collect::<Vec<f64>>();
+
                             acc
                         } else {
-                            for mut child in reg_vec.iter_mut() {
-                                let total_acc = self.get_total_acc(&mut child);
+                            println!("wasn't far");
+                            for mut child in match_me.unwrap().iter() {
+                                let total_acc = self.get_total_acc(Arc::clone(child));
                                 // println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
@@ -162,17 +209,22 @@ impl Body {
     }
 
     pub fn update_vel(&mut self) {
-        // println!("aaaaa");
+        println!("called update_vel");
         //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
         //TODO: tree should be a reference so we don't have to copy it every time
         // println!("updating vel");
         // println!("old velocity component: {:#?}", self.vel_vec[0]);
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
         for child in tree.reg_vec.iter_mut() {
+            let new_child = child[0].try_lock().unwrap().clone();
             // println!("{:#?}", child);
-            self.vel_vec = self.clone().vel_vec.iter_mut().zip(
-            self.clone().get_total_acc(&mut child[0]))
+            let new_child = Arc::new(Mutex::new(new_child));
+            let mut vel_vec = self.vel_vec.clone();
+
+            let mut vel_vec = vel_vec.iter_mut().zip(
+                self.get_total_acc(new_child))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
+            self.vel_vec = vel_vec;
         }
 
         // println!("new velocity component: {:#?}", self.vel_vec[0]);
@@ -180,7 +232,7 @@ impl Body {
 
     //TODO: make update_pos use functional programming
     pub fn update_pos(&mut self) {
-        // println!("updating pos");
+        println!("called update_pos");
         for (pi, vi) in self.pos_vec.iter_mut().zip( self.vel_vec.clone() ) {
             *pi += vi*DT;
         }
@@ -194,43 +246,50 @@ impl Region {
 
     // Recursively update the accelerations and velocities of masses
     pub fn deep_update_vel(&mut self) {
-        // println!("deep updating vel");
+        println!("called deep_update_vel");
         match self.reg_vec.clone() {
             //if we're at the leaf node, call update_vel if we have a mass
             None => {
+                println!("matched None in first arm of update_vel");
                 match self.com.clone() {
-                    None => (),
-                    Some(ref mut com) => {
-                        com.update_vel();
+                    None => {println!("matched None on subarm"); ()},
+                    Some(com_arc) => {
+                        println!("matched Some on subarm");
+                        let mut com_clone = com_arc.try_lock().unwrap().clone();
+                        com_clone.update_vel();
+                        self.com = Some(Arc::new(Mutex::new(com_clone)));
+                        drop(com_arc);
                         //TODO: find out if it's actually necessary to re-wrap this
-                        self.com = Some(com.clone());
+
                     }
                 }
             },
             //if we have children, call recursively
             Some(ref mut reg_vec) => {
-                let mut temp = vec![];
-                for mut child in reg_vec {
-                    child.deep_update_vel();
-                    temp.push(child.clone());
+                println!("matched Some in first arm of deep_update_vel");
+                let temp: Vec<Arc<Mutex<Region>>> = Vec::new();
+                for child in reg_vec {
+                    let mut child_clone = child.try_lock().unwrap().clone();
+                    child_clone.deep_update_vel();
+//                    drop(child);
                 }
-                self.reg_vec = Some(temp);
             }
         }
     }
 
     // Recursively update the postions of masses
     pub fn deep_update_pos(&mut self) {
-        // println!("deep updating pos");
+        println!("deep updating pos");
         match self.reg_vec.clone() {
             //if we're at the leaf node, call update_pos if we have a mass
             None => {
+                println!("matched None in first arm of deep_update_pos");
                 match self.com.clone() {
-                    None => (),
-                    Some(ref mut com) => {
-                        com.update_pos();
-                        //TODO: find out if it's actually necessary to re-wrap this
-                        self.com = Some(com.clone());
+                    None => {println!("matched None in subarm"); ()},
+                    Some(com) => {
+                        println!("matched Some in subarm");
+                        self.update_com();
+                        com.try_lock().unwrap().update_pos();
                     }
                 }
             },
@@ -238,7 +297,7 @@ impl Region {
             Some(ref mut reg_vec) => {
                 let mut temp = vec![];
                 for mut child in reg_vec {
-                    child.deep_update_pos();
+                    child.try_lock().unwrap().deep_update_pos();
                     temp.push(child.clone());
                 }
                 self.reg_vec = Some(temp);
@@ -248,7 +307,7 @@ impl Region {
     }
 
     pub fn update_com(&mut self) {
-        // println!("called update_com");
+        //println!("called update_com");
 
         // we check whether we have child regions to determine whether
         // or not we're in a leaf node. If we are, we should just
@@ -270,7 +329,7 @@ impl Region {
                     None => println!("superfluous (?) call to update_com.
                         change this line in physics.rs to panic! and use backtrace to see where."),
 
-                    Some(mut com) => {
+                    Some(com_arc) => {
 
                         // Double check to make sure we don't have any
                         // masses waiting to be added to the region,
@@ -280,7 +339,15 @@ impl Region {
                             None => (),
                             Some(_) => panic!("cannot update com with masses waiting to be queued!"),
                         };
-                        self.com = Some(com);
+
+                        // check to see if this region still contains com
+                        // if it doesn't, remove com and push it to the global tree
+                        if self.contains(Arc::clone(&com_arc)) {
+                            println!("contains com");
+                        } else {
+                            self.com = None;
+                            Region::push_body_global(Arc::clone(&com_arc));
+                        }
                     },
                 }
             },
@@ -290,14 +357,20 @@ impl Region {
                 let mut num = vec![0.0; DIMS as usize];
                 let mut den = 0.0;
 
-                for child in reg_vec.iter_mut() {
-                    match child.com {
-                        None => continue,
-                        Some(ref com) => {
-                            let mut com = com.clone();
-                            den += com.mass;
+                for child in reg_vec.iter() {
+                    let mut match_me = &child.try_lock().unwrap().com;
+                    // println!("{:#?}", match_me);
+                    match match_me {
+                        &None => continue,
+                        &Some(ref com_arc) => {
+                            // drop(match_me);
+                            let mut com = com_arc.try_lock().unwrap();
+                            den += com.mass.clone();
                             //TODO: we shouldn't have to be cloning pos_vec
-                            num = num.iter().zip(com.pos_vec.clone()).map(|(pi, pv)| pi + pv * com.mass)
+                            num = num
+                                .iter()
+                                .zip(com.pos_vec.clone())
+                                .map(|(pi, pv)| pi + pv * com.mass)
                                 .collect::<Vec<f64>>();
                         },
                     }
@@ -305,17 +378,21 @@ impl Region {
                 //if we didn't add any masses, make sure we're not dividing by 0
                 if den != 0.0 {
                     // println!("fix divide by 0");
-                    num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
+                    num = num
+                        .iter()
+                        .map(|n| n / den)
+                        .collect::<Vec<f64>>();
                     // println!("new num is {:#?}", num);
                 } else {
                     num = self.coord_vec.clone()
                 }
 
-                self.com = Some(Body {
+                self.com = Some(
+                    Arc::new(Mutex::new(Body {
                     pos_vec: num,
                     vel_vec: vec![0.0; DIMS],
                     mass: den
-                }
+                }))
                 );
             }
         }
@@ -417,7 +494,7 @@ mod tests {
                 mass: 0.0
             };
 
-            let mut node = Region {
+            let node = Arc::new(Mutex::new(Region {
 
                 reg_vec: None,
                 coord_vec: vec![0.0; dims],
@@ -425,15 +502,16 @@ mod tests {
                 add_queue: None,
                 com:
                 Some(
+                    Arc::new(Mutex::new(
                     Body {
                         pos_vec: vec![0.0; dims],
                         vel_vec: vec![0.0; dims],
                         mass: 0.0
-                    }
+                    }))
                 )
 
-            };
-            assert!(body.is_far(&mut node));
+            }));
+            assert!(body.is_far(node));
         }
     }
 
@@ -472,15 +550,15 @@ mod tests {
                 mass: 1.0
             };
 
-            let body2 = Body {
+            let body2 = Arc::new(Mutex::new(Body {
                 pos_vec: vec![0.0; dims],
                 vel_vec: vec![0.0; dims],
                 mass: 1.0
-            };
+            }));
 
             let acc = vec![0.0; dims];
             let entry = -1.0 * (G) / (dims as f64).sqrt() / (dims as f64);
-            assert_eq!(body1.update_accel(acc, &body2), vec![entry; dims]);
+            assert_eq!(body1.update_accel(acc, body2), vec![entry; dims]);
 
         }
     }
@@ -519,7 +597,7 @@ modify to give the distances from some other point,
     but this is probably unnecessary.
     */
     fn radial_distribution() {
-        let tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let tree = TREE_POINTER.try_lock().unwrap().tree.clone();
         let masses = tree.list_masses();
         let distances = masses.iter().map(|m| m.sq_magnitude(&m.pos_vec));
 
@@ -531,7 +609,7 @@ modify to give the distances from some other point,
     Finds the total (nonrelativistic) kinetic energy of particles.
     */
     fn kinetic_energy() {
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
         let masses = tree.list_masses();
         let energies = masses.into_iter().map(|m|
                             0.5*m.mass * m.sq_magnitude(&m.vel_vec))
@@ -553,7 +631,7 @@ modify to give the distances from some other point,
         calculation and more consistent results
     */
     fn potential_energy() {
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
         let masses = tree.list_masses();
 
         let potential_energies = masses.iter()
