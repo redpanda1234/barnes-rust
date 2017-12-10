@@ -351,15 +351,17 @@ impl Region {
             let mut remove = 0;
 
             match self.reg_vec.clone() {
+
                 None => {
                     match self.com {
                         None => 0,
                         Some(_) => 1
                     }
                 },
+
                 Some(mut reg_vec) => {
 
-                    for reg_arc in reg_vec.iter_mut() {
+                    for reg_arc in reg_vec.iter() {
                         let mut region = reg_arc.lock().unwrap();
                         // println!("updating child regions");
                         remove += region.update();
