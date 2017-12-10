@@ -3,12 +3,13 @@
 // have to do with the actual physics part of the simulation. So we
 // have to move up one level (super), and import tree::*
 pub use super::tree::*;
+pub use super::data::*;
 
 // Fetch global statics from the main function
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 10000.0;
+const G: f64 = 10.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {
@@ -76,12 +77,23 @@ impl Body {
         // println!("wheee {:#?}", self.node_sq_dist_to(&node));
         //Note: nodes are now guaranteed to have valid com when this is called
         let node = node_arc.try_lock().unwrap();
-        ( 2.0 * node.half_length / self.node_sq_dist_to(&node))
+        ( 2.0 * node.half_length / self.node_sq_dist_to(&node).sqrt())
         // ( 2.0 * node.half_length / self.squared_dist_to(&node.com.clone().unwrap()))
             <= THETA
     }
 
     pub fn get_classical_accel(&self, mass: &Body) -> Vec<f64> {
+
+        // this doesn't appear to work
+        // if (self as *const _ == mass as *const _) {
+        //     println!("\n\n\n FOUND SELF \n\n\n");
+        // };
+
+        //if the other body has no mass, just return 0
+        if mass.mass == 0.0 {
+            return vec![0.0; DIMS];
+        }
+
         // println!("called get_classical_accel");
         let rel = self.vec_rel(mass);
         // println!("{:?}", rel);
@@ -91,15 +103,19 @@ impl Body {
         // println!("{:?}", acc);
         let r = sq_mag.sqrt();
 
-        //if the distance is 0, just return 0
-        if r == 0.0 {
+        //if the distance is small, just return 0
+        //note that floats are weird, so the same mass
+        //could have a nonzero distance to itself
+        if r <= MIN_LEN / 3.0 {
             // println!("{:?}", r);
             return vec![0.0; DIMS];
         }
 
-        rel.iter()
-            .map(|ri| (ri/r) * acc)
-            .collect::<Vec<f64>>()
+        let result = rel.iter()
+                        .map(|ri| (ri/r) * acc)
+                        .collect::<Vec<f64>>();
+        //println!("acceleration: {:#?}", result);
+        result
     }
 
     pub fn get_classical_potential(&self, mass: &Body) -> Vec<f64> {
@@ -172,8 +188,6 @@ impl Body {
                 match match_me_too {
 
                     None => {
-                        // println!("matched None on subarm of Some");
-                        // drop(reg_vec);
                         node_arc.try_lock().unwrap().update_com();
                         self.get_total_acc(Arc::clone(&node_arc))
                     }
@@ -181,7 +195,7 @@ impl Body {
                     Some(ref com_arc) => {
                         // println!("matched Some on subarm of Some");
                         if self.is_far(Arc::clone(&node_arc)) {
-                             println!("was far");
+                            //println!("was far");
                             // println!("{:#?}, {:#?}", acc.clone(), com);
                             let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
                             //println!("acceleration component: {:#?}", total_acc);
@@ -193,7 +207,7 @@ impl Body {
 
                             acc
                         } else {
-                             println!("wasn't far");
+                            //println!("wasn't far from: {:#?}", com_arc.try_lock().unwrap().clone());
                             for mut child in match_me.unwrap().iter() {
                                 let total_acc = self.get_total_acc(Arc::clone(child));
                                 // println!("acceleration component: {:#?}", total_acc);
@@ -215,8 +229,8 @@ impl Body {
         // println!("updating vel");
         // println!("old velocity component: {:#?}", self.vel_vec[0]);
         let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
-        for child in tree.reg_vec.iter_mut() {
-            let new_child = child[0].try_lock().unwrap().clone();
+        for child in tree.reg_vec.clone().unwrap() {
+            let new_child = child.try_lock().unwrap().clone();
             // println!("{:#?}", child);
             let new_child = Arc::new(Mutex::new(new_child));
             let mut vel_vec = self.vel_vec.clone();
@@ -353,7 +367,7 @@ impl Region {
                         // check to see if this region still contains com
                         // if it doesn't, remove com and push it to the global tree
                         if !self.contains(Arc::clone(&com_arc)) {
-                            println!("push to global");
+                            //println!("push to global");
                             Region::push_body_global(Arc::clone(&com_arc));
                             self.com = None;
                         } // else {
@@ -509,7 +523,7 @@ mod tests {
 
                 reg_vec: None,
                 coord_vec: vec![0.0; dims],
-                half_length: 0.5,
+                half_length: 0.5 * THETA,
                 add_queue: None,
                 com:
                 Some(
@@ -531,7 +545,7 @@ mod tests {
 
         for dims in 1..9 {
             let body1 = Body {
-                pos_vec: vec![1.0; dims],
+                pos_vec: vec![10.0; dims],
                 vel_vec: vec![0.0; dims],
                 mass: 1.0,
             };

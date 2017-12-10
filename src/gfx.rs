@@ -157,6 +157,7 @@ impl Frame {
         self.tree.update();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.deep_update_vel();
+        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.deep_update_pos();
         // self.tree.add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
         let add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();

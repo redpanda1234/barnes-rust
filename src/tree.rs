@@ -226,7 +226,7 @@ impl Region {
                         // println!("whee!");
                         // for some reason, this case is never
                         // reached. (or is it?)
-                        println!("injecting bodies into child regions");
+                        //println!("injecting bodies into child regions");
                         // recurse on false because we don't need to
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
