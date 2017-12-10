@@ -123,10 +123,12 @@ impl Body {
         // println!("called get_total_acc");
         let mut acc = vec![0.0; DIMS];
         let mut match_me = node_arc.try_lock().unwrap().reg_vec.clone();
+        // let print_me = match_me.clone();
+        // println!("{:#?}", print_me.clone());
         match match_me {
             //if this is a leaf, find the acceleration between us and its com
             None => {
-                drop(match_me);
+                // drop(match_me);
                 // println!("try_locked node_arc and entered the match btry_lock. Matched on None");
                 match node_arc.try_lock().unwrap().com {
                     None => {
@@ -308,10 +310,11 @@ impl Region {
                 let mut num = vec![0.0; DIMS as usize];
                 let mut den = 0.0;
 
-                for child in reg_vec.iter_mut() {
-                    match child.try_lock().unwrap().com.clone() {
+                for child in reg_vec.iter() {
+                    let mut match_me = child.try_lock().unwrap().com.clone();
+                    match match_me {
                         None => continue,
-                        Some(ref com_arc) => {
+                        Some(com_arc) => {
                             let mut com = com_arc.try_lock().unwrap();
                             den += com.mass;
                             //TODO: we shouldn't have to be cloning pos_vec

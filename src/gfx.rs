@@ -35,7 +35,7 @@ impl Region {
                     pos_vec[i] *= 270.0 / MAX_LEN;
                     pos_vec[i] += 500.0;
                 }
-                println!("original: {:?}, normalized: {:?}\n\n\n", original, pos_vec);
+                // println!("original: {:?}, normalized: {:?}\n\n\n", original, pos_vec);
                 pos_vec
             }
 
@@ -56,7 +56,7 @@ impl Region {
                     pos_vec[i] += 500.0;
                     pos_vec[i] -= self.half_length;
                 }
-                println!("original: {:?}, normalized: {:?}\n\n\n", original, pos_vec);
+                // println!("original: {:?}, normalized: {:?}\n\n\n", original, pos_vec);
                 pos_vec
             }
 
@@ -88,7 +88,7 @@ impl Frame {
                 });
                 self.gl.draw(args.viewport(), |c, gl| {
                     let coords = [500.0, 500.0];
-                    let square = rectangle::square(0.0, 0.0, 4.0);
+                    let square = rectangle::square(0.0, 0.0, 2.0);
                     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                     rectangle(RED, square, transform, gl);
                 });
