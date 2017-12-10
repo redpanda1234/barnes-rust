@@ -335,7 +335,12 @@ impl Region {
 
         if split {
 
+
             if self.add_queue.clone().unwrap().len() == 1 {
+
+                //note that we can overwrite com because it
+                //would already have been added to
+                //the add queue, if it existed
 
                 self.com = self.add_queue.clone().unwrap().pop();
                 self.add_queue = None;
@@ -343,9 +348,56 @@ impl Region {
 
             } else {
 
-                self.split();
-                return self.recurse(false)
+                //if this region is very small and we don't want to subdivide it
+                //further, combine all the masses here into one
+                 if self.half_length < data::MIN_LEN {
+                    let mut pos = vec![0.0; DIMS as usize];
+                    let mut vel = vec![0.0; DIMS as usize];
+                    let mut den = 0.0;
 
+                    for mass in self.add_queue.iter() {
+                        let mut match_me = &mass.try_lock().unwrap().com;
+                        // println!("{:#?}", match_me);
+                        match match_me {
+                            &None => continue,
+                            &Some(ref com_arc) => {
+                                // drop(match_me);
+                                let mut com = com_arc.try_lock().unwrap();
+                                den += com.mass.clone();
+                                //TODO: we shouldn't have to be cloning pos_vec
+                                pos =pos
+                                    .iter()
+                                    .zip(com.pos_vec.clone())
+                                    .map(|(pi, pv)| pi + pv * com.mass)
+                                    .collect::<Vec<f64>>();
+                                vel =vel
+                                    .iter()
+                                    .zip(com.vel_vec.clone())
+                                    .map(|(pi, pv)| pi + pv * com.mass)
+                                    .collect::<Vec<f64>>();
+                            },
+                        }
+                    }
+                    //if we didn't add any masses, make sure we're not dividing by 0
+                    if den != 0.0 {
+                        pos = pos
+                            .iter()
+                            .map(|n| n / den)
+                            .collect::<Vec<f64>>();
+                        vel = vel
+                            .iter()
+                            .map(|n| n / den)
+                            .collect::<Vec<f64>>();
+                    }
+                    self.add_queue = None;
+                    self.com = Arc::new(Mutex::new(Body {
+
+                    }));
+                    return 1;
+                } else {
+                    self.split();
+                    return self.recurse(false)
+                }
             }
 
         } else {

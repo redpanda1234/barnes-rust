@@ -88,12 +88,12 @@ impl Frame {
                     clear(BLACK, gl);
                 });
 
-                // self.gl.draw(args.viewport(), |c, gl| {
-                //     let coords = [screen_offset, screen_offset];
-                //     let square = rectangle::square(0.0, 0.0, 2.0);
-                //     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
-                //     rectangle(RED, square, transform, gl);
-                // });
+                self.gl.draw(args.viewport(), |c, gl| {
+                    let coords = [screen_offset, screen_offset];
+                    let square = rectangle::square(0.0, 0.0, 2.0);
+                    let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+                    rectangle(RED, square, transform, gl);
+                });
 
                 //todo: replace this with drawing a red square at the master tree's com
                 //println!("none option passed to render; mass: {:#?}", tree.com.mass);
