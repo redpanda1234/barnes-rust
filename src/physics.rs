@@ -8,7 +8,7 @@ pub use super::tree::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 100000.0;
+const G: f64 = 10000.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {
@@ -181,7 +181,7 @@ impl Body {
                     Some(ref com_arc) => {
                         // println!("matched Some on subarm of Some");
                         if self.is_far(Arc::clone(&node_arc)) {
-                            // println!("was far");
+                             println!("was far");
                             // println!("{:#?}, {:#?}", acc.clone(), com);
                             let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
                             //println!("acceleration component: {:#?}", total_acc);
@@ -193,7 +193,7 @@ impl Body {
 
                             acc
                         } else {
-                            // println!("wasn't far");
+                             println!("wasn't far");
                             for mut child in match_me.unwrap().iter() {
                                 let total_acc = self.get_total_acc(Arc::clone(child));
                                 // println!("acceleration component: {:#?}", total_acc);

@@ -7,7 +7,7 @@ use std::thread;
 
 // TODO: use this everywhere we check dimensions
 pub const DIMS: usize = 2;
-pub const THETA: f64 = 0.5;
+pub const THETA: f64 = 0.005;
 pub const DT: f64 = 0.01;
 
 // approximate radius of the milky way
@@ -19,6 +19,7 @@ pub const DT: f64 = 0.01;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
+pub const MIN_LEN: f64 = 10;
 pub const MAX_VEL: f64 = 10.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
@@ -114,8 +115,8 @@ pub mod generate {
         // involve it in special cases outside of our loop. Note that
         // the final r_vec entry involves just .sin()'s, no .cos()'s.
 
-        vec[DIMS-2] = mag * final_theta.cos() * product;
-        vec[DIMS-1] = mag * final_theta.sin() * product;
+        vec[DIMS-2] = mag * -1.0*final_theta.cos() * product;
+        vec[DIMS-1] = mag * -1.0*final_theta.sin() * product;
 
         // return vec
         vec
@@ -138,7 +139,7 @@ pub mod generate {
         let body = Body {
             pos_vec: pos,
             vel_vec: vel,
-            mass: m
+            mass: 1000.0//m
         };
 
         Arc::new(Mutex::new(body))
