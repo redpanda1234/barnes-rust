@@ -156,10 +156,68 @@ impl Frame {
         }
     }
 
+    pub fn print_masses(&mut self, reg_option: Option<&Region>) -> String {
+        //recurse into the subregions
+        // let reg_option = self.tree.reg_vec.clone();
+        let mut output = String::new();
+        match reg_option {
+
+            None => {
+                let tree = TREE_POINTER.try_lock().unwrap().tree.clone();
+                // println!("let tree");
+                self.print_masses(Some(&tree))
+            },
+
+
+            Some(reg) => {
+                // println!("entered Some arm");
+                match reg.reg_vec.clone() {
+
+                    None => {
+                        match reg.com.clone() {
+                            None => output,
+                            Some(our_reg) => {
+                                let mass = our_reg.try_lock().unwrap().clone();
+
+                                if mass.mass > 0.0 {
+                                    output.push_str(&format!("\t{:#?}", mass.mass));
+                                    output.push_str(&format!("\t{:#?}", mass.pos_vec[0]));
+                                    output.push_str(&format!("\t{:#?}", mass.pos_vec[1]));
+                                    output.push_str(&format!("\t{:#?}", mass.vel_vec[0]));
+                                    output.push_str(&format!("\t{:#?}", mass.vel_vec[1]));
+                                }
+                                // println!("{}", output);
+                                output
+                            }
+                        }
+                    },
+
+                    Some(child_vec) => {
+
+                        for child in child_vec.iter() {
+                            //let mut clone = output.clone();
+                            output.push_str(
+                                &self.print_masses(
+                                    Some(& *child.lock().unwrap()),
+                                )
+                            );//
+                        }
+                        output
+                    }
+                }
+            }
+        }
+    }
+
     pub fn update(&mut self, args: &UpdateArgs) {
         // self.tree = TREE_POINTER.lock().unwrap().tree.clone();
         self.tree.update();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+
+        // let mut output = String::new();
+        // output =  self.print_masses(None, output);
+        // println!("{}", output);
+
         self.tree.deep_update_vel();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.deep_update_pos();
