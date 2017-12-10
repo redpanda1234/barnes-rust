@@ -25,14 +25,18 @@ impl Body {
 
     pub fn squared_dist_to(&self, mass: &Body) -> f64 {
         // println!("called squared_dist_to");
-        self.pos_vec.iter().zip(&mass.pos_vec)
+        self.pos_vec
+            .iter()
+            .zip(&mass.pos_vec)
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
 
     pub fn node_sq_dist_to(&self, node: &Region) -> f64 {
         // println!("called node_sq_dist_to");
         // println!("woooo {:#?}, {:#?}", &node.coord_vec, self.pos_vec);
-        self.pos_vec.iter().zip(&node.coord_vec)
+        self.pos_vec
+            .iter()
+            .zip(&node.coord_vec)
             .fold(0.0,(|sum,(qi, pi)| sum + (qi - pi).powi(2)))
     }
 
@@ -40,7 +44,8 @@ impl Body {
     // and some other passed Body.
     pub fn vec_rel(&self, mass: &Body) -> Vec<f64> {
         // println!("called vec_rel");
-        self.pos_vec.iter().zip(&mass.pos_vec)
+        self.pos_vec.iter()
+            .zip(&mass.pos_vec)
             .map(|(pi, mi)| mi - pi)
             .collect::<Vec<f64>>()
     }
@@ -92,7 +97,9 @@ impl Body {
             return vec![0.0; DIMS];
         }
 
-        rel.iter().map(|ri| (ri/r) * acc).collect::<Vec<f64>>()
+        rel.iter()
+            .map(|ri| (ri/r) * acc)
+            .collect::<Vec<f64>>()
     }
 
     pub fn get_classical_potential(&self, mass: &Body) -> Vec<f64> {
@@ -108,22 +115,28 @@ impl Body {
             return vec![0.0; DIMS];
         }
 
-        rel.iter().map(|ri| ri * pot/r).collect::<Vec<f64>>()
+        rel.iter()
+            .map(|ri| ri * pot/r)
+            .collect::<Vec<f64>>()
     }
 
     pub fn update_accel(&self, acc: Vec<f64>, mass_arc: Arc<Mutex<Body>>) -> Vec<f64> {
         // println!("called update_accel");
         let mass = mass_arc.try_lock().unwrap();
-        acc.iter().zip(self.get_classical_accel(&mass))
-            .map(|(acc_self, acc_other)| acc_self + acc_other).collect::<Vec<f64>>()
+        acc.iter()
+            .zip(self.get_classical_accel(&mass))
+            .map(|(acc_self, acc_other)| acc_self + acc_other)
+            .collect::<Vec<f64>>()
     }
 
     pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
         // println!("called get_total_acc");
         let mut acc = vec![0.0; DIMS];
-        let mut match_me = node_arc.try_lock().unwrap().reg_vec.clone();
-        // let print_me = match_me.clone();
-        // println!("{:#?}", print_me.clone());
+        let mut match_me =
+            node_arc
+            .try_lock()
+            .unwrap()
+            .reg_vec.clone();
         match match_me {
             //if this is a leaf, find the acceleration between us and its com
             None => {
@@ -137,9 +150,12 @@ impl Body {
                     Some(ref com_arc) => {
                         let com = com_arc.try_lock().unwrap().clone();
                         let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
-                        // println!("acceleration component: {:#?}", total_acc);
-                        acc = acc.iter().zip(total_acc
-                            .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
+                        println!("acceleration component: {:#?}", total_acc); // this is never called on singularities
+                        acc = acc.iter()
+                            .zip(total_acc.iter())
+                            .map(|(u,v)| u+v)
+                            .collect::<Vec<f64>>();
+
                         acc
                     }
                 }
@@ -160,14 +176,18 @@ impl Body {
                         if self.is_far(Arc::clone(&node_arc)) {
                             // println!("{:#?}, {:#?}", acc.clone(), com);
                             let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
-                            // println!("acceleration component: {:#?}", total_acc);
-                            acc = acc.iter().zip(total_acc
-                                                 .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
+                            println!("acceleration component: {:#?}", total_acc);
+                            // this is always 0 when stuff doesn't move, for some reason
+                            acc = acc
+                                .iter()
+                                .zip(total_acc.iter())
+                                .map(|(u,v)| u+v).collect::<Vec<f64>>();
+
                             acc
                         } else {
                             for mut child in match_me.unwrap().iter() {
                                 let total_acc = self.get_total_acc(Arc::clone(child));
-                                // println!("acceleration component: {:#?}", total_acc);
+                                println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             }
@@ -187,10 +207,15 @@ impl Body {
         // println!("old velocity component: {:#?}", self.vel_vec[0]);
         let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
         for child in tree.reg_vec.iter_mut() {
-            let child = Arc::new(Mutex::new(child[0].try_lock().unwrap().clone()));
-            self.vel_vec = self.clone().vel_vec.iter_mut().zip(
-            self.clone().get_total_acc(child))
+            let new_child = child[0].try_lock().unwrap().clone();
+            // println!("{:#?}", child);
+            let new_child = Arc::new(Mutex::new(new_child));
+            let mut vel_vec = self.vel_vec.clone();
+
+            let mut vel_vec = vel_vec.iter_mut().zip(
+                self.get_total_acc(new_child))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
+            self.vel_vec = vel_vec;
         }
 
         // println!("new velocity component: {:#?}", self.vel_vec[0]);
@@ -219,8 +244,10 @@ impl Region {
                 match self.com.clone() {
                     None => (),
                     Some(com_arc) => {
-                        let mut com = com_arc.try_lock().unwrap();
-                        com.update_vel();
+                        let mut com_clone = com_arc.try_lock().unwrap().clone();
+                        com_clone.update_vel();
+                        self.com = Some(Arc::new(Mutex::new(com_clone)));
+                        drop(com_arc);
                         //TODO: find out if it's actually necessary to re-wrap this
 
                     }
@@ -228,13 +255,12 @@ impl Region {
             },
             //if we have children, call recursively
             Some(ref mut reg_vec) => {
-                let mut temp = vec![];
-                for mut child in reg_vec {
-                    let mut child = child.try_lock().unwrap().clone();
-                    child.deep_update_vel();
-                    temp.push(Arc::new(Mutex::new(child.clone())));
+                let temp: Vec<Arc<Mutex<Region>>> = Vec::new();
+                for child in reg_vec {
+                    let mut child_clone = child.try_lock().unwrap().clone();
+                    child_clone.deep_update_vel();
+                    drop(child);
                 }
-                self.reg_vec = Some(temp);
             }
         }
     }
@@ -288,7 +314,7 @@ impl Region {
                     None => println!("superfluous (?) call to update_com.
                         change this line in physics.rs to panic! and use backtrace to see where."),
 
-                    Some(mut com) => {
+                    Some(com_arc) => {
 
                         // Double check to make sure we don't have any
                         // masses waiting to be added to the region,
@@ -301,15 +327,11 @@ impl Region {
 
                         // check to see if this region still contains com
                         // if it doesn't, remove com and push it to the global tree
-                        if self.contains(Arc::clone(&com)) {
-                            //println!("contains com");
-
-                            //I don't think this should be necessary...
-                            //self.com = Some(com);
+                        if self.contains(Arc::clone(&com_arc)) {
+                            println!("contains com");
                         } else {
                             self.com = None;
-                            //println!("body has moved outside of region");
-                            Region::push_body_global(com);
+                            Region::push_body_global(Arc::clone(&com_arc));
                         }
                     },
                 }
@@ -321,14 +343,19 @@ impl Region {
                 let mut den = 0.0;
 
                 for child in reg_vec.iter() {
-                    let mut match_me = child.try_lock().unwrap().com.clone();
+                    let mut match_me = &child.try_lock().unwrap().com;
+                    // println!("{:#?}", match_me);
                     match match_me {
-                        None => continue,
-                        Some(com_arc) => {
+                        &None => continue,
+                        &Some(ref com_arc) => {
+                            // drop(match_me);
                             let mut com = com_arc.try_lock().unwrap();
-                            den += com.mass;
+                            den += com.mass.clone();
                             //TODO: we shouldn't have to be cloning pos_vec
-                            num = num.iter().zip(com.pos_vec.clone()).map(|(pi, pv)| pi + pv * com.mass)
+                            num = num
+                                .iter()
+                                .zip(com.pos_vec.clone())
+                                .map(|(pi, pv)| pi + pv * com.mass)
                                 .collect::<Vec<f64>>();
                         },
                     }
@@ -336,7 +363,10 @@ impl Region {
                 //if we didn't add any masses, make sure we're not dividing by 0
                 if den != 0.0 {
                     // println!("fix divide by 0");
-                    num = num.iter().map(|n| n / den).collect::<Vec<f64>>();
+                    num = num
+                        .iter()
+                        .map(|n| n / den)
+                        .collect::<Vec<f64>>();
                     // println!("new num is {:#?}", num);
                 } else {
                     num = self.coord_vec.clone()

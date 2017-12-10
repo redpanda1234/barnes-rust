@@ -67,7 +67,7 @@ fn main() {
 
     let num_bodies = 1000;
 
-    let num_bodies = 200;
+    let num_bodies = 100;
 
     let root = generate::gt_all_ranges(num_bodies);
 
