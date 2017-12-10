@@ -18,7 +18,7 @@ pub const DT: f64 = 10.0;
 // pub const MAX_MASS: f64 =
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
-pub const MAX_LEN: f64 = 1_00.0;
+pub const MAX_LEN: f64 = 1_000.0;
 pub const MAX_VEL: f64 = 0.01;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;

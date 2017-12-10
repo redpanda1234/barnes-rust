@@ -54,7 +54,7 @@ impl Region {
         for i in 0..DIMS {
             coord_vec[i] *= screen_scale / MAX_LEN;
             coord_vec[i] += screen_offset;
-            coord_vec[i] -= self.half_length;
+            coord_vec[i] -= self.half_length * (screen_scale / MAX_LEN);
 
         }
 
@@ -74,7 +74,7 @@ impl Frame {
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
-        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.5];
+        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.05];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 
         //main should pass render() a None option
@@ -125,7 +125,7 @@ impl Frame {
 
                                 let coords = reg.normalize_region_coords();
 
-                                let square = rectangle::square( -1.0 * reg.half_length, -1.0 * reg.half_length, 2.0*reg.half_length);
+                                let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale / MAX_LEN));
                                 let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                                 rectangle(GREEN, square, transform, gl);
                             }
@@ -137,7 +137,7 @@ impl Frame {
                         self.gl.draw(args.viewport(), |c, gl| {
                             //draw red squares
                             let coords = reg.clone().normalize_region_coords();
-                            let square = rectangle::square( -1.0 * reg.half_length, -1.0 * reg.half_length, 2.0*reg.half_length);
+                            let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale) / MAX_LEN);
                             let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                             rectangle(BLUE, square, transform, gl);
                         });
