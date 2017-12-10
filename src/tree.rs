@@ -206,8 +206,8 @@ impl Region {
                         // println!("updating children");
                         let mut return_me = 0;
                         // TODO: before and after check here.
-                        for reg_arc in reg_vec.iter_mut() {
-                            let reg = reg_arc.lock().unwrap();
+                        for reg_arc in reg_vec.iter() {
+                            let mut reg = reg_arc.lock().unwrap();
                             return_me += reg.update();
                         };
 
@@ -348,7 +348,7 @@ impl Region {
                 Some(mut reg_vec) => {
 
                     for reg_arc in reg_vec.iter_mut() {
-                        let region = reg_arc.lock().unwrap();
+                        let mut region = reg_arc.lock().unwrap();
                         // println!("updating child regions");
                         remove += region.update();
                     }
@@ -401,9 +401,9 @@ impl Region {
 
                     let m_arc = queue.pop().unwrap();
 
-                    'inner: for reg_arc in reg_vec.iter_mut() {
-                        let region = reg_arc.lock().unwrap();
-                        if region.contains(m_arc) {
+                    'inner: for reg_arc in reg_vec.iter() {
+                        let mut region = reg_arc.lock().unwrap();
+                        if region.contains(Arc::clone(&m_arc)) {
                             // define reg_queue here for the Some arm
                             // of our match
                             let mut reg_queue = region.add_queue.clone();

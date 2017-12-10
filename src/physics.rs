@@ -121,8 +121,8 @@ impl Body {
                 match node_arc.lock().unwrap().com {
                     None => //{println!("node has no com"); acc},
                         acc,
-                    Some(com_arc) => {
-                        let total_acc = self.update_accel(acc.clone(), com_arc);
+                    Some(ref com_arc) => {
+                        let total_acc = self.update_accel(acc.clone(), Arc::clone(&com_arc));
                         // println!("acceleration component: {:#?}", total_acc);
                         acc = acc.iter().zip(total_acc
                             .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
@@ -137,19 +137,19 @@ impl Body {
                     None => {
                         // println!("updating child com");
                         node_arc.lock().unwrap().update_com();
-                        self.get_total_acc(node_arc)
+                        self.get_total_acc(Arc::clone(&node_arc))
                     }
-                    Some(com) => {
-                        if self.is_far(node_arc) {
+                    Some(ref com_arc) => {
+                        if self.is_far(Arc::clone(&node_arc)) {
                             // println!("{:#?}, {:#?}", acc.clone(), com);
-                            let total_acc = self.update_accel(acc.clone(), com);
+                            let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
                             // println!("acceleration component: {:#?}", total_acc);
                             acc = acc.iter().zip(total_acc
                                                  .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
                             acc
                         } else {
                             for mut child in reg_vec.iter() {
-                                let total_acc = self.get_total_acc(*child);
+                                let total_acc = self.get_total_acc(Arc::clone(child));
                                 // println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
@@ -171,7 +171,7 @@ impl Body {
         let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
         for child in tree.reg_vec.iter_mut() {
             self.vel_vec = self.clone().vel_vec.iter_mut().zip(
-            self.clone().get_total_acc(child[0]))
+            self.clone().get_total_acc(Arc::clone(&child[0])))
             .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
         }
 
@@ -292,7 +292,7 @@ impl Region {
                 for child in reg_vec.iter_mut() {
                     match child.lock().unwrap().com {
                         None => continue,
-                        Some(com_arc) => {
+                        Some(ref com_arc) => {
                             let mut com = com_arc.lock().unwrap();
                             den += com.mass;
                             //TODO: we shouldn't have to be cloning pos_vec

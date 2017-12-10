@@ -27,7 +27,7 @@ impl Region {
 
             None => vec![0.0; DIMS],
             Some(com) => {
-                let pos_vec = com.lock().unwrap().pos_vec.clone();
+                let mut pos_vec = com.lock().unwrap().pos_vec.clone();
                 for i in 0..DIMS {
                     pos_vec[i] *= 270.0 / MAX_LEN;
                     pos_vec[i] += 400.0;
