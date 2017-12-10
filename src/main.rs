@@ -65,7 +65,7 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    //let num_bodies = 1000;
+    let num_bodies = 1000;
 
 
     let root = generate::gt_all_ranges(num_bodies);
