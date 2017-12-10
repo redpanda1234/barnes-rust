@@ -6,7 +6,7 @@ use std::sync::{Mutex, Arc};
 use std::thread;
 
 // TODO: use this everywhere we check dimensions
-pub const DIMS: usize = 2;
+pub const DIMS: usize = 4;
 pub const THETA: f64 = 0.5;
 pub const DT: f64 = 0.02;
 

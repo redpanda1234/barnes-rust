@@ -545,7 +545,7 @@ mod tests {
 
         for dims in 1..9 {
             let body1 = Body {
-                pos_vec: vec![10.0; dims],
+                pos_vec: vec![1.0; dims],
                 vel_vec: vec![0.0; dims],
                 mass: 1.0,
             };
