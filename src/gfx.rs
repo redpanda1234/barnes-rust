@@ -21,7 +21,11 @@ pub struct Frame {
 
 pub use data::{ MAX_LEN, DIMS };
 
+pub const screen_scale: f64 = 270.0;
+pub const screen_offset: f64 = 500.0;
+
 impl Region {
+
 
     fn normalize_coords(&self) -> Vec<f64> {
 
@@ -32,8 +36,8 @@ impl Region {
                 let mut pos_vec = com.lock().unwrap().pos_vec.clone();
                 let original = pos_vec.clone();
                 for i in 0..DIMS {
-                    pos_vec[i] *= 270.0 / MAX_LEN;
-                    pos_vec[i] += 500.0;
+                    pos_vec[i] *= screen_scale / MAX_LEN;
+                    pos_vec[i] += screen_offset;
                 }
                 // println!("original: {:?}, normalized: {:?}\n\n\n", original, pos_vec);
                 pos_vec
@@ -43,36 +47,17 @@ impl Region {
 
     }
 
-    fn normalize_box_coords(&self) -> Vec<f64> {
+    fn normalize_region_coords(&self) -> Vec<f64> {
 
-        match self.com.clone() {
+        let mut coord_vec = self.coord_vec.clone();
 
-            None => vec![540.0; DIMS],
-            Some(com) => {
-                let mut pos_vec = com.lock().unwrap().pos_vec.clone();
-                let original = pos_vec.clone();
-                for i in 0..DIMS {
-                    pos_vec[i] *= 270.0 / MAX_LEN;
-                    pos_vec[i] += 500.0;
-                    pos_vec[i] -= self.half_length;
-                }
-                // println!("original: {:?}, normalized: {:?}\n\n\n", original, pos_vec);
-                pos_vec
-            }
+        for i in 0..DIMS {
+            coord_vec[i] *= screen_scale / MAX_LEN;
+            coord_vec[i] += screen_offset;
 
         }
 
-    }
-
-    fn normalize_region_coords(&mut self) -> Vec<f64> {
-
-
-        for i in 0..self.coord_vec.len() {
-            self.coord_vec[i] *= 270.0 / MAX_LEN;
-            self.coord_vec[i] += 400.0;
-        }
-        self.coord_vec.clone()
-
+        coord_vec
 
     }
 
@@ -126,7 +111,7 @@ impl Frame {
                                     .rot_rad(0.0);
                                 rectangle(WHITE, square, transform, gl);
 
-                                let coords = reg.clone().normalize_box_coords();
+                                let coords = reg.normalize_region_coords();
                                 let square = rectangle::square(0.0, 0.0, 2.0 * reg.half_length);
                                 let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                                 rectangle(GREEN, square, transform, gl);
