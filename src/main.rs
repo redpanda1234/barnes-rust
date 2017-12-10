@@ -64,7 +64,7 @@ fn main() {
     // generation function the rng object we've just seeded. Seeding
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
-    let num_bodies = 100;
+    let num_bodies = 1000;
 
     generate::gt_all_ranges(num_bodies);
 
