@@ -65,7 +65,7 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    let num_bodies = 100;
+    let num_bodies = 200;
 
 
     let root = generate::gt_all_ranges(num_bodies);
@@ -75,10 +75,10 @@ fn main() {
         tree: TREE_POINTER.lock().unwrap().tree.clone()
     };
 
-    println!("done generating");
-    for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
-        println!("splitting multiplier: {:#?}", vec);
-    }
+    // println!("done generating");
+    // for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
+    //     println!("splitting multiplier: {:#?}", vec);
+    // }
 
     let mut events = Events::new(EventSettings::new());
 
@@ -86,9 +86,11 @@ fn main() {
 
         // make sure the tree is set up correctly before
         // trying to render or update anything
-        let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
-        tree.update();
-        TREE_POINTER.lock().unwrap().tree = tree;
+        // but actually let's not do this because what
+        // really matters now is frame.tree
+        //let mut tree = TREE_POINTER.lock().unwrap().tree.clone();
+        //tree.update();
+        //TREE_POINTER.lock().unwrap().tree = tree;
 
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
@@ -99,9 +101,9 @@ fn main() {
         if let Some(u) = e.update_args() {
             // let frame.tree = TREE_POINTER.lock().unwrap().tree.clone();
             // TREE_POINTER.lock().unwrap().tree = frame.tree;
-            println!("calling update from main");
+            // println!("calling update from main");
             frame.update(&u);
-            println!("called update from main");
+            // println!("called update from main");
         }
 
     }

@@ -21,8 +21,8 @@ pub struct Frame {
 
 pub use data::{ MAX_LEN, DIMS };
 
-pub const screen_scale: f64 = 270.0;
-pub const screen_offset: f64 = 500.0;
+pub const screen_scale: f64 = 350.0;
+pub const screen_offset: f64 = 400.0;
 
 impl Region {
 
@@ -73,7 +73,7 @@ impl Frame {
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
-        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.05];
+        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.1];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 
         //main should pass render() a None option
@@ -88,12 +88,12 @@ impl Frame {
                     clear(BLACK, gl);
                 });
 
-                self.gl.draw(args.viewport(), |c, gl| {
-                    let coords = [500.0, 500.0];
-                    let square = rectangle::square(0.0, 0.0, 2.0);
-                    let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
-                    rectangle(RED, square, transform, gl);
-                });
+                // self.gl.draw(args.viewport(), |c, gl| {
+                //     let coords = [screen_offset, screen_offset];
+                //     let square = rectangle::square(0.0, 0.0, 4.0);
+                //     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+                //     rectangle(RED, square, transform, gl);
+                // });
 
                 //todo: replace this with drawing a red square at the master tree's com
                 //println!("none option passed to render; mass: {:#?}", tree.com.mass);
@@ -122,16 +122,20 @@ impl Frame {
 
                                 rectangle(WHITE, square, transform, gl);
 
-                                let coords = reg.normalize_region_coords();
+                                // Optional drawing of green squares representing regions with children
 
-                                let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale / MAX_LEN));
-                                let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
-                                rectangle(GREEN, square, transform, gl);
+                                // let coords = reg.normalize_region_coords();
+
+                                // let square = rectangle::square(0.0, 0.0, 2.0*reg.half_length * (screen_scale / MAX_LEN));
+                                // let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
+                                // rectangle(GREEN, square, transform, gl);
                             }
                         });
                     },
 
                     Some(child_vec) => {
+                        //
+                        // Optional drawing of blue squares representing current regions
                         //
                         // self.gl.draw(args.viewport(), |c, gl| {
                         //     //draw red squares
@@ -153,10 +157,13 @@ impl Frame {
     }
 
     pub fn update(&mut self, args: &UpdateArgs) {
-        self.tree.deep_update_vel();
-        self.tree.deep_update_pos();
-        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        // self.tree = TREE_POINTER.lock().unwrap().tree.clone();
         self.tree.update();
+        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        self.tree.deep_update_vel();
+        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        self.tree.deep_update_pos();
+        self.tree.add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
     }
 }

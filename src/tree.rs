@@ -102,6 +102,7 @@ impl Region {
 
 
     pub fn contains(&self, body_arc: Arc<Mutex<Body>>) -> bool {
+        //println!("called contains");
         let body = &body_arc.lock().unwrap();
         // Iterate through all pairs of the i components of our
         // position coordinate
@@ -210,7 +211,7 @@ impl Region {
                             return_me += reg.update();
                         }
                         if return_me == 0 {
-                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
+                            // println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
                             self.reg_vec = None;
                         }
                         self.reg_vec = Some(reg_vec);
@@ -222,15 +223,17 @@ impl Region {
                     // always go into leaf nodes
                     // right????
                     &Some(_) => {
+                        // println!("whee!");
                         // for some reason, this case is never
                         // reached. (or is it?)
-                        println!("injecting bodies into child regions");
+                        //println!("injecting bodies into child regions");
+
                         // recurse on false because we don't need to
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
                         if result == 0 {
-                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
-                            self.reg_vec = None
+                            // println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
+                            // self.reg_vec = None
                         }
                         result
                     },
@@ -329,10 +332,16 @@ impl Region {
         // println!("\n\n\nrecursing with {} on self: \n{:#?}", split, self);
         // we call recurse(true) only when we need to split the
         // region, so first call split then recurse on false.
+        //println!("called recurse");
 
         if split {
 
+
             if self.add_queue.clone().unwrap().len() == 1 {
+
+                //note that we can overwrite com because it
+                //would already have been added to
+                //the add queue, if it existed
 
                 self.com = self.add_queue.clone().unwrap().pop();
                 self.add_queue = None;
@@ -340,9 +349,53 @@ impl Region {
 
             } else {
 
-                self.split();
-                return self.recurse(false)
+                //if this region is very small and we don't want to subdivide it
+                //further, combine all the masses here into one
+                 if self.half_length < MIN_LEN {
+                    let mut pos = vec![0.0; DIMS as usize];
+                    let mut vel = vec![0.0; DIMS as usize];
+                    let mut den = 0.0;
 
+                    for mass in self.add_queue.clone().unwrap() {
+                        // drop(match_me);
+                        let mut com = mass.try_lock().unwrap();
+                        den += com.mass.clone();
+                        //TODO: we shouldn't have to be cloning pos_vec
+                        pos =pos
+                            .iter()
+                            .zip(com.pos_vec.clone())
+                            .map(|(pi, pv)| pi + pv * com.mass)
+                            .collect::<Vec<f64>>();
+                        vel =vel
+                            .iter()
+                            .zip(com.vel_vec.clone())
+                            .map(|(pi, pv)| pi + pv * com.mass)
+                            .collect::<Vec<f64>>();
+
+
+                    }
+                    //if we didn't add any masses, make sure we're not dividing by 0
+                    if den != 0.0 {
+                        pos = pos
+                            .iter()
+                            .map(|n| n / den)
+                            .collect::<Vec<f64>>();
+                        vel = vel
+                            .iter()
+                            .map(|n| n / den)
+                            .collect::<Vec<f64>>();
+                    }
+                    self.add_queue = None;
+                    self.com = Some(Arc::new(Mutex::new(Body {
+                        pos_vec: pos,
+                        vel_vec: vel,
+                        mass: den
+                    })));
+                    return 1;
+                } else {
+                    self.split();
+                    return self.recurse(false)
+                }
             }
 
         } else {
@@ -404,8 +457,7 @@ impl Region {
                 // should only be one thing, else we'd have split in
                 // the self.recurse() call)
                 self.com = queue.pop();
-                // never triggered because handeled in recurse. FIXME
-                // panic!("aaaa! why isn't this case ever triggered???");
+                // never triggered because handeled in recurse
                 // println!("None case com is \n{:#?}", self.com);
                 assert_eq!(queue.len(), 0);
             },
@@ -450,24 +502,31 @@ impl Region {
         let mut add_queue = tree.add_queue.clone();
 
         //if the added mass is outside of the tree region, don't add it
+        // println!("about to call contains");
         if(!tree.contains(Arc::clone(&body_arc))) {
-            println!("\n\nDeleted mass\n\n");
+            // panic!("wwaaaa");
+            // println!("\n\nDeleted mass: {:#?}\n\n", body_arc);
             return;
-        }
+        } else {
+            // panic!("panci");
+            // println!("didn't delete mass\n\n\n\n\n\n\n\n\n");
+            //if the add queue doesn't already exist, create it
+            match add_queue {
 
-        //if the add queue doesn't already exist, create it
-        match add_queue {
-            None => {
-                let mut queue = Vec::new();
-                queue.push(body_arc);
-                add_queue = Some(queue);
-            },
-            Some(mut queue) => {
-                queue.push(body_arc);
-                add_queue = Some(queue);
-            }
-        };
-        TREE_POINTER.lock().unwrap().tree.add_queue = add_queue;
+                None => {
+                    let mut queue = Vec::new();
+                    queue.push(body_arc);
+                    TREE_POINTER.lock().unwrap().tree.add_queue = Some(queue);
+                },
+
+                Some(mut queue) => {
+                    queue.push(body_arc);
+                    TREE_POINTER.lock().unwrap().tree.add_queue = Some(queue);
+                }
+            };
+            //println!("TREE add queue: {:#?}", TREE_POINTER.lock().unwrap().tree.add_queue.clone());
+
+        }
     }
 
     pub fn list_masses(&self) -> Vec<Body> {
