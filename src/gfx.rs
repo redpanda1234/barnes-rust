@@ -144,6 +144,24 @@ impl Frame {
                         //     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                         //     rectangle(BLUE, square, transform, gl);
                         // });
+                        self.gl.draw(args.viewport(), |c, gl| {
+                        let coords = reg.clone().normalize_coords();
+
+                            if coords[0] == -1.0 {
+
+                                return
+
+                            } else {
+                                let square = rectangle::square(0.0, 0.0, MIN_LEN);
+
+                                let transform =
+                                    c.transform
+                                    .trans(coords[0], coords[1])
+                                    .rot_rad(0.0);
+
+                                rectangle(RED, square, transform, gl);
+                            }
+                        });
                         for child in child_vec.iter() {
                             self.render(
                                 Some(& *child.lock().unwrap()),
