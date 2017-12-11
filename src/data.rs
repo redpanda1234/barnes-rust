@@ -18,9 +18,10 @@ pub const DT: f64 = 0.000007;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
-pub const MIN_LEN: f64 = 0.5;
-pub const MAX_VEL: f64 = 1_000.0;
+pub const MIN_LEN: f64 = 5.0;
+pub const MAX_VEL: f64 = 1_00.0;
 pub const MAX_MASS: f64 = 1_000.0;
+
 pub static mut NUM_THREADS: i64 = 20;
 
 pub struct TreeWrapper {
@@ -176,7 +177,7 @@ pub mod generate {
             Body {
                 pos_vec: vec![-50.0; DIMS],
                 vel_vec: vec![0.0; DIMS],
-                mass: 1.0//m
+                mass: 10000.0//m
             }
         )));
     }
