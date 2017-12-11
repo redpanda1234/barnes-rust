@@ -33,6 +33,8 @@
 % For cancelling frac stuff
 \usepackage{cancel}
 
+\usepackage{titlesec}
+
 % ----------------------- Hacky Control Seqs ------------------------ %
 \let\oldref\ref
 \renewcommand{\ref}[1]{(\oldref{#1})}
@@ -60,6 +62,21 @@
 \newcommand{\rmin}{r_{\rm min}}
 
 \renewcommand{\vec}[1]{\mathbf{#1}}
+
+% Finally, enumerate formatting
+\setenumerate[0]{label=(\alph*)}
+
+% And shorten the vspace after section headers. How to read?
+%
+%                {12pt plus 4pt minus 2pt}
+%
+%  - 12pt is what we would like the spacing to be
+%  - plus 4pt means that TeX can stretch it by at most 4pt
+%  - minus 2pt means that TeX can shrink it by at most 2pt
+
+\titlespacing\section{0pt}{
+  12pt plus 4pt minus 2pt}{
+  0pt plus 2pt minus 2pt}
 
 % ----------------------- Header formatting ------------------------- %
 \pagestyle{fancy}
@@ -92,7 +109,8 @@
     these masses’ interactions efficiently so that we can see how the
     system evolves based on various initial configurations.
 
-    In our simulation, we
+    \subsection{The Algorithm}
+
 
 
 % ------------------------------------------------------------------ %
