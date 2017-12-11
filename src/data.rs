@@ -7,7 +7,7 @@ use std::thread;
 
 pub const DIMS: usize = 2;
 pub const THETA: f64 = 0.5;
-pub const DT: f64 = 0.000007;
+pub const DT: f64 = 0.0007;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
@@ -177,6 +177,25 @@ pub mod generate {
             Body {
                 pos_vec: vec![-50.0; DIMS],
                 vel_vec: vec![0.0; DIMS],
+                mass: 10000.0//m
+            }
+        )));
+    }
+
+    pub fn gt_two_body() {
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+            Body {
+                pos_vec: vec![-100.0, 0.0],
+                vel_vec: vec![0.0, 1000.0],
+                mass: 10000.0//m
+            }
+        )));
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+            Body {
+                pos_vec: vec![100.0, 0.0],
+                vel_vec: vec![0.0, -1000.0],
                 mass: 10000.0//m
             }
         )));

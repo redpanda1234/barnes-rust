@@ -45,6 +45,8 @@ use std::io::prelude::*;
 
 fn main() {
     let mut file = File::create("output.txt").unwrap();
+    //write the parameters being used to the file
+    file.write_fmt(format_args!("G: {}, DT: {}\n", physics::G, DT));
 
 
     // Change this to OpenGL::V2_1 if not working.
@@ -70,9 +72,10 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    let num_bodies = 5000;
+    let num_bodies = 500;
 
-    let root = generate::gt_all_ranges(num_bodies);
+    //let root = generate::gt_all_ranges(num_bodies);
+    generate::gt_two_body();
 
     let mut frame = Frame {
         gl: GlGraphics::new(opengl),
@@ -101,8 +104,8 @@ fn main() {
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
             frame.render(None, &r);
-            // let mut output = frame.print_masses(None);
-            // file.write_fmt(format_args!("{}", output));
+            let mut output = frame.print_masses(None);
+            file.write_fmt(format_args!("{}", output));
             // println!("called render from main");
         }
 
