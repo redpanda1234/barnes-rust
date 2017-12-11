@@ -9,7 +9,7 @@ pub use super::data::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 500.0;
+const G: f64 = 500000.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {
@@ -146,7 +146,7 @@ impl Body {
     }
 
     pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
-        println!("called get_total_acc");
+        //println!("called get_total_acc");
         let mut acc = vec![0.0; DIMS];
         let mut match_me =
             node_arc
@@ -244,12 +244,12 @@ impl Body {
         //     self.vel_vec = vel_vec;
         // }
 
-        println!("\n\ntrying to update acceleration...");
+        //println!("\n\ntrying to update acceleration...");
 
         self.vel_vec = tree.reg_vec.clone().unwrap().iter().fold(
                 self.vel_vec.clone(), |vel, child| vel.iter().zip(
                     self.get_total_acc(child.clone())
-                    ).map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>()
+                    ).map(|(vi, ai)| vi + ai * DT).collect::<Vec<f64>>()
         )
 
         // println!("new velocity component: {:#?}", self.vel_vec[0]);
