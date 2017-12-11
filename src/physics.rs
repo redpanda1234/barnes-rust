@@ -164,7 +164,8 @@ impl Body {
                         // println!("matched some on subarm of None");
                         // let com = com_arc.try_lock().unwrap().clone();
                         // let total_acc =
-                        self.update_accel(acc, com_arc)
+                        let mut acc = self.update_accel(acc, com_arc);
+                        acc
 
                         // acc = acc.iter()
                         //     .zip(total_acc.iter())
@@ -185,7 +186,12 @@ impl Body {
 
                     None => {
                         node_arc.try_lock().unwrap().update_com();
-                        self.get_total_acc(Arc::clone(&node_arc))
+                        let total_acc = self.get_total_acc(Arc::clone(&node_arc));
+                        acc = acc
+                            .iter()
+                            .zip(total_acc.iter())
+                            .map(|(u,v)| u+v).collect::<Vec<f64>>();
+                        acc
                     }
 
                     Some(ref com_arc) => {
