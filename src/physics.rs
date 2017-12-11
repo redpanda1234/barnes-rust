@@ -170,12 +170,12 @@ impl Body {
                         let com = com_arc.try_lock().unwrap().clone();
                         let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
                         //println!("acceleration component: {:#?}", total_acc); // this is never called on singularities
-                        acc = acc.iter()
-                            .zip(total_acc.iter())
-                            .map(|(u,v)| u+v)
-                            .collect::<Vec<f64>>();
+                        // acc = acc.iter()
+                        //     .zip(total_acc.iter())
+                        //     .map(|(u,v)| u+v)
+                        //     .collect::<Vec<f64>>();
 
-                        acc
+                        total_acc
                     }
                 }
             }
@@ -188,6 +188,7 @@ impl Body {
                 match match_me_too {
 
                     None => {
+                        //we really shouldn't get here
                         node_arc.try_lock().unwrap().update_com();
                         self.get_total_acc(Arc::clone(&node_arc))
                     }
@@ -195,16 +196,17 @@ impl Body {
                     Some(ref com_arc) => {
                         // println!("matched Some on subarm of Some");
                         if self.is_far(Arc::clone(&node_arc)) {
-                            //println!("was far");
-                            // println!("{:#?}, {:#?}", acc.clone(), com);
-                            let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
+                            println!("was far");
+                            let total_acc = self.update_accel(vec![0.0; DIMS], Arc::clone(com_arc));
                             //println!("acceleration component: {:#?}", total_acc);
                             // this is always 0 when stuff doesn't move, for some reason
                             acc = acc
                                 .iter()
                                 .zip(total_acc.iter())
                                 .map(|(u,v)| u+v).collect::<Vec<f64>>();
-
+                            if com_arc.try_lock().unwrap().clone().mass > 0.0 {
+                            println!("{:#?}, {:#?}", acc, com_arc.try_lock().unwrap().clone());
+                            }
                             acc
                         } else {
                             //println!("wasn't far from: {:#?}", com_arc.try_lock().unwrap().clone());
@@ -299,7 +301,7 @@ impl Region {
         }
     }
 
-    // Recursively update the postions of masses
+    // Recursively update the positions of masses
     pub fn deep_update_pos(&mut self) {
         // println!("deep updating pos");
         match self.reg_vec.clone() {
@@ -394,7 +396,7 @@ impl Region {
                         &Some(ref com_arc) => {
                             // drop(match_me);
                             let mut com = com_arc.try_lock().unwrap();
-                            den += com.mass.clone();
+                            den += com.mass;
                             //TODO: we shouldn't have to be cloning pos_vec
                             num = num
                                 .iter()
