@@ -22,6 +22,17 @@ pub const MIN_LEN: f64 = 5.0;
 pub const MAX_VEL: f64 = 1_00.0;
 pub const MAX_MASS: f64 = 1_000.0;
 
+pub const GAMMA_SHAPE: f64 = 200.0; // these must all be positive
+pub const GAMMA_SCALE: f64 = 500.0;
+pub const GAMMA_SHAPE_TF: f64 = 200.0;
+pub const GAMMA_SCALE_TF: f64 = 600.0;
+
+pub const NORMAL_MEAN: f64 = 0.5 * MAX_LEN;
+pub const NORMAL_STD_DEV: f64 = 0.5 * NORMAL_MEAN;
+
+pub const NORMAL_MEAN_TF: f64 = 2.0 * NORMAL_MEAN;
+pub const NORMAL_STD_DEV_TF: f64 = NORMAL_STD_DEV;
+
 pub static mut NUM_THREADS: i64 = 20;
 
 pub struct TreeWrapper {
@@ -180,6 +191,78 @@ pub mod generate {
                 mass: 10000.0//m
             }
         )));
+    }
+
+    pub fn gt_all_gamma(num_bodies: usize) {
+        use data::rand::distributions::*;
+        // let mut seeder = get_seeder_rng();
+
+        let m_gen = Gamma::new(GAMMA_SHAPE, GAMMA_SCALE);
+        let p_mag_gen = Gamma::new(GAMMA_SHAPE, GAMMA_SCALE);
+        let v_mag_gen = Gamma::new(GAMMA_SHAPE, GAMMA_SCALE);
+        let t_gen = Gamma::new(GAMMA_SHAPE, GAMMA_SCALE);
+        let t_f_gen = &Gamma::new(GAMMA_SHAPE_TF, GAMMA_SCALE_TF);
+
+        let mut rng = rand::StdRng::new().unwrap();
+
+        for _ in 0..num_bodies {
+
+            Region::push_body_global(
+                gb_from_mags(
+                    t_f_gen.ind_sample(&mut rng),
+                    t_f_gen.ind_sample(&mut rng),
+                    p_mag_gen.ind_sample(&mut rng),
+                    v_mag_gen.ind_sample(&mut rng),
+                    m_gen.ind_sample(&mut rng),
+                    t_gen
+                )
+            )
+        }
+
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+            Body {
+                pos_vec: vec![-50.0; DIMS],
+                vel_vec: vec![0.0; DIMS],
+                mass: 10000.0//m
+            }
+        )));
+    }
+
+    pub fn gt_all_normal(num_bodies: usize) {
+        use data::rand::distributions::*;
+        // let mut seeder = get_seeder_rng();
+
+        let m_gen = Normal::new(NORMAL_MEAN, NORMAL_STD_DEV);
+        let p_mag_gen = Normal::new(NORMAL_MEAN, NORMAL_STD_DEV);
+        let v_mag_gen = Normal::new(NORMAL_MEAN, NORMAL_STD_DEV);
+        let t_gen = Normal::new(NORMAL_MEAN, NORMAL_STD_DEV);
+        let t_f_gen = Normal::new(NORMAL_MEAN_TF, NORMAL_STD_DEV_TF);
+
+        let mut rng = rand::StdRng::new().unwrap();
+
+        for _ in 0..num_bodies {
+
+            Region::push_body_global(
+                gb_from_mags(
+                    t_f_gen.ind_sample(&mut rng),
+                    t_f_gen.ind_sample(&mut rng),
+                    p_mag_gen.ind_sample(&mut rng),
+                    v_mag_gen.ind_sample(&mut rng),
+                    m_gen.ind_sample(&mut rng),
+                    t_gen
+                )
+            )
+        }
+
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+                Body {
+                    pos_vec: vec![-50.0; DIMS],
+                    vel_vec: vec![0.0; DIMS],
+                    mass: 10000.0//m
+                }
+            )));
     }
 
     // fn push_body_global(body_arc: Arc<Mutex<Body>>) {
