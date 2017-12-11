@@ -9,7 +9,7 @@ pub use super::data::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 500.0;
+const G: f64 = 5000000.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {
@@ -106,7 +106,7 @@ impl Body {
         //if the distance is small, just return 0
         //note that floats are weird, so the same mass
         //could have a nonzero distance to itself
-        if r <= MIN_LEN / 100.0 {
+        if r <= MIN_LEN {
             // println!("{:?}", r);
             return vec![0.0; DIMS];
         }
@@ -146,7 +146,7 @@ impl Body {
     }
 
     pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
-        // println!("called get_total_acc");
+        //println!("called get_total_acc");
         let mut acc = vec![0.0; DIMS];
         let mut match_me =
             node_arc
@@ -162,20 +162,20 @@ impl Body {
                     },
                     Some(com_arc) => {
                         // println!("matched some on subarm of None");
-                        // let com = com_arc.try_lock().unwrap().clone();
-                        // let total_acc =
-                        let mut acc = self.update_accel(acc, com_arc);
-                        acc
 
+                        let com = com_arc.try_lock().unwrap().clone();
+                        let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
+                        //println!("acceleration component: {:#?}", total_acc); // this is never called on singularities
                         // acc = acc.iter()
                         //     .zip(total_acc.iter())
                         //     .map(|(u,v)| u+v)
                         //     .collect::<Vec<f64>>();
 
-                        // acc
+
+                        total_acc
                     }
                 }
-            }
+            },
             //if this node has children, find the acceleration from each of them
             Some(_) => {
                 // println!("matched Some on first arm of get_totall_acc");
@@ -185,25 +185,26 @@ impl Body {
                 match match_me_too {
 
                     None => {
+                        //we really shouldn't get here
                         node_arc.try_lock().unwrap().update_com();
-                        let total_acc = self.get_total_acc(Arc::clone(&node_arc));
-                        acc = acc
-                            .iter()
-                            .zip(total_acc.iter())
-                            .map(|(u,v)| u+v).collect::<Vec<f64>>();
-                        acc
-                    }
+                        self.get_total_acc(Arc::clone(&node_arc))
+                    },
 
                     Some(ref com_arc) => {
                         // println!("matched Some on subarm of Some");
                         if self.is_far(Arc::clone(&node_arc)) {
-                            node_arc.try_lock().unwrap().update_com();
-                            let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
-                            acc = acc
-                                .iter()
-                                .zip(total_acc.iter())
-                                .map(|(u,v)| u+v).collect::<Vec<f64>>();
-                            acc
+                           // println!("was far");
+                            let total_acc = self.update_accel(vec![0.0; DIMS], Arc::clone(com_arc));
+                            //println!("acceleration component: {:#?}", total_acc);
+                            // this is always 0 when stuff doesn't move, for some reason
+                            // acc = acc
+                            //     .iter()
+                            //     .zip(total_acc.iter())
+                            //     .map(|(u,v)| u+v).collect::<Vec<f64>>();
+                            if com_arc.try_lock().unwrap().clone().mass > 0.0 {
+                                //println!("{:#?}, {:#?}", total_acc, com_arc.try_lock().unwrap().clone());
+                            }
+                            total_acc
                         } else {
                             //println!("wasn't far from: {:#?}", com_arc.try_lock().unwrap().clone());
                             for mut child in match_me.unwrap().iter() {
@@ -211,6 +212,7 @@ impl Body {
                                 // println!("acceleration component: {:#?}", total_acc);
                                 acc = acc.iter().zip(total_acc
                                         .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
+                                //println!("{:#?}: ", acc);
                             }
                             acc
                         }
@@ -238,9 +240,13 @@ impl Body {
         //     .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
         //     self.vel_vec = vel_vec;
         // }
-        self.vel_vec = tree.reg_vec.clone().unwrap().iter().fold(self.vel_vec.clone(), |vel, child| vel.iter().zip(
-                self.get_total_acc(child.clone())
-                ).map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>()
+
+        //println!("\n\ntrying to update acceleration...");
+
+        self.vel_vec = tree.reg_vec.clone().unwrap().iter().fold(
+                self.vel_vec.clone(), |vel, child| vel.iter().zip(
+                    self.get_total_acc(child.clone())
+                    ).map(|(vi, ai)| vi + ai * DT).collect::<Vec<f64>>()
         )
 
         // println!("new velocity component: {:#?}", self.vel_vec[0]);
@@ -297,7 +303,7 @@ impl Region {
         }
     }
 
-    // Recursively update the postions of masses
+    // Recursively update the positions of masses
     pub fn deep_update_pos(&mut self) {
         // println!("deep updating pos");
         match self.reg_vec.clone() {
@@ -392,7 +398,7 @@ impl Region {
                         &Some(ref com_arc) => {
                             // drop(match_me);
                             let mut com = com_arc.try_lock().unwrap();
-                            den += com.mass.clone();
+                            den += com.mass;
                             //TODO: we shouldn't have to be cloning pos_vec
                             num = num
                                 .iter()

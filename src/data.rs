@@ -7,7 +7,7 @@ use std::thread;
 
 pub const DIMS: usize = 2;
 pub const THETA: f64 = 0.5;
-pub const DT: f64 = 0.008;
+pub const DT: f64 = 0.000007;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
@@ -18,8 +18,8 @@ pub const DT: f64 = 0.008;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
-pub const MIN_LEN: f64 = 10.0;
-pub const MAX_VEL: f64 = 500.0;
+pub const MIN_LEN: f64 = 0.5;
+pub const MAX_VEL: f64 = 1_000.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
@@ -114,8 +114,8 @@ pub mod generate {
         // involve it in special cases outside of our loop. Note that
         // the final r_vec entry involves just .sin()'s, no .cos()'s.
 
-        vec[DIMS-2] = mag * -1.0*final_theta.cos() * product;
-        vec[DIMS-1] = mag * 1.0*final_theta.sin() * product;
+        vec[DIMS-2] = mag * 1.0*final_theta.sin() * product;
+        vec[DIMS-1] = mag * 1.0*final_theta.cos() * product;
 
         // return vec
         vec
@@ -138,7 +138,7 @@ pub mod generate {
         let body = Body {
             pos_vec: pos,
             vel_vec: vel,
-            mass: 1.0//m
+            mass: 100.0//m
         };
 
         Arc::new(Mutex::new(body))
@@ -150,8 +150,8 @@ pub mod generate {
         // let mut seeder = get_seeder_rng();
 
         let m_gen = Range::new(0.0, MAX_MASS);
-        let p_mag_gen = Range::new(0.0, MAX_LEN);
-        let v_mag_gen = Range::new(0.1*MAX_VEL, MAX_VEL);
+        let p_mag_gen = Range::new(0.2*MAX_LEN, 0.3*MAX_LEN);
+        let v_mag_gen = Range::new(0.2*MAX_VEL, 0.3*MAX_VEL);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
@@ -171,14 +171,14 @@ pub mod generate {
             )
         }
 
-        // Region::push_body_global(
-        //     Arc::new(Mutex::new(
-        //     Body {
-        //         pos_vec: vec![50.0; DIMS],
-        //         vel_vec: vec![0.0; DIMS],
-        //         mass: 100000.0//m
-        //     }
-        // )));
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+            Body {
+                pos_vec: vec![-50.0; DIMS],
+                vel_vec: vec![0.0; DIMS],
+                mass: 1.0//m
+            }
+        )));
     }
 
     // fn push_body_global(body_arc: Arc<Mutex<Body>>) {

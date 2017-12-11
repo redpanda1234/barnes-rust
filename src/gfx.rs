@@ -69,11 +69,11 @@ impl Frame {
     pub fn render(&mut self, reg_option: Option<&Region>, args: &RenderArgs) {
         use graphics::*;
 
-        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.1];
+        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.5];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
-        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.1];
+        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.05];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 
         //main should pass render() a None option
@@ -113,7 +113,7 @@ impl Frame {
                                 return
 
                             } else {
-                                let square = rectangle::square(0.0, 0.0, 1.0);
+                                let square = rectangle::square(0.0, 0.0, 1.5);
 
                                 let transform =
                                     c.transform
@@ -136,7 +136,7 @@ impl Frame {
                     Some(child_vec) => {
                         //
                         // Optional drawing of blue squares representing current regions
-                        //
+
                         // self.gl.draw(args.viewport(), |c, gl| {
                         //     //draw red squares
                         //     let coords = reg.clone().normalize_region_coords();
@@ -155,7 +155,7 @@ impl Frame {
 
                                         if coords[0] == -1.0 {
                                         } else {
-                                            // let square = rectangle::square(0.0, 0.0, 1.0);
+                                            let square = rectangle::square(0.0, 0.0, 1.0);
 
                                             // let transform =
                                             //     c.transform
@@ -163,6 +163,7 @@ impl Frame {
                                             //     .rot_rad(0.0);
 
                                             // rectangle(RED, square, transform, gl);
+
                                         }
                                     };
                                 }
@@ -241,11 +242,11 @@ impl Frame {
         // let mut output = String::new();
         // output =  self.print_masses(None, output);
         // println!("{}", output);
-
         self.tree.deep_update_vel();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.deep_update_pos();
         self.tree.add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        self.tree.update();
     }
 }
