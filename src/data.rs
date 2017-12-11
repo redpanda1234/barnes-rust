@@ -5,10 +5,9 @@ use super::*;
 use std::sync::{Mutex, Arc};
 use std::thread;
 
-// TODO: use this everywhere we check dimensions
-pub const DIMS: usize = 4;
-pub const THETA: f64 = 0.5;
-pub const DT: f64 = 0.02;
+pub const DIMS: usize = 2;
+pub const THETA: f64 = 0.00005;
+pub const DT: f64 = 0.008;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
@@ -20,7 +19,7 @@ pub const DT: f64 = 0.02;
 
 pub const MAX_LEN: f64 = 1_000.0;
 pub const MIN_LEN: f64 = 1.0;
-pub const MAX_VEL: f64 = 1_00.0;
+pub const MAX_VEL: f64 = 1_000.0;
 pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
@@ -175,7 +174,7 @@ pub mod generate {
         Region::push_body_global(
             Arc::new(Mutex::new(
             Body {
-                pos_vec: vec![10.0; DIMS],
+                pos_vec: vec![50.0; DIMS],
                 vel_vec: vec![0.0; DIMS],
                 mass: 100000.0//m
             }

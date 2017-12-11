@@ -9,7 +9,7 @@ pub use super::data::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 5.0;
+const G: f64 = 500.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {
@@ -106,7 +106,7 @@ impl Body {
         //if the distance is small, just return 0
         //note that floats are weird, so the same mass
         //could have a nonzero distance to itself
-        if r <= MIN_LEN / 3.0 {
+        if r <= MIN_LEN / 100.0 {
             // println!("{:?}", r);
             return vec![0.0; DIMS];
         }
@@ -229,17 +229,21 @@ impl Body {
         // println!("updating vel");
         // println!("old velocity component: {:#?}", self.vel_vec[0]);
         let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
-        for child in tree.reg_vec.clone().unwrap() {
-            let new_child = child.try_lock().unwrap().clone();
-            // println!("{:#?}", child);
-            let new_child = Arc::new(Mutex::new(new_child));
-            let mut vel_vec = self.vel_vec.clone();
+        // for child in tree.reg_vec.clone().unwrap() {
+        //     let new_child = child.try_lock().unwrap().clone();
+        //     // println!("{:#?}", child);
+        //     let new_child = Arc::new(Mutex::new(new_child));
+        //     let mut vel_vec = self.vel_vec.clone();
 
-            let mut vel_vec = vel_vec.iter_mut().zip(
-                self.get_total_acc(new_child))
-            .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
-            self.vel_vec = vel_vec;
-        }
+        //     let mut vel_vec = vel_vec.iter_mut().zip(
+        //         self.get_total_acc(new_child))
+        //     .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
+        //     self.vel_vec = vel_vec;
+        // }
+        self.vel_vec = tree.reg_vec.clone().unwrap().iter().fold(self.vel_vec.clone(), |vel, child| vel.iter().zip(
+                self.get_total_acc(child.clone())
+                ).map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>()
+        )
 
         // println!("new velocity component: {:#?}", self.vel_vec[0]);
     }
@@ -543,7 +547,7 @@ mod tests {
     #[test]
     fn test_get_classical_accel() {
 
-        for dims in 1..9 {
+        for dims in 1..2 {
             let body1 = Body {
                 pos_vec: vec![1.0; dims],
                 vel_vec: vec![0.0; dims],

@@ -70,7 +70,11 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
+<<<<<<< HEAD
     let num_bodies = 5;
+=======
+    let num_bodies = 10;
+>>>>>>> 3429a0b6508bc6672e9e61b91d6efee64c565714
 
 
     let root = generate::gt_all_ranges(num_bodies);
@@ -102,7 +106,6 @@ fn main() {
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
             frame.render(None, &r);
-            // println!("trying to print");
             let mut output = frame.print_masses(None);
             file.write_fmt(format_args!("{}", output));
             // println!("called render from main");
