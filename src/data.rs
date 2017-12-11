@@ -150,7 +150,7 @@ pub mod generate {
         // let mut seeder = get_seeder_rng();
 
         let m_gen = Range::new(0.0, MAX_MASS);
-        let p_mag_gen = Range::new(0.1*MAX_LEN, MAX_LEN);
+        let p_mag_gen = Range::new(0.0, MAX_LEN);
         let v_mag_gen = Range::new(0.1*MAX_VEL, MAX_VEL);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);

@@ -156,26 +156,22 @@ impl Body {
         match match_me {
             //if this is a leaf, find the acceleration between us and its com
             None => {
-                // println!("matched None on first arm of get_totall_acc");
-                // drop(match_me);
-                // println!("try_locked node_arc and entered the match btry_lock. Matched on None");
-                match node_arc.try_lock().unwrap().com {
+                match node_arc.try_lock().unwrap().com.clone() {
                     None => {
-                        // println!("matched None on subarm of None");
-                        // println!("matched on None");
                         acc
                     },
-                    Some(ref com_arc) => {
+                    Some(com_arc) => {
                         // println!("matched some on subarm of None");
-                        let com = com_arc.try_lock().unwrap().clone();
-                        let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
-                        //println!("acceleration component: {:#?}", total_acc); // this is never called on singularities
-                        acc = acc.iter()
-                            .zip(total_acc.iter())
-                            .map(|(u,v)| u+v)
-                            .collect::<Vec<f64>>();
+                        // let com = com_arc.try_lock().unwrap().clone();
+                        // let total_acc =
+                        self.update_accel(acc, com_arc)
 
-                        acc
+                        // acc = acc.iter()
+                        //     .zip(total_acc.iter())
+                        //     .map(|(u,v)| u+v)
+                        //     .collect::<Vec<f64>>();
+
+                        // acc
                     }
                 }
             }
