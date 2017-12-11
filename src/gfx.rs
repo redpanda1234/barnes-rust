@@ -19,7 +19,7 @@ pub struct Frame {
     pub tree: Region // the tree we're gonna be drawing
 }
 
-pub use data::{ MAX_LEN, DIMS };
+pub use data::{ MIN_LEN, MAX_LEN, DIMS };
 
 pub const screen_scale: f64 = 350.0;
 pub const screen_offset: f64 = 400.0;
@@ -69,12 +69,13 @@ impl Frame {
     pub fn render(&mut self, reg_option: Option<&Region>, args: &RenderArgs) {
         use graphics::*;
 
-        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.25];
+        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.5];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
-        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.1];
+        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.05];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+        const YELLOW: [f32; 4] = [1.0, 1.0, 0.0, 1.0];
 
         //main should pass render() a None option
         //if that happens, call render on the tree
@@ -113,14 +114,23 @@ impl Frame {
                                 return
 
                             } else {
-                                let square = rectangle::square(0.0, 0.0, 1.0);
 
                                 let transform =
                                     c.transform
                                     .trans(coords[0], coords[1])
                                     .rot_rad(0.0);
-
-                                rectangle(WHITE, square, transform, gl);
+                                match reg.com.clone() {
+                                    None => (),
+                                    Some (com) => {
+                                        if com.lock().unwrap().clone().mass < 9000.0 {
+                                            let square = rectangle::square(0.0, 0.0, 2.0);
+                                            rectangle(WHITE, square, transform, gl);
+                                        } else {
+                                            let square = rectangle::square(0.0, 0.0, 4.0);
+                                            rectangle(YELLOW, square, transform, gl);
+                                        }
+                                    }
+                                }
 
                                 // Optional drawing of green squares representing regions with children
 
@@ -136,7 +146,7 @@ impl Frame {
                     Some(child_vec) => {
                         //
                         // Optional drawing of blue squares representing current regions
-                        //
+
                         // self.gl.draw(args.viewport(), |c, gl| {
                         //     //draw red squares
                         //     let coords = reg.clone().normalize_region_coords();
@@ -144,6 +154,31 @@ impl Frame {
                         //     let transform = c.transform.trans(coords[0], coords[1]).rot_rad(0.0);
                         //     rectangle(BLUE, square, transform, gl);
                         // });
+                        self.gl.draw(args.viewport(), |c, gl| {
+                            match reg.com.clone() {
+                                None => (),
+                                Some(com) => {
+                                    let mut mass = com.lock().unwrap().mass;
+                                    if mass > 0.0 {
+
+                                        let coords = reg.clone().normalize_coords();
+
+                                        if coords[0] == -1.0 {
+                                        } else {
+                                            let square = rectangle::square(0.0, 0.0, 1.0);
+
+                                            // let transform =
+                                            //     c.transform
+                                            //     .trans(coords[0], coords[1])
+                                            //     .rot_rad(0.0);
+
+                                            // rectangle(RED, square, transform, gl);
+
+                                        }
+                                    };
+                                }
+                            }
+                        });
                         for child in child_vec.iter() {
                             self.render(
                                 Some(& *child.lock().unwrap()),
@@ -165,7 +200,9 @@ impl Frame {
             None => {
                 let tree = TREE_POINTER.try_lock().unwrap().tree.clone();
                 // println!("let tree");
-                self.print_masses(Some(&tree))
+                output = self.print_masses(Some(&tree));
+                output.push_str(&format!("\n"));
+                output
             },
 
 
@@ -179,7 +216,7 @@ impl Frame {
                             Some(our_reg) => {
                                 let mass = our_reg.try_lock().unwrap().clone();
 
-                                if mass.mass > 0.0 {
+                                if mass.mass == 100000.01 {
                                     output.push_str(&format!("\t{:#?}", mass.mass));
                                     output.push_str(&format!("\t{:#?}", mass.pos_vec[0]));
                                     output.push_str(&format!("\t{:#?}", mass.pos_vec[1]));
@@ -217,11 +254,11 @@ impl Frame {
         // let mut output = String::new();
         // output =  self.print_masses(None, output);
         // println!("{}", output);
-
         self.tree.deep_update_vel();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
         self.tree.deep_update_pos();
         self.tree.add_queue = TREE_POINTER.lock().unwrap().tree.add_queue.clone();
         TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        self.tree.update();
     }
 }

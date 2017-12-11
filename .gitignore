@@ -5,3 +5,4 @@ Cargo.lock
 **/auto/
 *.aux
 *.log
+src/interesting results/output.txt

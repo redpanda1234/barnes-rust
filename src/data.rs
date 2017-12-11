@@ -5,10 +5,9 @@ use super::*;
 use std::sync::{Mutex, Arc};
 use std::thread;
 
-// TODO: use this everywhere we check dimensions
 pub const DIMS: usize = 2;
-pub const THETA: f64 = 0.5;
-pub const DT: f64 = 0.02;
+pub const THETA: f64 = 0.0005;
+pub const DT: f64 = 0.0007;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
@@ -19,9 +18,21 @@ pub const DT: f64 = 0.02;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
-pub const MIN_LEN: f64 = 1.0;
-pub const MAX_VEL: f64 = 1_00.0;
-pub const MAX_MASS: f64 = 1_000.0;
+pub const MIN_LEN: f64 = 10.0;
+pub const MAX_VEL: f64 = 10_000.0;
+pub const MAX_MASS: f64 = 5000.0;
+
+pub const GAMMA_SHAPE: f64 = 200.0; // these must all be positive
+pub const GAMMA_SCALE: f64 = 500.0;
+pub const GAMMA_SHAPE_TF: f64 = 200.0;
+pub const GAMMA_SCALE_TF: f64 = 600.0;
+
+pub const NORMAL_MEAN: f64 = 0.5 * MAX_LEN;
+pub const NORMAL_STD_DEV: f64 = 0.5 * NORMAL_MEAN;
+
+pub const NORMAL_MEAN_TF: f64 = 2.0 * NORMAL_MEAN;
+pub const NORMAL_STD_DEV_TF: f64 = NORMAL_STD_DEV;
+
 pub static mut NUM_THREADS: i64 = 20;
 
 pub struct TreeWrapper {
@@ -115,8 +126,8 @@ pub mod generate {
         // involve it in special cases outside of our loop. Note that
         // the final r_vec entry involves just .sin()'s, no .cos()'s.
 
-        vec[DIMS-2] = mag * -1.0*final_theta.cos() * product;
-        vec[DIMS-1] = mag * 1.0*final_theta.sin() * product;
+        vec[DIMS-2] = mag * 1.0*final_theta.sin() * product;
+        vec[DIMS-1] = mag * 1.0*final_theta.cos() * product;
 
         // return vec
         vec
@@ -139,7 +150,7 @@ pub mod generate {
         let body = Body {
             pos_vec: pos,
             vel_vec: vel,
-            mass: 1.0//m
+            mass: m + 1.0
         };
 
         Arc::new(Mutex::new(body))
@@ -151,10 +162,117 @@ pub mod generate {
         // let mut seeder = get_seeder_rng();
 
         let m_gen = Range::new(0.0, MAX_MASS);
-        let p_mag_gen = Range::new(0.2*MAX_LEN, 0.4*MAX_LEN);
-        let v_mag_gen = Range::new(0.2*MAX_VEL, 0.4*MAX_VEL);
+        let p_mag_gen = Range::new(0.1*MAX_LEN, 0.5*MAX_LEN);
+        let v_mag_gen = Range::new(0.4*MAX_VEL, 0.8*MAX_VEL);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
+
+        let mut rng = rand::StdRng::new().unwrap();
+
+        for _ in 0..num_bodies {
+
+            Region::push_body_global(
+                gb_from_mags(
+                    t_f_gen.ind_sample(&mut rng),
+                    t_f_gen.ind_sample(&mut rng),
+                    p_mag_gen.ind_sample(&mut rng),
+                    v_mag_gen.ind_sample(&mut rng),
+                    m_gen.ind_sample(&mut rng),
+                    t_gen
+                )
+            )
+        }
+
+    }
+
+    pub fn gt_two_body() {
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+            Body {
+                pos_vec: vec![-100.0, 0.0],
+                vel_vec: vec![0.0, 2000.0],
+                mass: 100000.01//m
+            }
+        )));
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+            Body {
+                pos_vec: vec![100.0, 0.0],
+                vel_vec: vec![0.0, -2000.0],
+                mass: 100000.0//m
+            }
+        )));
+    }
+
+    //a system of two large objects, i.e. stars, with a number of
+    //smaller objects injected around them
+    pub fn gt_binary_system() {
+        gt_two_body();
+
+        gt_all_ranges(300);
+    }
+
+    //inject masses horizontally
+    pub fn gt_scattering(num_bodies: usize) {
+        use data::rand::distributions::*;
+
+        //impact parameters
+        let impact_parameters = Range::new(-400.0, 400.0);
+        let mut rng = rand::StdRng::new().unwrap();
+
+        let velocities = Range::new(750.0, 10000.0);
+        let offsets = Range::new(50.0, 150.0);
+
+        for _ in 0..num_bodies {
+
+            let b = impact_parameters.ind_sample(&mut rng);
+            let v = velocities.ind_sample(&mut rng);
+            let x = offsets.ind_sample(&mut rng);
+
+            Region::push_body_global(
+                Arc::new(Mutex::new(
+                Body {
+                    pos_vec: vec![-MAX_LEN + x, b],
+                    vel_vec: vec![v, 0.0],
+                    mass: 1.0//m
+                }
+            )));
+        }
+    }
+
+    //scattering in a 1/r potential
+    pub fn gt_rutherford_scattering(num_bodies: usize) {
+
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+            Body {
+                pos_vec: vec![0.0, 0.0],
+                vel_vec: vec![0.0, 0.0],
+                mass: 100000.0//m
+            }
+        )));
+
+        gt_scattering(num_bodies);
+    }
+
+    //scattering onto a binary system
+    pub fn gt_binary_scattering(num_bodies: usize) {
+        gt_two_body();
+
+        gt_scattering(num_bodies);
+    }
+
+
+
+    pub fn gt_all_gamma(num_bodies: usize) {
+        use data::rand::distributions::*;
+        // let mut seeder = get_seeder_rng();
+
+        let m_gen = Gamma::new(GAMMA_SHAPE, GAMMA_SCALE);
+        let p_mag_gen = Gamma::new(GAMMA_SHAPE, GAMMA_SCALE);
+        let v_mag_gen = Gamma::new(GAMMA_SHAPE, GAMMA_SCALE);
+        let t_gen = Gamma::new(GAMMA_SHAPE, GAMMA_SCALE);
+        let t_f_gen = &Gamma::new(GAMMA_SHAPE_TF, GAMMA_SCALE_TF);
 
         let mut rng = rand::StdRng::new().unwrap();
 
@@ -175,11 +293,38 @@ pub mod generate {
         Region::push_body_global(
             Arc::new(Mutex::new(
             Body {
-                pos_vec: vec![10.0; DIMS],
+                pos_vec: vec![-50.0; DIMS],
                 vel_vec: vec![0.0; DIMS],
-                mass: 100000.0//m
+                mass: 10000.0//m
             }
         )));
+    }
+
+    pub fn gt_all_normal(num_bodies: usize) {
+        use data::rand::distributions::*;
+        // let mut seeder = get_seeder_rng();
+
+        let m_gen = Normal::new(NORMAL_MEAN, NORMAL_STD_DEV);
+        let p_mag_gen = Normal::new(NORMAL_MEAN, NORMAL_STD_DEV);
+        let v_mag_gen = Normal::new(NORMAL_MEAN, NORMAL_STD_DEV);
+        let t_gen = Normal::new(NORMAL_MEAN, NORMAL_STD_DEV);
+        let t_f_gen = Normal::new(NORMAL_MEAN_TF, NORMAL_STD_DEV_TF);
+
+        let mut rng = rand::StdRng::new().unwrap();
+
+        for _ in 0..num_bodies {
+
+            Region::push_body_global(
+                gb_from_mags(
+                    t_f_gen.ind_sample(&mut rng),
+                    t_f_gen.ind_sample(&mut rng),
+                    p_mag_gen.ind_sample(&mut rng),
+                    v_mag_gen.ind_sample(&mut rng),
+                    m_gen.ind_sample(&mut rng),
+                    t_gen
+                )
+            )
+        }
     }
 
     // fn push_body_global(body_arc: Arc<Mutex<Body>>) {

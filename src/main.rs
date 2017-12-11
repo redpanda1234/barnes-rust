@@ -45,6 +45,8 @@ use std::io::prelude::*;
 
 fn main() {
     let mut file = File::create("output.txt").unwrap();
+    //write the parameters being used to the file
+    file.write_fmt(format_args!("G: {}, DT: {}\n", physics::G, DT));
 
 
     // Change this to OpenGL::V2_1 if not working.
@@ -68,19 +70,23 @@ fn main() {
     // masses we want to simulate, second argument passes the random
     // generation function the rng object we've just seeded. Seeding
     // is generally good while we're still in the testing phase, since
-    // it gives us reproducible results.
+    // it gives us reproducible results
+    let num_bodies = 500;
 
-    let num_bodies = 20;
-
-
-    let root = generate::gt_all_ranges(num_bodies);
+    generate::gt_all_ranges(300);
+    generate::gt_rutherford_scattering(100);
+    //generate::gt_all_ranges(num_bodies);
+    //generate::gt_two_body();
+    //generate::gt_binary_system();
+    //generate::gt_rutherford_scattering(num_bodies);
+    //generate::gt_binary_scattering(num_bodies);
 
     let mut frame = Frame {
         gl: GlGraphics::new(opengl),
         tree: TREE_POINTER.lock().unwrap().tree.clone()
     };
 
-    // println!("done generating");
+    println!("done generating");
     // for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
     //     println!("splitting multiplier: {:#?}", vec);
     // }
@@ -102,9 +108,8 @@ fn main() {
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
             frame.render(None, &r);
-            println!("trying to print");
-            let mut output = frame.print_masses(None);
-            file.write_fmt(format_args!("{}", output));
+            //let mut output = frame.print_masses(None);
+            //file.write_fmt(format_args!("{}", output));
             // println!("called render from main");
         }
 
@@ -113,7 +118,7 @@ fn main() {
             // TREE_POINTER.lock().unwrap().tree = frame.tree;
             // println!("calling update from main");
             frame.update(&u);
-            // println!("called update from main");
+            println!("called update from main");
         }
 
     }
