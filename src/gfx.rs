@@ -248,8 +248,8 @@ impl Frame {
 
     pub fn update(&mut self, args: &UpdateArgs) {
         // self.tree = TREE_POINTER.lock().unwrap().tree.clone();
-        self.tree.update();
-        TREE_POINTER.lock().unwrap().tree = self.tree.clone();
+        // self.tree.update();
+        // TREE_POINTER.lock().unwrap().tree = self.tree.clone();
 
         // let mut output = String::new();
         // output =  self.print_masses(None, output);

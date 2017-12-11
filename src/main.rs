@@ -95,6 +95,9 @@ fn main() {
 
     let mut counter = 0;
 
+    frame.tree.update();
+    TREE_POINTER.lock().unwrap().tree = frame.tree.clone();
+
     while let Some(e) = events.next(&mut window) {
 
         // make sure the tree is set up correctly before
