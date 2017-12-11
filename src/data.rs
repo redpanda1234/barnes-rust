@@ -204,11 +204,65 @@ pub mod generate {
         )));
     }
 
+    //a system of two large objects, i.e. stars, with a number of
+    //smaller objects injected around them
     pub fn gt_binary_system() {
         gt_two_body();
         
-        gt_all_ranges(1000);
+        gt_all_ranges(300);
     }
+
+    //inject masses horizontally
+    pub fn gt_scattering(num_bodies: usize) {
+        use data::rand::distributions::*;
+
+        //impact parameters
+        let impact_parameters = Range::new(-400.0, 400.0);
+        let mut rng = rand::StdRng::new().unwrap();
+
+        let velocities = Range::new(750.0, 10000.0);
+        let offsets = Range::new(50.0, 150.0);
+
+        for _ in 0..num_bodies {
+
+            let b = impact_parameters.ind_sample(&mut rng);
+            let v = velocities.ind_sample(&mut rng);
+            let x = offsets.ind_sample(&mut rng);       
+
+            Region::push_body_global(
+                Arc::new(Mutex::new(
+                Body {
+                    pos_vec: vec![-MAX_LEN + x, b],
+                    vel_vec: vec![v, 0.0],
+                    mass: 1.0//m
+                }
+            )));
+        }
+    }
+
+    //scattering in a 1/r potential
+    pub fn gt_rutherford_scattering(num_bodies: usize) {
+
+        Region::push_body_global(
+            Arc::new(Mutex::new(
+            Body {
+                pos_vec: vec![0.0, 0.0],
+                vel_vec: vec![0.0, 0.0],
+                mass: 100000.0//m
+            }
+        )));
+
+        gt_scattering(num_bodies);
+    }
+
+    //scattering onto a binary system
+    pub fn gt_binary_scattering(num_bodies: usize) {
+        gt_two_body();
+
+        gt_scattering(num_bodies);
+    }
+
+
     
     pub fn gt_all_gamma(num_bodies: usize) {
         use data::rand::distributions::*;
