@@ -9,7 +9,7 @@ pub use super::data::*;
 pub use super::data::{DIMS, TREE_POINTER, DT, THETA};
 
 // let const G: f64 = (6.674 / (1_000_000_000_00.0));
-const G: f64 = 500000.0;
+const G: f64 = 5000000.0;
 use std::sync::{Arc, Mutex};
 
 impl Body {
@@ -106,7 +106,7 @@ impl Body {
         //if the distance is small, just return 0
         //note that floats are weird, so the same mass
         //could have a nonzero distance to itself
-        if r <= MIN_LEN / 100.0 {
+        if r <= MIN_LEN {
             // println!("{:?}", r);
             return vec![0.0; DIMS];
         }
