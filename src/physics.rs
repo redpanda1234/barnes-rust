@@ -205,7 +205,7 @@ impl Body {
                                 .zip(total_acc.iter())
                                 .map(|(u,v)| u+v).collect::<Vec<f64>>();
                             if com_arc.try_lock().unwrap().clone().mass > 0.0 {
-                            println!("{:#?}, {:#?}", acc, com_arc.try_lock().unwrap().clone());
+                                println!("{:#?}, {:#?}", acc, com_arc.try_lock().unwrap().clone());
                             }
                             acc
                         } else {
