@@ -122,7 +122,7 @@ impl Frame {
                                 match reg.com.clone() {
                                     None => (),
                                     Some (com) => {
-                                        if com.lock().unwrap().clone().mass < 1000.0 {
+                                        if com.lock().unwrap().clone().mass < 9000.0 {
                                             let square = rectangle::square(0.0, 0.0, 2.0);
                                             rectangle(WHITE, square, transform, gl);
                                         } else {
