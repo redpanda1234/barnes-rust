@@ -70,7 +70,7 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    let num_bodies = 200;
+    let num_bodies = 5000;
 
     let root = generate::gt_all_ranges(num_bodies);
 
@@ -101,8 +101,8 @@ fn main() {
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
             frame.render(None, &r);
-            let mut output = frame.print_masses(None);
-            file.write_fmt(format_args!("{}", output));
+            // let mut output = frame.print_masses(None);
+            // file.write_fmt(format_args!("{}", output));
             // println!("called render from main");
         }
 

@@ -69,7 +69,7 @@ impl Frame {
     pub fn render(&mut self, reg_option: Option<&Region>, args: &RenderArgs) {
         use graphics::*;
 
-        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.25];
+        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.1];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
@@ -155,14 +155,14 @@ impl Frame {
 
                                         if coords[0] == -1.0 {
                                         } else {
-                                            let square = rectangle::square(0.0, 0.0, 1.0);
+                                            // let square = rectangle::square(0.0, 0.0, 1.0);
 
-                                            let transform =
-                                                c.transform
-                                                .trans(coords[0], coords[1])
-                                                .rot_rad(0.0);
+                                            // let transform =
+                                            //     c.transform
+                                            //     .trans(coords[0], coords[1])
+                                            //     .rot_rad(0.0);
 
-                                            rectangle(RED, square, transform, gl);
+                                            // rectangle(RED, square, transform, gl);
                                         }
                                     };
                                 }
