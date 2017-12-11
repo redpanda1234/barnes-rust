@@ -19,8 +19,8 @@ pub const DT: f64 = 0.0007;
 
 pub const MAX_LEN: f64 = 1_000.0;
 pub const MIN_LEN: f64 = 10.0;
-pub const MAX_VEL: f64 = 1_000.0;
-pub const MAX_MASS: f64 = 5.0;
+pub const MAX_VEL: f64 = 10_000.0;
+pub const MAX_MASS: f64 = 5000.0;
 
 pub const GAMMA_SHAPE: f64 = 200.0; // these must all be positive
 pub const GAMMA_SCALE: f64 = 500.0;
@@ -162,8 +162,8 @@ pub mod generate {
         // let mut seeder = get_seeder_rng();
 
         let m_gen = Range::new(0.0, MAX_MASS);
-        let p_mag_gen = Range::new(0.2*MAX_LEN, 0.3*MAX_LEN);
-        let v_mag_gen = Range::new(0.2*MAX_VEL, 0.3*MAX_VEL);
+        let p_mag_gen = Range::new(0.1*MAX_LEN, 0.5*MAX_LEN);
+        let v_mag_gen = Range::new(0.4*MAX_VEL, 0.8*MAX_VEL);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
@@ -325,15 +325,6 @@ pub mod generate {
                 )
             )
         }
-
-        Region::push_body_global(
-            Arc::new(Mutex::new(
-                Body {
-                    pos_vec: vec![-50.0; DIMS],
-                    vel_vec: vec![0.0; DIMS],
-                    mass: 10000.0//m
-                }
-            )));
     }
 
     // fn push_body_global(body_arc: Arc<Mutex<Body>>) {

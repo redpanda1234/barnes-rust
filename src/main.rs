@@ -70,12 +70,13 @@ fn main() {
     // masses we want to simulate, second argument passes the random
     // generation function the rng object we've just seeded. Seeding
     // is generally good while we're still in the testing phase, since
-    // it gives us reproducible results.
+    // it gives us reproducible results
+    let num_bodies = 500;
 
-    let num_bodies = 1;
-
-    //let root = generate::gt_all_ranges(num_bodies);
-    generate::gt_two_body();
+    generate::gt_all_ranges(300);
+    generate::gt_rutherford_scattering(100);
+    //generate::gt_all_ranges(num_bodies);
+    //generate::gt_two_body();
     //generate::gt_binary_system();
     //generate::gt_rutherford_scattering(num_bodies);
     //generate::gt_binary_scattering(num_bodies);
@@ -107,8 +108,8 @@ fn main() {
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
             frame.render(None, &r);
-            let mut output = frame.print_masses(None);
-            file.write_fmt(format_args!("{}", output));
+            //let mut output = frame.print_masses(None);
+            //file.write_fmt(format_args!("{}", output));
             // println!("called render from main");
         }
 
