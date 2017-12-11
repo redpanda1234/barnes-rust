@@ -195,16 +195,12 @@ impl Body {
                     Some(ref com_arc) => {
                         // println!("matched Some on subarm of Some");
                         if self.is_far(Arc::clone(&node_arc)) {
-                            //println!("was far");
-                            // println!("{:#?}, {:#?}", acc.clone(), com);
+                            node_arc.try_lock().unwrap().update_com();
                             let total_acc = self.update_accel(acc.clone(), Arc::clone(com_arc));
-                            //println!("acceleration component: {:#?}", total_acc);
-                            // this is always 0 when stuff doesn't move, for some reason
                             acc = acc
                                 .iter()
                                 .zip(total_acc.iter())
                                 .map(|(u,v)| u+v).collect::<Vec<f64>>();
-
                             acc
                         } else {
                             //println!("wasn't far from: {:#?}", com_arc.try_lock().unwrap().clone());

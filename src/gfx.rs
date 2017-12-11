@@ -150,12 +150,12 @@ impl Frame {
                                 Some(com) => {
                                     let mut mass = com.lock().unwrap().mass;
                                     if mass > 0.0 {
-            
+
                                         let coords = reg.clone().normalize_coords();
 
                                         if coords[0] == -1.0 {
                                         } else {
-                                            let square = rectangle::square(0.0, 0.0, MIN_LEN);
+                                            let square = rectangle::square(0.0, 0.0, 1.0);
 
                                             let transform =
                                                 c.transform

@@ -17,10 +17,10 @@ pub const DT: f64 = 0.008;
 // pub const MAX_MASS: f64 =
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
-pub const MAX_LEN: f64 = 1_000_000.0;
-pub const MIN_LEN: f64 = 1_000.0;
-pub const MAX_VEL: f64 = 1_00.0;
-pub const MAX_MASS: f64 = 10_000_000.0;
+pub const MAX_LEN: f64 = 1_000.0;
+pub const MIN_LEN: f64 = 10.0;
+pub const MAX_VEL: f64 = 500.0;
+pub const MAX_MASS: f64 = 1_000.0;
 pub static mut NUM_THREADS: i64 = 20;
 
 pub struct TreeWrapper {
@@ -150,8 +150,8 @@ pub mod generate {
         // let mut seeder = get_seeder_rng();
 
         let m_gen = Range::new(0.0, MAX_MASS);
-        let p_mag_gen = Range::new(0.2*MAX_LEN, 0.4*MAX_LEN);
-        let v_mag_gen = Range::new(0.2*MAX_VEL, 0.4*MAX_VEL);
+        let p_mag_gen = Range::new(0.1*MAX_LEN, MAX_LEN);
+        let v_mag_gen = Range::new(0.1*MAX_VEL, MAX_VEL);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
@@ -171,14 +171,14 @@ pub mod generate {
             )
         }
 
-        Region::push_body_global(
-            Arc::new(Mutex::new(
-            Body {
-                pos_vec: vec![50.0; DIMS],
-                vel_vec: vec![0.0; DIMS],
-                mass: 100000.0//m
-            }
-        )));
+        // Region::push_body_global(
+        //     Arc::new(Mutex::new(
+        //     Body {
+        //         pos_vec: vec![50.0; DIMS],
+        //         vel_vec: vec![0.0; DIMS],
+        //         mass: 100000.0//m
+        //     }
+        // )));
     }
 
     // fn push_body_global(body_arc: Arc<Mutex<Body>>) {
