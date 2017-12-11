@@ -200,7 +200,7 @@ impl Frame {
             None => {
                 let tree = TREE_POINTER.try_lock().unwrap().tree.clone();
                 // println!("let tree");
-                output = self.print_masses(Some(&tree));                
+                output = self.print_masses(Some(&tree));
                 output.push_str(&format!("\n"));
                 output
             },
@@ -216,7 +216,7 @@ impl Frame {
                             Some(our_reg) => {
                                 let mass = our_reg.try_lock().unwrap().clone();
 
-                                if mass.mass > 0.0 {
+                                if mass.mass == 100000.01 {
                                     output.push_str(&format!("\t{:#?}", mass.mass));
                                     output.push_str(&format!("\t{:#?}", mass.pos_vec[0]));
                                     output.push_str(&format!("\t{:#?}", mass.pos_vec[1]));

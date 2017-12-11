@@ -191,7 +191,7 @@ pub mod generate {
             Body {
                 pos_vec: vec![-100.0, 0.0],
                 vel_vec: vec![0.0, 2000.0],
-                mass: 100000.0//m
+                mass: 100000.01//m
             }
         )));
         Region::push_body_global(
@@ -208,7 +208,7 @@ pub mod generate {
     //smaller objects injected around them
     pub fn gt_binary_system() {
         gt_two_body();
-        
+
         gt_all_ranges(300);
     }
 
@@ -227,7 +227,7 @@ pub mod generate {
 
             let b = impact_parameters.ind_sample(&mut rng);
             let v = velocities.ind_sample(&mut rng);
-            let x = offsets.ind_sample(&mut rng);       
+            let x = offsets.ind_sample(&mut rng);
 
             Region::push_body_global(
                 Arc::new(Mutex::new(
@@ -263,7 +263,7 @@ pub mod generate {
     }
 
 
-    
+
     pub fn gt_all_gamma(num_bodies: usize) {
         use data::rand::distributions::*;
         // let mut seeder = get_seeder_rng();

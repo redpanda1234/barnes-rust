@@ -72,13 +72,13 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-    let num_bodies = 100;
+    let num_bodies = 1;
 
     //let root = generate::gt_all_ranges(num_bodies);
-    //generate::gt_two_body();
+    generate::gt_two_body();
     //generate::gt_binary_system();
     //generate::gt_rutherford_scattering(num_bodies);
-    generate::gt_binary_scattering(num_bodies);
+    //generate::gt_binary_scattering(num_bodies);
 
     let mut frame = Frame {
         gl: GlGraphics::new(opengl),
