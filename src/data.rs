@@ -6,7 +6,7 @@ use std::sync::{Mutex, Arc};
 use std::thread;
 
 pub const DIMS: usize = 2;
-pub const THETA: f64 = 0.5;
+pub const THETA: f64 = 0.0005;
 pub const DT: f64 = 0.0007;
 
 // approximate radius of the milky way
@@ -18,9 +18,9 @@ pub const DT: f64 = 0.0007;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
-pub const MIN_LEN: f64 = 5.0;
-pub const MAX_VEL: f64 = 1_00.0;
-pub const MAX_MASS: f64 = 1_000.0;
+pub const MIN_LEN: f64 = 10.0;
+pub const MAX_VEL: f64 = 1_000.0;
+pub const MAX_MASS: f64 = 5.0;
 
 pub const GAMMA_SHAPE: f64 = 200.0; // these must all be positive
 pub const GAMMA_SCALE: f64 = 500.0;
@@ -150,7 +150,7 @@ pub mod generate {
         let body = Body {
             pos_vec: pos,
             vel_vec: vel,
-            mass: 100.0//m
+            mass: m + 1.0
         };
 
         Arc::new(Mutex::new(body))
@@ -183,14 +183,6 @@ pub mod generate {
             )
         }
 
-        Region::push_body_global(
-            Arc::new(Mutex::new(
-            Body {
-                pos_vec: vec![-50.0; DIMS],
-                vel_vec: vec![0.0; DIMS],
-                mass: 10000.0//m
-            }
-        )));
     }
 
     pub fn gt_two_body() {
@@ -198,18 +190,24 @@ pub mod generate {
             Arc::new(Mutex::new(
             Body {
                 pos_vec: vec![-100.0, 0.0],
-                vel_vec: vec![0.0, 1000.0],
-                mass: 10000.0//m
+                vel_vec: vec![0.0, 2000.0],
+                mass: 100000.0//m
             }
         )));
         Region::push_body_global(
             Arc::new(Mutex::new(
             Body {
                 pos_vec: vec![100.0, 0.0],
-                vel_vec: vec![0.0, -1000.0],
-                mass: 10000.0//m
+                vel_vec: vec![0.0, -2000.0],
+                mass: 100000.0//m
             }
         )));
+    }
+
+    pub fn gt_binary_system() {
+        gt_two_body();
+        
+        gt_all_ranges(1000);
     }
     
     pub fn gt_all_gamma(num_bodies: usize) {

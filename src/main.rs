@@ -75,7 +75,8 @@ fn main() {
     let num_bodies = 500;
 
     //let root = generate::gt_all_ranges(num_bodies);
-    generate::gt_two_body();
+    //generate::gt_two_body();
+    generate::gt_binary_system();
 
     let mut frame = Frame {
         gl: GlGraphics::new(opengl),

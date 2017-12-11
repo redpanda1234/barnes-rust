@@ -75,6 +75,7 @@ impl Frame {
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
         const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.05];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+        const YELLOW: [f32; 4] = [1.0, 1.0, 0.0, 1.0];
 
         //main should pass render() a None option
         //if that happens, call render on the tree
@@ -113,14 +114,23 @@ impl Frame {
                                 return
 
                             } else {
-                                let square = rectangle::square(0.0, 0.0, 1.5);
 
                                 let transform =
                                     c.transform
                                     .trans(coords[0], coords[1])
                                     .rot_rad(0.0);
-
-                                rectangle(WHITE, square, transform, gl);
+                                match reg.com.clone() {
+                                    None => (),
+                                    Some (com) => {
+                                        if com.lock().unwrap().clone().mass < 1000.0 {
+                                            let square = rectangle::square(0.0, 0.0, 2.0);
+                                            rectangle(WHITE, square, transform, gl);
+                                        } else {
+                                            let square = rectangle::square(0.0, 0.0, 4.0);
+                                            rectangle(YELLOW, square, transform, gl);
+                                        }
+                                    }
+                                }
 
                                 // Optional drawing of green squares representing regions with children
 
