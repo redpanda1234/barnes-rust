@@ -190,7 +190,9 @@ impl Frame {
             None => {
                 let tree = TREE_POINTER.try_lock().unwrap().tree.clone();
                 // println!("let tree");
-                self.print_masses(Some(&tree))
+                output = self.print_masses(Some(&tree));                
+                output.push_str(&format!("\n"));
+                output
             },
 
 
