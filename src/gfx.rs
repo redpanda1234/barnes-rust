@@ -113,7 +113,7 @@ impl Frame {
                                 return
 
                             } else {
-                                let square = rectangle::square(0.0, 0.0, MIN_LEN);
+                                let square = rectangle::square(0.0, 0.0, 1.0);
 
                                 let transform =
                                     c.transform

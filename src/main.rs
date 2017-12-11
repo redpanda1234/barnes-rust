@@ -70,12 +70,7 @@ fn main() {
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results.
 
-<<<<<<< HEAD
-    let num_bodies = 5;
-=======
-    let num_bodies = 10;
->>>>>>> 3429a0b6508bc6672e9e61b91d6efee64c565714
-
+    let num_bodies = 200;
 
     let root = generate::gt_all_ranges(num_bodies);
 
@@ -84,7 +79,7 @@ fn main() {
         tree: TREE_POINTER.lock().unwrap().tree.clone()
     };
 
-    // println!("done generating");
+    println!("done generating");
     // for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
     //     println!("splitting multiplier: {:#?}", vec);
     // }
@@ -116,7 +111,7 @@ fn main() {
             // TREE_POINTER.lock().unwrap().tree = frame.tree;
             // println!("calling update from main");
             frame.update(&u);
-            // println!("called update from main");
+            println!("called update from main");
         }
 
     }
