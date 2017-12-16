@@ -69,7 +69,7 @@ impl Frame {
     pub fn render(&mut self, reg_option: Option<&Region>, args: &RenderArgs) {
         use graphics::*;
 
-        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.5];
+        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.05];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
@@ -86,7 +86,7 @@ impl Frame {
 
                 self.gl.draw(args.viewport(), |c, gl| {
                     // Clear the screen.
-                    clear(BLACK, gl);
+                    //clear(BLACK, gl);
                 });
 
                 // self.gl.draw(args.viewport(), |c, gl| {
@@ -119,6 +119,7 @@ impl Frame {
                                     c.transform
                                     .trans(coords[0], coords[1])
                                     .rot_rad(0.0);
+
                                 match reg.com.clone() {
                                     None => (),
                                     Some (com) => {
