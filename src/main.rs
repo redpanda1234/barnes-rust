@@ -71,14 +71,14 @@ fn main() {
     // generation function the rng object we've just seeded. Seeding
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results
-    let num_bodies = 500;
+    let num_bodies = 100;
 
-    generate::gt_all_ranges(300);
-    generate::gt_rutherford_scattering(100);
+    // generate::gt_all_ranges(300);
+    // generate::gt_rutherford_scattering(100);
     //generate::gt_all_ranges(num_bodies);
     //generate::gt_two_body();
     //generate::gt_binary_system();
-    //generate::gt_rutherford_scattering(num_bodies);
+    generate::gt_rutherford_scattering(num_bodies);
     //generate::gt_binary_scattering(num_bodies);
 
     let mut frame = Frame {
@@ -94,6 +94,9 @@ fn main() {
     let mut events = Events::new(EventSettings::new());
 
     let mut counter = 0;
+
+    frame.tree.update();
+    TREE_POINTER.lock().unwrap().tree = frame.tree.clone();
 
     while let Some(e) = events.next(&mut window) {
 
