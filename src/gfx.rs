@@ -46,16 +46,16 @@ impl Region {
 
     }
 
-    fn liouville_normalize_coords(&self) -> Vec<f64> {
+    fn liouville_normalize_coords(&self) -> Vec<Vec<f64>> {
 
         match self.com.clone() {
 
-            None => vec![-1.0; DIMS],
+            None => vec![vec![-1.0]],
 
             Some(com) => {
 
-                let mut pos_mag = 0.0;
-                let mut mom_mag = 0.0;
+                let mut pos = vec![0.0; DIMS];
+                let mut mom = vec![0.0; DIMS];
 
                 // Destructure body
                 let Body {
@@ -69,7 +69,7 @@ impl Region {
                 let mass = com.lock().unwrap().mass.clone();
 
                 for i in 0..DIMS {
-                    pos_vec[i] *= 1.5 * screen_scale / MAX_LEN;
+                    pos_vec[i] *= screen_scale / MAX_LEN;
                     pos_vec[i] += screen_offset;
 
                     // 1.5 was an arbitrary choice -- since both vel
@@ -79,13 +79,13 @@ impl Region {
                     // do some quick back-of-the-envelope math to make
                     // 1.5 a more intelligent choice.
 
-                    vel_vec[i] *= 1.0 * mass * screen_scale / (MAX_VEL * MAX_MASS);
+                    vel_vec[i] *= mass * screen_scale / (MAX_VEL * MAX_MASS);
                     vel_vec[i] += screen_offset;
 
-                    pos_mag += pos_vec[i].powi(2);
-                    mom_mag += vel_vec[i].powi(2);
+                    pos[i] += pos_vec[i];
+                    mom[i] += vel_vec[i];
                 }
-                vec![pos_mag.sqrt(), mom_mag.sqrt()]
+                vec![pos, mom]
             }
 
         }
@@ -243,6 +243,9 @@ impl Frame {
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.5];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
+        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.5];
+        const RED: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
+
         match reg_option {
 
             None => {
@@ -266,22 +269,32 @@ impl Frame {
                         self.gl.draw(args.viewport(), |c, gl| {
                             let coords = reg.clone().liouville_normalize_coords();
                             // println!("{:?}", coords);
-                            if coords[0] == -1.0 {
+                            // println!("{:?}", coords);
+                            if coords[0][0] == -1.0 {
 
                                 return
 
                             } else {
 
-                                let transform =
+                                let transform1 =
                                     c.transform
-                                    .trans(coords[0], coords[1])
+                                    .trans(coords[0][0], coords[0][1])
                                     .rot_rad(0.0);
+
+                                let transform2 =
+                                    c.transform
+                                    .trans(coords[1][0], coords[1][1])
+                                    .rot_rad(0.0);
+
 
                                 match reg.com.clone() {
                                     None => (),
                                     Some (com) => {
-                                        let square = rectangle::square(0.0, 0.0, 1.0);
-                                        rectangle(WHITE, square, transform, gl);
+                                        let square1 = rectangle::square(0.0, 0.0, 1.0);
+                                        rectangle(RED, square1, transform1, gl);
+
+                                        let square2 = rectangle::square(0.0, 0.0, 1.0);
+                                        rectangle(BLUE, square2, transform2, gl);
                                     }
                                 }
                             }
