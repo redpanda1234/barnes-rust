@@ -73,8 +73,8 @@ fn main() {
     // it gives us reproducible results
     let num_bodies = 100;
 
-    // generate::gt_all_ranges(300);
-    // generate::gt_rutherford_scattering(100);
+
+    //generate::gt_rutherford_scattering(num_bodies);
     //generate::gt_all_ranges(num_bodies);
     //generate::gt_two_body();
     generate::gt_binary_system();
@@ -110,7 +110,8 @@ fn main() {
 
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
-            frame.phase_render(None, &r);
+            //frame.phase_render(None, &r);
+            frame.render(None, &r);
             //let mut output = frame.print_masses(None);
             //file.write_fmt(format_args!("{}", output));
             // println!("called render from main");

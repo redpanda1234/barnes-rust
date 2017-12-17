@@ -18,7 +18,7 @@ pub const DT: f64 = 0.00001;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
-pub const MIN_LEN: f64 = 1.0;
+pub const MIN_LEN: f64 = 0.0000000001;
 pub const MAX_VEL: f64 = 10_000.0;
 pub const MAX_MASS: f64 = 5000.0;
 
@@ -109,25 +109,27 @@ pub mod generate {
         // the thetas defining our position
 
         let mut product: f64 = 1.0;
+        if DIMS != 1 {
+            for i in 0..(DIMS-2) {
+                let theta = t_generator.ind_sample(&mut rng);
+                vec[i] = mag*(theta.cos())*product;
 
-        for i in 0..(DIMS-2) {
-            let theta = t_generator.ind_sample(&mut rng);
-            vec[i] = mag*(theta.cos())*product;
+                // all future calculations will involve product of
+                // preceding theta.sin() values, so we increment it here
 
-            // all future calculations will involve product of
-            // preceding theta.sin() values, so we increment it here
-
-            product *= theta.sin();
-
+                product *= theta.sin();
+            }
+            vec[DIMS-2] = mag * 1.0*final_theta.sin() * product;
+            vec[DIMS-1] = mag * 1.0*final_theta.cos() * product;
+        } else {
+            vec[0] = mag;
         }
-
         // The final theta value is special, as it ranges from 0 to
         // 2pi. So we treat it the r coordinates whose definitions
         // involve it in special cases outside of our loop. Note that
         // the final r_vec entry involves just .sin()'s, no .cos()'s.
 
-        vec[DIMS-2] = mag * 1.0*final_theta.sin() * product;
-        vec[DIMS-1] = mag * 1.0*final_theta.cos() * product;
+
 
         // return vec
         vec

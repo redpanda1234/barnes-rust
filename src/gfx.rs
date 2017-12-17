@@ -127,7 +127,7 @@ impl Frame {
 
                 self.gl.draw(args.viewport(), |c, gl| {
                     // Clear the screen.
-                    //clear(BLACK, gl);
+                    clear(BLACK, gl);
                 });
 
                 // self.gl.draw(args.viewport(), |c, gl| {
@@ -163,13 +163,13 @@ impl Frame {
                                 match reg.com.clone() {
                                     None => (),
                                     Some (com) => {
-                                        if com.lock().unwrap().clone().mass < 9000.0 {
+                                        //if com.lock().unwrap().clone().mass < 9000.0 {
                                             let square = rectangle::square(0.0, 0.0, 2.0);
                                             rectangle(WHITE, square, transform, gl);
-                                        } else {
-                                            let square = rectangle::square(0.0, 0.0, 4.0);
-                                            rectangle(YELLOW, square, transform, gl);
-                                        }
+                                        // } else {
+                                        //     let square = rectangle::square(0.0, 0.0, 2.0);
+                                        //     rectangle(YELLOW, square, transform, gl);
+                                        // }
                                     }
                                 }
 
@@ -265,8 +265,7 @@ impl Frame {
                     None => {
                         self.gl.draw(args.viewport(), |c, gl| {
                             let coords = reg.clone().liouville_normalize_coords();
-                            // println!("{:?}", coords);
-                            // println!("{:?}", coords);
+
                             if coords[0][0] == -1.0 {
 
                                 return

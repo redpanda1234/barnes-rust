@@ -147,13 +147,14 @@ impl Body {
     }
 
     pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
-        //println!("called get_total_acc");
         let mut acc = vec![0.0; DIMS];
+
         let mut match_me =
             node_arc
             .try_lock()
             .unwrap()
             .reg_vec.clone();
+
         match match_me {
             //if this is a leaf, find the acceleration between us and its com
             None => {
@@ -162,16 +163,9 @@ impl Body {
                         acc
                     },
                     Some(com_arc) => {
-                        // println!("matched some on subarm of None");
 
                         let com = com_arc.try_lock().unwrap().clone();
                         let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
-                        //println!("acceleration component: {:#?}", total_acc); // this is never called on singularities
-                        // acc = acc.iter()
-                        //     .zip(total_acc.iter())
-                        //     .map(|(u,v)| u+v)
-                        //     .collect::<Vec<f64>>();
-
 
                         total_acc
                     }
