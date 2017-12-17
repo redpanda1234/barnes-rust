@@ -75,9 +75,9 @@ fn main() {
 
     // generate::gt_all_ranges(300);
     // generate::gt_rutherford_scattering(100);
-    generate::gt_all_ranges(num_bodies);
+    //generate::gt_all_ranges(num_bodies);
     //generate::gt_two_body();
-    //generate::gt_binary_system();
+    generate::gt_binary_system();
     //generate::gt_rutherford_scattering(num_bodies);
     //generate::gt_binary_scattering(num_bodies);
 

@@ -70,7 +70,7 @@ impl Region {
 
                 for i in 0..DIMS {
                     pos_vec[i] *= 1.5 * screen_scale / MAX_LEN;
-                    pos_vec[i] += screen_offset + 50.0;
+                    pos_vec[i] += screen_offset;
 
                     // 1.5 was an arbitrary choice -- since both vel
                     // and mass are sampled from a uniform
@@ -79,8 +79,8 @@ impl Region {
                     // do some quick back-of-the-envelope math to make
                     // 1.5 a more intelligent choice.
 
-                    vel_vec[i] *= 2.0 * mass * screen_scale / (MAX_VEL * MAX_MASS);
-                    vel_vec[i] += (screen_offset - 150.0);
+                    vel_vec[i] *= 1.0 * mass * screen_scale / (MAX_VEL * MAX_MASS);
+                    vel_vec[i] += screen_offset;
 
                     pos_mag += pos_vec[i].powi(2);
                     mom_mag += vel_vec[i].powi(2);
