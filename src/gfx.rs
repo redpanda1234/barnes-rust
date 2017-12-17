@@ -69,12 +69,18 @@ impl Region {
                 let mass = com.lock().unwrap().mass.clone();
 
                 for i in 0..DIMS {
-                    pos_vec[i] *= screen_scale / MAX_LEN;
-                    pos_vec[i] += screen_offset;
+                    pos_vec[i] *= 1.5 * screen_scale / MAX_LEN;
+                    pos_vec[i] += screen_offset + 50.0;
 
-                    // 4.0 below chosen arbitrarily to just make things not fly as far away
-                    vel_vec[i] *= mass * screen_scale / (4.0 * MAX_VEL * MAX_MASS);
-                    vel_vec[i] += screen_offset;
+                    // 1.5 was an arbitrary choice -- since both vel
+                    // and mass are sampled from a uniform
+                    // distribution, it makes sense that things'd be
+                    // compacted more in the y axis. Should probably
+                    // do some quick back-of-the-envelope math to make
+                    // 1.5 a more intelligent choice.
+
+                    vel_vec[i] *= 2.0 * mass * screen_scale / (MAX_VEL * MAX_MASS);
+                    vel_vec[i] += (screen_offset - 150.0);
 
                     pos_mag += pos_vec[i].powi(2);
                     mom_mag += vel_vec[i].powi(2);
@@ -244,7 +250,7 @@ impl Frame {
 
                 self.gl.draw(args.viewport(), |c, gl| {
                     // Clear the screen.
-                    clear(BLACK, gl);
+                    //clear(BLACK, gl);
                 });
 
                 //todo: replace this with drawing a red square at the master tree's com

@@ -7,7 +7,7 @@ use std::thread;
 
 pub const DIMS: usize = 2;
 pub const THETA: f64 = 0.5;
-pub const DT: f64 = 0.00001;
+pub const DT: f64 = 0.000002;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
@@ -18,7 +18,7 @@ pub const DT: f64 = 0.00001;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
-pub const MIN_LEN: f64 = 0.001;
+pub const MIN_LEN: f64 = 1.0;
 pub const MAX_VEL: f64 = 10_000.0;
 pub const MAX_MASS: f64 = 5000.0;
 
