@@ -40,13 +40,13 @@ pub use tree::*;
 pub use physics::*;
 pub use gfx::*;
 
-use std::fs::File;
-use std::io::prelude::*;
+// use std::fs::File;
+// use std::io::prelude::*;
 
 fn main() {
-    let mut file = File::create("output.txt").unwrap();
-    //write the parameters being used to the file
-    file.write_fmt(format_args!("G: {}, DT: {}\n", physics::G, DT));
+    // let mut file = File::create("output.txt").unwrap();
+    // write the parameters being used to the file
+    // file.write_fmt(format_args!("G: {}, DT: {}\n", physics::G, DT));
 
 
     // Change this to OpenGL::V2_1 if not working.
@@ -71,14 +71,14 @@ fn main() {
     // generation function the rng object we've just seeded. Seeding
     // is generally good while we're still in the testing phase, since
     // it gives us reproducible results
-    let num_bodies = 100;
+    let num_bodies = 1000;
 
     // generate::gt_all_ranges(300);
     // generate::gt_rutherford_scattering(100);
-    //generate::gt_all_ranges(num_bodies);
+    generate::gt_all_ranges(num_bodies);
     //generate::gt_two_body();
     //generate::gt_binary_system();
-    generate::gt_rutherford_scattering(num_bodies);
+    //generate::gt_rutherford_scattering(num_bodies);
     //generate::gt_binary_scattering(num_bodies);
 
     let mut frame = Frame {
@@ -110,7 +110,7 @@ fn main() {
 
         if let Some(r) = e.render_args() {
             // println!("calling render from main");
-            frame.render(None, &r);
+            frame.phase_render(None, &r);
             //let mut output = frame.print_masses(None);
             //file.write_fmt(format_args!("{}", output));
             // println!("called render from main");
