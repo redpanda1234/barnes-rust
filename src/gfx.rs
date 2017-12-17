@@ -59,17 +59,13 @@ impl Region {
 
                 // Destructure body
                 let Body {
-                    pos_vec: pos_vec,
-                    vel_vec: vel_vec,
-                    mass: mass
+                    pos_vec: mut pos_vec,
+                    vel_vec: mut vel_vec,
+                    mass: mut mass
                 } = com.lock().unwrap().clone();
 
-                let mut pos_vec = com.lock().unwrap().pos_vec.clone();
-                let mut vel_vec = com.lock().unwrap().vel_vec.clone();
-                let mass = com.lock().unwrap().mass.clone();
-
                 for i in 0..DIMS {
-                    pos_vec[i] *= screen_scale / MAX_LEN;
+                    pos_vec[i] *= 1.5 * screen_scale / MAX_LEN;
                     pos_vec[i] += screen_offset;
 
                     // 1.5 was an arbitrary choice -- since both vel
@@ -79,7 +75,7 @@ impl Region {
                     // do some quick back-of-the-envelope math to make
                     // 1.5 a more intelligent choice.
 
-                    vel_vec[i] *= mass * screen_scale / (MAX_VEL * MAX_MASS);
+                    vel_vec[i] *= 2.0 * mass * screen_scale / (MAX_VEL * MAX_MASS);
                     vel_vec[i] += screen_offset;
 
                     pos[i] += pos_vec[i];
@@ -243,8 +239,9 @@ impl Frame {
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.5];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
-        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.5];
-        const RED: [f32; 4] = [1.0, 0.0, 0.0, 0.5];
+        // const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 0.5];
+        const YELLOW: [f32; 4] = [1.0, 1.0, 0.0, 0.5];
+        const MAGENTA: [f32; 4] = [1.0, 0.0, 1.0, 0.5];
 
         match reg_option {
 
@@ -278,12 +275,12 @@ impl Frame {
 
                                 let transform1 =
                                     c.transform
-                                    .trans(coords[0][0], coords[0][1])
+                                    .trans(coords[0][0], coords[1][0])
                                     .rot_rad(0.0);
 
                                 let transform2 =
                                     c.transform
-                                    .trans(coords[1][0], coords[1][1])
+                                    .trans(coords[0][1], coords[1][1])
                                     .rot_rad(0.0);
 
 
@@ -291,10 +288,10 @@ impl Frame {
                                     None => (),
                                     Some (com) => {
                                         let square1 = rectangle::square(0.0, 0.0, 1.0);
-                                        rectangle(RED, square1, transform1, gl);
+                                        rectangle(YELLOW, square1, transform1, gl);
 
                                         let square2 = rectangle::square(0.0, 0.0, 1.0);
-                                        rectangle(BLUE, square2, transform2, gl);
+                                        rectangle(MAGENTA, square2, transform2, gl);
                                     }
                                 }
                             }
