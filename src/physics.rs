@@ -146,6 +146,17 @@ impl Body {
             .collect::<Vec<f64>>()
     }
 
+    pub fn test_new_update_accel(&self, acc: Vec<f64>, mass: Body)
+    -> (Vec<f64>, Body) {
+        // println!("called update_accel");
+        //let mass = mass_arc.try_lock().unwrap();
+        (acc.iter()
+            .zip(self.get_classical_accel(&mass))
+            .map(|(acc_self, acc_other)| acc_self + acc_other)
+            .collect::<Vec<f64>>(),
+         mass)
+    }
+
     pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
         let mut acc = vec![0.0; DIMS];
 
@@ -164,18 +175,14 @@ impl Body {
                     },
                     Some(com_arc) => {
 
-                        let com = com_arc.try_lock().unwrap().clone();
-                        let total_acc = self.update_accel(acc.clone(), Arc::new(Mutex::new(com)));
-
-                        total_acc
+                        let mut com = com_arc.try_lock().unwrap().clone();
+                        let acc = self.update_accel(acc, Arc::new(Mutex::new(com)));
+                        acc
                     }
                 }
             },
             //if this node has children, find the acceleration from each of them
             Some(_) => {
-                // println!("matched Some on first arm of get_totall_acc");
-                // println!("try_locked node_arc and entered the match btry_lock. Matched on Some");
-                // println!("has reg_vec");
                 let match_me_too = node_arc.try_lock().unwrap().com.clone();
                 match match_me_too {
 
@@ -186,28 +193,19 @@ impl Body {
                     },
 
                     Some(ref com_arc) => {
-                        // println!("matched Some on subarm of Some");
                         if self.is_far(Arc::clone(&node_arc)) {
-                           // println!("was far");
-                            let total_acc = self.update_accel(vec![0.0; DIMS], Arc::clone(com_arc));
-                            //println!("acceleration component: {:#?}", total_acc);
-                            // this is always 0 when stuff doesn't move, for some reason
-                            // acc = acc
-                            //     .iter()
-                            //     .zip(total_acc.iter())
-                            //     .map(|(u,v)| u+v).collect::<Vec<f64>>();
-                            if com_arc.try_lock().unwrap().clone().mass > 0.0 {
-                                //println!("{:#?}, {:#?}", total_acc, com_arc.try_lock().unwrap().clone());
-                            }
+                            let total_acc = self.update_accel(
+                                vec![0.0; DIMS],
+                                Arc::clone(com_arc)
+                            );
                             total_acc
                         } else {
-                            //println!("wasn't far from: {:#?}", com_arc.try_lock().unwrap().clone());
                             for mut child in match_me.unwrap().iter() {
                                 let total_acc = self.get_total_acc(Arc::clone(child));
-                                // println!("acceleration component: {:#?}", total_acc);
-                                acc = acc.iter().zip(total_acc
-                                        .iter()).map(|(u,v)| u+v).collect::<Vec<f64>>();
-                                //println!("{:#?}: ", acc);
+                                acc = acc.iter()
+                                    .zip(total_acc.iter())
+                                    .map(|(u,v)| u+v)
+                                    .collect::<Vec<f64>>();
                             }
                             acc
                         }
@@ -218,33 +216,25 @@ impl Body {
     }
 
     pub fn update_vel(&mut self) {
-        // println!("called update_vel");
-        //TODO: we shouldn't have to be cloning vel_vec, so let's find a better way
-        //TODO: tree should be a reference so we don't have to copy it every time
-        // println!("updating vel");
-        // println!("old velocity component: {:#?}", self.vel_vec[0]);
+
+        // TODO: we shouldn't have to be cloning vel_vec, so let's find
+        // a better way
+
+        // TODO: tree should be a reference so we don't have to copy
+        // it every time
+
         let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();
-        // for child in tree.reg_vec.clone().unwrap() {
-        //     let new_child = child.try_lock().unwrap().clone();
-        //     // println!("{:#?}", child);
-        //     let new_child = Arc::new(Mutex::new(new_child));
-        //     let mut vel_vec = self.vel_vec.clone();
 
-        //     let mut vel_vec = vel_vec.iter_mut().zip(
-        //         self.get_total_acc(new_child))
-        //     .map(|(vi, ai)| *vi + ai * DT).collect::<Vec<f64>>();
-        //     self.vel_vec = vel_vec;
-        // }
 
-        //println!("\n\ntrying to update acceleration...");
-
-        self.vel_vec = tree.reg_vec.clone().unwrap().iter().fold(
-                self.vel_vec.clone(), |vel, child| vel.iter().zip(
-                    self.get_total_acc(child.clone())
-                    ).map(|(vi, ai)| vi + ai * DT).collect::<Vec<f64>>()
+        self.vel_vec = tree.reg_vec.clone().unwrap()
+            .iter()
+            .fold(
+                self.vel_vec.clone(),
+                |vel, child| vel.iter().zip(
+                    self.get_total_acc(child.clone()) )
+                    .map(|(vi, ai)| vi + ai * DT)
+                    .collect::<Vec<f64>>()
         )
-
-        // println!("new velocity component: {:#?}", self.vel_vec[0]);
     }
 
     //TODO: make update_pos use functional programming

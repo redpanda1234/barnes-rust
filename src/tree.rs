@@ -232,8 +232,8 @@ impl Region {
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
                         if result == 0 {
-                            // println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
-                            // self.reg_vec = None
+                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
+                            self.reg_vec = None
                         }
                         result
                     },
@@ -336,7 +336,6 @@ impl Region {
 
         if split {
 
-
             if self.add_queue.clone().unwrap().len() == 1 {
 
                 //note that we can overwrite com because it
@@ -366,6 +365,7 @@ impl Region {
                             .zip(com.pos_vec.clone())
                             .map(|(pi, pv)| pi + pv * com.mass)
                             .collect::<Vec<f64>>();
+
                         vel =vel
                             .iter()
                             .zip(com.vel_vec.clone())
