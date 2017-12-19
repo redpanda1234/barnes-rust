@@ -46,7 +46,7 @@ impl Region {
 
     }
 
-    fn liouville_normalize_coords(&self) -> Vec<Vec<f64>> {
+    fn phase_normalize_coords(&self) -> Vec<Vec<f64>> {
 
         match self.com.clone() {
 
@@ -88,6 +88,43 @@ impl Region {
 
     }
 
+    fn phase_mag_normalize_coords(&self) -> Vec<f64> {
+        match self.com.clone() {
+
+            None => vec![-1.0],
+
+            Some(com) => {
+
+                // Destructure body
+                let Body {
+                    pos_vec: mut pos_vec,
+                    vel_vec: mut vel_vec,
+                    mass: mut mass
+                } = com.lock().unwrap().clone();
+
+                let mut coord_vec = vec![0.0_f64; 2];
+
+                for i in 0..DIMS {
+                    pos_vec[i] *= 1.5 * screen_scale / MAX_LEN;
+                    pos_vec[i] += screen_offset;
+
+                    // 1.5 was an arbitrary choice -- since both vel
+                    // and mass are sampled from a uniform
+                    // distribution, it makes sense that things'd be
+                    // compacted more in the y axis. Should probably
+                    // do some quick back-of-the-envelope math to make
+                    // 1.5 a more intelligent choice.
+
+                    vel_vec[i] *= 2.0 * mass * screen_scale / (MAX_VEL * MAX_MASS);
+                    vel_vec[i] += screen_offset;
+                }
+                vec![coord_vec[0].sqrt(), coord_vec[1].sqrt()]
+            }
+
+        }
+
+    }
+
     fn normalize_region_coords(&self) -> Vec<f64> {
 
         let mut coord_vec = self.coord_vec.clone();
@@ -110,7 +147,7 @@ impl Frame {
     pub fn render(&mut self, reg_option: Option<&Region>, args: &RenderArgs) {
         use graphics::*;
 
-        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.05];
+        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 0.5];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 0.05];
@@ -148,11 +185,9 @@ impl Frame {
 
                     None => {
                         self.gl.draw(args.viewport(), |c, gl| {
-                            let coords = reg.clone().normalize_coords();
+                            let coords = reg.clone().phase_mag_normalize_coords();
                             if coords[0] == -1.0 {
-
                                 return
-
                             } else {
 
                                 let transform =
@@ -163,8 +198,8 @@ impl Frame {
                                 match reg.com.clone() {
                                     None => (),
                                     Some (com) => {
-                                        //if com.lock().unwrap().clone().mass < 9000.0 {
-                                            let square = rectangle::square(0.0, 0.0, 2.0);
+                                        // if com.lock().unwrap().clone().mass < 9000.0 {
+                                            let square = rectangle::square(0.0, 0.0, 1.0);
                                             rectangle(WHITE, square, transform, gl);
                                         // } else {
                                         //     let square = rectangle::square(0.0, 0.0, 2.0);
@@ -264,7 +299,7 @@ impl Frame {
 
                     None => {
                         self.gl.draw(args.viewport(), |c, gl| {
-                            let coords = reg.clone().liouville_normalize_coords();
+                            let coords = reg.clone().phase_normalize_coords();
 
                             if coords[0][0] == -1.0 {
 

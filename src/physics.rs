@@ -146,17 +146,6 @@ impl Body {
             .collect::<Vec<f64>>()
     }
 
-    pub fn test_new_update_accel(&self, acc: Vec<f64>, mass: Body)
-    -> (Vec<f64>, Body) {
-        // println!("called update_accel");
-        //let mass = mass_arc.try_lock().unwrap();
-        (acc.iter()
-            .zip(self.get_classical_accel(&mass))
-            .map(|(acc_self, acc_other)| acc_self + acc_other)
-            .collect::<Vec<f64>>(),
-         mass)
-    }
-
     pub fn get_total_acc(&mut self, node_arc: Arc<Mutex<Region>>) -> Vec<f64> {
         let mut acc = vec![0.0; DIMS];
 
@@ -188,6 +177,7 @@ impl Body {
 
                     None => {
                         //we really shouldn't get here
+                        //panic!("we got here");
                         node_arc.try_lock().unwrap().update_com();
                         self.get_total_acc(Arc::clone(&node_arc))
                     },
@@ -323,7 +313,7 @@ impl Region {
         };
     }
 
-    pub fn update_com(&mut self) {
+    pub fn update_com(&mut self) -> bool {
         //println!("called update_com");
 
         // we check whether we have child regions to determine whether
@@ -341,12 +331,18 @@ impl Region {
                 // add queue, we can probably unwrap straight away ---
                 // although match operations _are_ cheap...
 
-                match self.com.clone() {
+                match self.com {
 
-                    None => println!("superfluous (?) call to update_com.
-                        change this line in physics.rs to panic! and use backtrace to see where."),
+                    None => {
+                        println!("superfluous (?) call to update_com.
+                        change this line in physics.rs to panic! and
+                        use backtrace to see where.");
 
-                    Some(com_arc) => {
+                        true // return true indicates this region
+                        // should be dropped
+                    },
+
+                    Some(ref com_arc) => {
 
                         // Double check to make sure we don't have any
                         // masses waiting to be added to the region,
@@ -354,64 +350,70 @@ impl Region {
 
                         match self.add_queue {
                             None => (),
-                            Some(_) => panic!("cannot update com with masses waiting to be queued!")
+                            Some(_) => panic!("cannot update com with
+                            masses waiting to be queued!")
                         };
 
-                        // check to see if this region still contains com
-                        // if it doesn't, remove com and push it to the global tree
-                        if !self.contains(Arc::clone(&com_arc)) {
-                            //println!("push to global");
-                            Region::push_body_global(Arc::clone(&com_arc));
-                            self.com = None;
-                        } // else {
-                            // println!("does contain");
-                        // }
+                        if !self.contains(Arc::clone(com_arc)) {
+
+                            Region::push_body_global(Arc::clone(com_arc));
+                            true
+
+                        } else {
+                            false
+                        }
+
                     },
                 }
             },
 
             Some(ref mut reg_vec) => {
-                // println!("I see dead children");
+
                 let mut num = vec![0.0; DIMS as usize];
                 let mut den = 0.0;
 
                 for child in reg_vec.iter() {
-                    let mut match_me = &child.try_lock().unwrap().com;
-                    // println!("{:#?}", match_me);
-                    match match_me {
-                        &None => continue,
-                        &Some(ref com_arc) => {
-                            // drop(match_me);
-                            let mut com = com_arc.try_lock().unwrap();
-                            den += com.mass;
-                            //TODO: we shouldn't have to be cloning pos_vec
-                            num = num
-                                .iter()
-                                .zip(com.pos_vec.clone())
-                                .map(|(pi, pv)| pi + pv * com.mass)
-                                .collect::<Vec<f64>>();
-                        },
+                    let mut child = child.try_lock().unwrap();
+                    let still_alive = !child.update_com();
+                    if still_alive {
+                        let mut match_me = &child.com;
+
+                        match match_me {
+                            &None => continue,
+                            &Some(ref com_arc) => {
+                                // drop(match_me);
+                                let mut com = com_arc.try_lock().unwrap();
+                                den += com.mass;
+                                //TODO: we shouldn't have to be cloning pos_vec
+                                num = num
+                                    .iter()
+                                    .zip(com.pos_vec.clone())
+                                    .map(|(pi, pv)| pi + pv * com.mass)
+                                    .collect::<Vec<f64>>();
+                            },
+                        }
                     }
                 }
+
                 //if we didn't add any masses, make sure we're not dividing by 0
                 if den != 0.0 {
-                    // println!("fix divide by 0");
-                    num = num
-                        .iter()
+                    num = num.iter()
                         .map(|n| n / den)
                         .collect::<Vec<f64>>();
-                    // println!("new num is {:#?}", num);
-                } else {
-                    num = self.coord_vec.clone()
-                }
 
-                self.com = Some(
+                    self.com = Some(
                     Arc::new(Mutex::new(Body {
-                    pos_vec: num,
-                    vel_vec: vec![0.0; DIMS],
-                    mass: den
-                }))
-                );
+                        pos_vec: num,
+                        vel_vec: vec![0.0; DIMS],
+                        mass: den
+                    })));
+
+                    false
+
+                } else {
+                    true // if den == 0.0, then there are no child
+                    // regions, so we should delete this.
+                }
             }
         }
     }
@@ -607,12 +609,10 @@ mod analysis {
     use super::*;
 
     /*
-    Function to get the distribution of the radii of particles
-    in the simulation.
-    This assumes a force center at the origin.
-    It would be easy to
-modify to give the distances from some other point,
-    but this is probably unnecessary.
+    Function to get the distribution of the radii of particles in the
+    simulation. This assumes a force center at the origin. It would be
+    easy to modify to give the distances from some other point, but
+    this is probably unnecessary.
     */
     fn radial_distribution() {
         let tree = TREE_POINTER.try_lock().unwrap().tree.clone();
@@ -642,11 +642,11 @@ modify to give the distances from some other point,
     }
 
     /*
-    Function to find the exact gravitational potential energy.
-    Note that this doesn't make the same approximation as
-    the acceleration calculations.
-    TODO: add an option to calculate with this approximation, both for faster
-        calculation and more consistent results
+    Function to find the exact gravitational potential energy. Note
+    that this doesn't make the same approximation as the acceleration
+    calculations. TODO: add an option to calculate with this
+    approximation, both for faster calculation and more consistent
+    results
     */
     fn potential_energy() {
         let mut tree = TREE_POINTER.try_lock().unwrap().tree.clone();

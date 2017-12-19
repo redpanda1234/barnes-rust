@@ -211,7 +211,6 @@ impl Region {
                             return_me += reg.update();
                         }
                         if return_me == 0 {
-                            // println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
                             self.reg_vec = None;
                         }
                         self.reg_vec = Some(reg_vec);
@@ -232,7 +231,6 @@ impl Region {
                         // split the region (it's already splitted)
                         let result = self.recurse(false);
                         if result == 0 {
-                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
                             self.reg_vec = None
                         }
                         result
