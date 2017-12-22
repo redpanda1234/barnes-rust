@@ -5,23 +5,8 @@
 use super::data::*;
 use super::physics::*;
 
-// Static -> valid globally throughout the lifetime of the program
-// mut allows us to modify the value contained in the static.
-// TODO: implement a more intelligent thread limit thing.
-
-// derive(Clone) tells rust to try and implement the clone trait on
-// our Coord automatically. This allows us to clone the data inside of
-// Coord later on in our program, without writing the method
-// ourselves.
-
-// TODO: implement a method for element-wise addition on Body
-
-// TODO: implement some form of thread queue flagging at the end of
-// each velocity update run.
-
-// Body is going to end up being our class to represent masses. Each
-// one will have a float vector to describe position, then some mass
-// value assigned to it.
+use std::thread;
+use std::sync::{Mutex, Arc};
 
 #[derive(Clone, Debug)]
 pub struct Body {
@@ -29,59 +14,6 @@ pub struct Body {
     pub vel_vec: Vec<f64>,
     pub mass: f64
 }
-
-/*
-// This is our top-level class that we'll use to represent regions in
-// our recursive tree. We made the mistake of defining everything with
-// option enums --- FIXME: refactor to make this not be the case.
-// reg_vec is an optional vector of child regions --- if we're at a
-// leaf in the tree, then this will be None, else we'll have a Some
-
-// containing a vector of references to child regions.
-
-// coord_vec is going to be a vector of floats describing the position
-// of the center of our region (which is an n-dimensional box).
-
-// half_length, as the name indicates, is going to be a float whose
-// value is half of the length of a side of our box. We chose to use
-// half lengths because it makes determining whether a region contains
-// some mass faster.
-
-// remove is a bool flag that will tell the update function whether or
-// not the center-of-mass from the previous timestep in our tree is
-// invalid or not. For instance, if any mass moves in the subtree, the
-// COM is no longer valid. FIXME: I'm questioning whether this flag
-// should even be a part of our struct or not. It seems that the com
-// should _always_ change after a timestep.
-
-// add_queue is an optional queue for pushing masses into the region.
-// The way our code currently works, when a mass enters some region,
-// we push it into an add-queue for the region. Then, our region
-// determines whether or not it needs to split into sub-regions, and
-// if so, it splits and sequentially pushes the masses in its
-// add-queue into the sub-queues for its children. In the end, the
-// only region that'll actually do any work incorporating the mass
-// will be the lowest-level sub-region. We call this model "corporate
-// delegation."
-
-// Finally, com is an optional Bodyinate that contains a position and
-// a mass (center of mass of our region).
-
-// ******** TODO / TOFIX ********
-// + calculate distance metric in parent node
-// + create better implementations for generic-dimensional spaces
-// + implement dropping of dead branches
-// + collisions
-//   - really really close bodies merge, but add a bonding energy
-//     term to maintain conservation of energy
-// + reimplement contains method by constructing indices using our
-//   binary string construction method on the global multiplier array.
- */
-use std::sync::{Mutex, Arc};
-use std::thread;
-
-// use std::rc::Rc;
-// use std::cell::RefCell;
 
 #[derive(Clone, Debug)]
 pub struct Region {
@@ -93,214 +25,46 @@ pub struct Region {
 }
 
 
-// Let's implement methods on REgion!
 impl Region {
 
-    // contains takes some body, and then compares each of the i
-    // coordinates in its position vector to determine whether it's
-    // contained in the calling region or not.
-
-
     pub fn contains(&self, body_arc: Arc<Mutex<Body>>) -> bool {
-        //println!("called contains");
         let body = &body_arc.lock().unwrap();
-        // Iterate through all pairs of the i components of our
-        // position coordinate
 
         for (qi, pi) in self.coord_vec.iter().zip(&body.pos_vec) {
-
-            // TODO: make sure nothing funny happens if it happens to
-            // be directly on the boundary... I think this is handeled
-            // because we'll pop a mass as soon as it passes for one
-            // of the regions, but let's double-check.
-
             if (qi-pi).abs() > self.half_length {
-                // println!("shit, return false");
                 return false
             }
         }
-        true // implicit "return true" if it doesn't fail any checks
+        true
     }
 
-    // update does two jobs at once. It recursively pushes masses from
-    // add queues
-    pub fn update(&mut self) -> i32 {
+    pub fn update(&mut self) {
 
-        // First check whether the calling region has any child
-        // regions. This will determine how we handle our updating.
-        // Currently, we check whether
-
-        match self.reg_vec.clone() {
-
-            None => {
-
-                // if we don't have a defined region vector, then that
-                // means that either we're a leaf node, or we're doing
-                // the first initial push of masses into the tree.
-
-                // we want to check whether there are any new
-                // masses waiting to be added to our region. If
-                // there aren't, we return 0 (because Harry had
-                // the idea of using our recursive update function
-                // to simultaneously calculate how many bodies
-                // were contained in subregions of our region, as
-                // idea of calculating a metric for the number of
-                // bodies contained below the given body, which
-                // will be useful in multithreading), else we
-                // recurse down into the tree.
-
-                match self.add_queue.clone() {
-
-                    None => {
-                        // println!("nothing to add");
-                        match &self.com {
-                            &None => 0,
-                            &Some(_) => 1
-                        }
-                    },
-
-                    // if our add_queue is nonempty, then we need
-                    // to handle ingesting of the masses.
-
-                    Some(mut queue) => {
-
-                        match self.com.clone() {
-
-                            None => self.recurse(true),
-
-                            // If we have a current com, we push
-                            // it into the queue (because we're
-                            // still at a leaf node), and then
-                            // subdivide accordingly, returning
-                            // the number of submasses contained.
-
-                            Some(mut com) => {
-                                queue.push(com);
-                                self.com = None;
-                                self.add_queue = Some(queue);
-                                self.recurse(true)
-                            },
-                        }
-                    },
-                }
-            },
-
-            // Case that our region has a defined vector of child
-            // regions. TODO: check for dead regions, and prune those.
-            // Perhaps we should make each of the entries in the
-            // vector options on Regions?
-
-            Some(mut reg_vec) => {
-
-                // Invalidate com, because it's gonna be invalid no
-                // matter what if we aren't at a leaf node.
-
-                self.com = None;
-
-                //
-                match &self.add_queue {
-
-                    // If the add_queue is None, we only want to look
-                    // at the child regions.
-
-                    &None => {
-                        //println!("updating children");
-                        let mut return_me = 0;
-                        for reg_arc in reg_vec.iter() {
-                            let mut reg = reg_arc.lock().unwrap();
-                            return_me += reg.update();
-                        }
-                        if return_me == 0 {
-                            // println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
-                            self.reg_vec = None;
-                        }
-                        self.reg_vec = Some(reg_vec);
-                        return_me
-                    },
-
-                    // I think this case should never be called
-                    // because the way we inject masses should mean they
-                    // always go into leaf nodes
-                    // right????
-                    &Some(_) => {
-                        // println!("whee!");
-                        // for some reason, this case is never
-                        // reached. (or is it?)
-                        //println!("injecting bodies into child regions");
-
-                        // recurse on false because we don't need to
-                        // split the region (it's already splitted)
-                        let result = self.recurse(false);
-                        if result == 0 {
-                            println!("\n\nDeleted region vector: {:#?}\n\n", self.coord_vec);
-                            self.reg_vec = None
-                        }
-                        result
-                    },
-                }
-            },
-        }
     }
 
     fn split(&mut self) {
-        // println!("\n\n\n\nsplitting self: \n {:#?}", self);
-        // First, we check whether the calling region has any child
-        // regions or not. Don't want to split a region that's already
-        // been split.
+
 
         match self.reg_vec {
 
             None => {
 
-                // There's no children (as expected), so we'll create
-                // the children vector. First, we need to make a
-                // placeholder vector to write to, since None can't be
-                // unwrapped.
-
                 let mut reg_vec = Vec::new();
-
-                // quarter_length will be used to efficiently
-                // calculate the coordinate vectors of the
-                // newly-created child regions. We compute
-                // it up here so that we don't have to during each
-                // iteration of the loop below.
-
                 let quarter_length = self.half_length * 0.5;
 
-                // MULTIPLIERS is stored in a Mutex, so we have to
-                // lock and unwrap it, then clone it so that we can
-                // use its data while freeing it for other waiting
-                // threads to access threads can access it once we're
-                // done. FIXME: why do we need a mutex for multipliers
-                // at all...? I can't see why we'd be modifying it.
-                // I think it'd be faster to just pass a reference to
-                // the global MULTIPLIERS vector everywhere than it is
-                // locking and unwrapping it.
-
                 for vec in MULTIPLIERS.lock().unwrap().clone().iter_mut() {
-
-                    // Here, MULTIPLIERS represents all the possible
-                    // displacement vectors between the center of the
-                    // calling region and the centers of its child
-                    // regions, scaled by a factor of quarter_length.
 
                     for i in 0..DIMS {
                         vec[i] *= quarter_length;
                         vec[i] += self.coord_vec[i];
                     }
 
-                    // Construct the empty child region corresponding
-                    // to the relative position given by vec, and push
-                    // it into the calling region's region vector
-
                     reg_vec.push(
                         Arc::new(
                             Mutex::new(
                                 Region {
                                     reg_vec: None,
-                                    // vec is currently a mutable reference,
-                                    // so we call .to_vec() on it to extrac
-                                    // the underlying vec.
+                                    // extract vec from mutable ref
                                     coord_vec: vec.to_vec(),
                                     add_queue: None,
                                     com: None,
@@ -310,18 +74,8 @@ impl Region {
                         )
                     )
                 }
-
-                // Now that we're done pushing all the child regions,
-                // we write reg_vec out to the calling region, and
-                // place it into an Option enum so that we can perform
-                // matches on it later.
-
                 self.reg_vec = Some(reg_vec);
-
             },
-
-            // We shouldn't ever be calling split on a pre-split
-            // region, so one of the calls must've been wrong.
             Some(_) => {
                 panic!("this wasn't supposed to happen. {:#?}", self);
             }
