@@ -1,14 +1,14 @@
 # Theo Mech Computational Project
-A Rust-implemented Barnes-Hut $n$-body simulator. Project based on a
+A Rust-implemented Barnes-Hut n-body simulator. Project based on a
 similar thing I made in Python last summer
 (see [here](https://github.com/redpanda1234/euler)). Simulation is
 written to be general over an arbitrary number of spatial dimensions;
-working in 2D vs.\ 3D vs.\ $n$D is as simple as changing one global
+working in 2D vs. 3D vs. nD is as simple as changing one global
 constant (although graphics will remain 2D). All initial conditions
 are generated at runtime, sampling scalar parameters such as mass,
 speed, and distance-from-center from a choice of uniform, normal, or
 gamma distributions. Speed and distance are then converted into
-velocity and displacement by projecting down using $n$-d spherical
+velocity and displacement by projecting down using nD spherical
 coordinates. All major data structures are stored in mutexes, then
 wrapped in thread-safe reference-counting pointers to allow
 multi-threaded tree recursion in the future. Graphics implemented
