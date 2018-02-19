@@ -6,8 +6,8 @@ use std::sync::{Mutex, Arc};
 use std::thread;
 
 pub const DIMS: usize = 2;
-pub const THETA: f64 = 0.0005;
-pub const DT: f64 = 0.0007;
+pub const THETA: f64 = 0.5;
+pub const DT: f64 = 0.00025;
 
 // approximate radius of the milky way
 //pub const MAX_LEN: f64 = 500_000_000_000_000_000_000.0;
@@ -18,7 +18,7 @@ pub const DT: f64 = 0.0007;
 // 62_635_700_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000.0;
 
 pub const MAX_LEN: f64 = 1_000.0;
-pub const MIN_LEN: f64 = 10.0;
+pub const MIN_LEN: f64 = 0.001;
 pub const MAX_VEL: f64 = 10_000.0;
 pub const MAX_MASS: f64 = 5000.0;
 
@@ -162,8 +162,8 @@ pub mod generate {
         // let mut seeder = get_seeder_rng();
 
         let m_gen = Range::new(0.0, MAX_MASS);
-        let p_mag_gen = Range::new(0.1*MAX_LEN, 0.5*MAX_LEN);
-        let v_mag_gen = Range::new(0.4*MAX_VEL, 0.8*MAX_VEL);
+        let p_mag_gen = Range::new(0.0, 0.7*MAX_LEN);
+        let v_mag_gen = Range::new(0.2*MAX_VEL, 0.5*MAX_VEL);
         let t_gen = Range::new(0.0, PI);
         let t_f_gen = &Range::new(0.0, 2.0*PI);
 
@@ -217,7 +217,7 @@ pub mod generate {
         use data::rand::distributions::*;
 
         //impact parameters
-        let impact_parameters = Range::new(-400.0, 400.0);
+        let impact_parameters = Range::new(50.0, 51.0);
         let mut rng = rand::StdRng::new().unwrap();
 
         let velocities = Range::new(750.0, 10000.0);
@@ -227,14 +227,14 @@ pub mod generate {
 
             let b = impact_parameters.ind_sample(&mut rng);
             let v = velocities.ind_sample(&mut rng);
-            let x = offsets.ind_sample(&mut rng);
+            // let x = offsets.ind_sample(&mut rng);
 
             Region::push_body_global(
                 Arc::new(Mutex::new(
                 Body {
-                    pos_vec: vec![-MAX_LEN + x, b],
+                    pos_vec: vec![-MAX_LEN + 10.0, b],
                     vel_vec: vec![v, 0.0],
-                    mass: 1.0//m
+                    mass: 0.0000001//m
                 }
             )));
         }
