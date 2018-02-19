@@ -2,7 +2,7 @@
 Originally, this was supposed to be a 5-10 hour computational project
 for Harvey Mudd's Theoretical Mechanics course (Physics 111). It
 quickly escaped that scope. By the end of the semester, Harry and I
-had poured well over 80 hours into it, and learning a new programming
+had poured well over 80 hours into it, even learning a new programming
 language (rust) along the way. It's far from perfect, the
 documentation is a little...unhelpful, and the code can be
 spaghetti-like at times. But it's a labor of love, and we think that
